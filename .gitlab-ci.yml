@@ -1,5 +1,5 @@
 ---
-image: registry.cloud.fits/fits/buildtools
+image: registry.cloud.fits/fits/buildtools:dev
 
 test:
   script:
