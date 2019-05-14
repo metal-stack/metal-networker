@@ -1,0 +1,8 @@
+---
+image: registry.cloud.fits/fits/buildtools:dev
+
+test:
+  script:
+    - cd metal-networker
+    - go test ./...
+  only: master
