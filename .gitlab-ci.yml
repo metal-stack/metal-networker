@@ -1,8 +1,10 @@
 ---
-image: registry.cloud.fits/fits/buildtools:dev
+image: registry.cloud.fits/fits/buildtools
 
 test:
   script:
+    - pwd
+    - ls
     - cd metal-networker
     - go test ./...
   only:
