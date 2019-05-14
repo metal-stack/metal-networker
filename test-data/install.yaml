@@ -1,0 +1,62 @@
+# Note: This is a general-purpose configuration file that contains information not only for this app.
+#
+# bash-4.4# cat /rootfs/etc/metal/install.yaml
+# hostname: machine
+# ipaddress: 10.0.40.3
+# asn: "4200010243"
+# networks:
+# - ips:
+#   - 10.0.40.3
+#   networkid: fa50cd35-114f-478c-af19-59ff4ce01198
+#   primary: true
+#   prefixes: []
+#   vrf: 3981
+#   asn: 4200010243
+#   nat: false
+# machineuuid: b369ceb0-a087-427d-9726-d8b57cd59c1c
+# sshpublickey: ""
+# password: tbTnono8kSikJWIi
+# devmode: false
+# console: ttyS0,115200n8
+---
+# Applies to hostname of the box.
+hostname: firewall
+# [SKIPPED] No used.
+ipaddress: 10.0.112.6
+# [SKIPPED] No used.
+asn: "4200028678"
+networks:
+  # [SKIPPED] Used for calculating the prefixes that needs to be considered as described.
+  - ips:
+      - 10.0.112.6
+    # For each of the above IPs it is required to check against the prefixes and remember matches to:
+    # - define static route leak for return traffic from each of the non-primary into the primary networks
+    prefixes:
+      - 10.0.112.0/24
+      - 10.0.113.0/24
+    # [SKIPPED] No used.
+    networkid: 8584c55e-e54f-44f6-9407-f84c996dc611
+    # The primary field identifies the tenant network. Non-primary networks are considered infrastructure.
+    primary: true
+    # TODO
+    vrf: 27402
+    # Defines the autonomous system number for the BGP instances to configure.
+    asn: 4200028678
+  - ips:
+      # Applied to the interface (VRF) that must consider MASQUERADING/ represents the communication endpoint.
+      - 185.1.1.3
+    # [SKIPPED] No used.
+    networkid: aefdd956-3026-40ed-96a4-246234a3d7cb
+    firewall_underlay: true
+    # In case firewall_underlay equals true this addresses (as /32) are applied to the local loopback interface.
+    prefixes:
+      - 185.1.1.1/27
+    primary: false
+    # Network segments targeted for route leak from tenant vrf into this external network.
+    destination_prefixes:
+      - 0.0.0.0/0
+    # In case nat equals true a post-up hook is added to the interface that enables MASQUERADING
+    nat: true
+    vrf: 104000
+    # [SKIPPED] No used.
+    asn: 4200000259
