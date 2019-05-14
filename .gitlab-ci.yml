@@ -5,4 +5,5 @@ test:
   script:
     - cd metal-networker
     - go test ./...
-  only: master
+  only:
+    - master
