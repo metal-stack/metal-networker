@@ -1,62 +1,134 @@
 # Note: This is a general-purpose configuration file that contains information not only for this app.
 #
-# bash-4.4# cat /rootfs/etc/metal/install.yaml
-# hostname: machine
-# ipaddress: 10.0.40.3
-# asn: "4200010243"
+# This file is considered to be used to configure the tenant firewall!
+#
+###########################################
+# root@firewall:/etc/metal# date
+# Thu May 16 13:48:11 CEST 2019
+# root@firewall:/etc/metal# cat install.yaml
+# hostname: firewall
+# ipaddress: 10.0.12.1
+# asn: "4200003073"
 # networks:
-# - ips:
-#   - 10.0.40.3
-#   networkid: fa50cd35-114f-478c-af19-59ff4ce01198
-#   primary: true
-#   prefixes: []
-#   vrf: 3981
-#   asn: 4200010243
-#   nat: false
-# machineuuid: b369ceb0-a087-427d-9726-d8b57cd59c1c
+#   - asn: 4200003073
+#     destinationprefixes: []
+#     ips:
+#       - 10.0.12.1
+#     nat: false
+#     networkid: bc830818-2df1-4904-8c40-4322296d393d
+#     prefixes:
+#       - 10.0.12.0/22
+#     primary: true
+#     underlay: false
+#     vrf: 3981
+#   - asn: 4200003073
+#     destinationprefixes:
+#       - 0.0.0.0/0
+#     ips:
+#       - 185.24.0.1
+#     nat: false
+#     networkid: internet-vagrant-lab
+#     prefixes:
+#       - 185.24.0.0/22
+#       - 185.27.0.0/22
+#     primary: false
+#     underlay: false
+#     vrf: 104009
+#   - asn: 4200003073
+#     destinationprefixes: []
+#     ips:
+#       - 10.1.0.1
+#     nat: false
+#     networkid: underlay-vagrant-lab
+#     prefixes:
+#       - 10.0.12.0/22
+#     primary: false
+#     underlay: true
+#     vrf: 0
+# machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
 # sshpublickey: ""
-# password: tbTnono8kSikJWIi
+# password: KAWT5DugqSPAezMl
 # devmode: false
 # console: ttyS0,115200n8
+###########################################
 ---
-# Applies to hostname of the box.
+# Applies to hostname of the firewall.
 hostname: firewall
-# [SKIPPED] No used.
-ipaddress: 10.0.112.6
-# [SKIPPED] No used.
-asn: "4200028678"
+# [IGNORED]
+ipaddress: 10.0.12.1
+# [IGNORED]
+asn: "4200003073"
 networks:
-  # [SKIPPED] Used for calculating the prefixes that needs to be considered as described.
-  - ips:
-      - 10.0.112.6
-    # For each of the above IPs it is required to check against the prefixes and remember matches to:
-    # - define static route leak for return traffic from each of the non-primary into the primary networks
+  # === Tenant Network (primary=true)
+    # [IGNORED]
+  - asn: 4200003073
+    # [IGNORED in case of primary network]
+    destinationprefixes: []
+    # Used to consider the set of prefixes that originate the given IP's to establish route leak in external
+    # network VRF's for return traffic. Applied to the SVI (as /32)
+    ips:
+      - 10.0.12.1
+    # [IGNORED in case of primary network]
+    nat: false
+    # [IGNORED]
+    networkid: bc830818-2df1-4904-8c40-4322296d393d
+    # Prefixes that originate the given IP's are considered for static route leak to route return traffic to the tenant.
     prefixes:
-      - 10.0.112.0/24
-      - 10.0.113.0/24
-    # [SKIPPED] No used.
-    networkid: 8584c55e-e54f-44f6-9407-f84c996dc611
-    # The primary field identifies the tenant network. Non-primary networks are considered infrastructure.
+      - 10.0.12.0/22
     primary: true
-    # TODO
-    vrf: 27402
-    # Defines the autonomous system number for the BGP instances to configure.
-    asn: 4200028678
-  - ips:
-      # Applied to the interface (VRF) that must consider MASQUERADING/ represents the communication endpoint.
-      - 185.1.1.3
-    # [SKIPPED] No used.
-    networkid: aefdd956-3026-40ed-96a4-246234a3d7cb
-    firewall_underlay: true
-    # In case firewall_underlay equals true this addresses (as /32) are applied to the local loopback interface.
-    prefixes:
-      - 185.1.1.1/27
-    primary: false
-    # Network segments targeted for route leak from tenant vrf into this external network.
-    destination_prefixes:
+    # [IGNORED in case of primary network]
+    underlay: false
+    # Defines the tenant VRF id.
+    vrf: 3981
+  # === External infrastructure networks to route to
+    # [IGNORED]
+  - asn: 4200003073
+    # Considered to establish static route leak to reach out from tenant VRF into the external networks.
+    destinationprefixes:
       - 0.0.0.0/0
-    # In case nat equals true a post-up hook is added to the interface that enables MASQUERADING
+    # Applied to the SVI (as /32)
+    ips:
+      - 185.24.0.1
+    # In case nat equals true a post-up hook is added to the SVI that enables MASQUERADING.
     nat: true
-    vrf: 104000
-    # [SKIPPED] No used.
-    asn: 4200000259
+    # [IGNORED]
+    networkid: internet-vagrant-lab
+    # [IGNORED]
+    prefixes:
+      - 185.24.0.0/22
+      - 185.27.0.0/22
+    primary: false
+    underlay: false
+    # VRF id considered to define EVPN interfaces.firewall01.
+    vrf: 104009
+  # === Firewall Underlay Network (firewall_underlay=true)
+    # Considered to define the BGP ASN.
+  - asn: 4200003073
+    # Considered to establish static route leak to reach out from tenant VRF into the external networks.
+    destinationprefixes: []
+    # Applied to local loopback as /32.
+    ips:
+      - 10.1.0.1
+    # In case nat equals true a post-up hook is added to the interface that enables MASQUERADING.
+    nat: false
+    # [UNUSED]
+    networkid: underlay-vagrant-lab
+    # [UNUSED]
+    prefixes:
+      - 10.0.12.0/22
+    primary: false
+    underlay: true
+    # [IGNORED] Underlay runs in default VRF.
+    vrf: 0
+# [IGNORED]
+machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
+# [IGNORED]
+sshpublickey: ""
+# [IGNORED]
+password: KAWT5DugqSPAezMl
+# [IGNORED]
+devmode: false
+# [IGNORED]
+console: ttyS1,115200n8
+
+

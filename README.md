@@ -4,7 +4,7 @@ Configures ifup/ifdown and Free Range Routing (FRR) by applying setup from a con
 
 ## Configuration File
 
-The configuration file is expected to contain YAML. See [./test-data/install.yaml](./test-data/install.yaml).
+The configuration file is expected to contain YAML. See [./test-data/install.yaml](test-data/install.yaml).
 
 ## Usage
 
