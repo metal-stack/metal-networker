@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"text/template"
@@ -15,8 +16,7 @@ const (
 
 func main() {
 	// Todo: rethink: panic
-	// TODO: ensure the arg is present
-	a := os.Args[1]
+	a := mustArg(1)
 	d := NewKnowledgeBase(a)
 
 	f := mustTmpFile("interfaces_")
@@ -28,6 +28,13 @@ func main() {
 	frr := NewFrrConfig(d, f)
 	tpl = mustRead(TplFrr)
 	mustApply(f, frr.Applier, tpl, "/etc/network/interfaces")
+}
+
+func mustArg(index int) string {
+	if len(os.Args) != 2 {
+		panic(errors.New("expectation only the yaml input path is present as argument failed"))
+	}
+	return os.Args[index]
 }
 
 func mustApply(tmpFile string, applier network.Applier, tpl string, dest string) {
