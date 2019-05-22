@@ -2,50 +2,57 @@ package main
 
 import (
 	"errors"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
+
+	"gopkg.in/yaml.v3"
 )
 
 const VlanOffset = 1000
 
 // Generated with: https://mengzhuo.github.io/yaml-to-go/.
 type KnowledgeBase struct {
-	Hostname  string `yaml:"hostname"`
-	Ipaddress string `yaml:"ipaddress"`
-	Asn       string `yaml:"asn"`
-	Networks  []struct {
-		Asn                 int64         `yaml:"asn"`
-		Destinationprefixes []interface{} `yaml:"destinationprefixes"`
-		Ips                 []string      `yaml:"ips"`
-		Nat                 bool          `yaml:"nat"`
-		Networkid           string        `yaml:"networkid"`
-		Prefixes            []string      `yaml:"prefixes"`
-		Primary             bool          `yaml:"primary"`
-		Underlay            bool          `yaml:"underlay"`
-		Vrf                 int           `yaml:"vrf"`
-		Vlan                int           `yaml:"vlan,omitempty"`
-	} `yaml:"networks"`
-	Machineuuid  string `yaml:"machineuuid"`
-	Sshpublickey string `yaml:"sshpublickey"`
-	Password     string `yaml:"password"`
-	Devmode      bool   `yaml:"devmode"`
-	Console      string `yaml:"console"`
+	Hostname     string    `yaml:"hostname"`
+	Ipaddress    string    `yaml:"ipaddress"`
+	Asn          string    `yaml:"asn"`
+	Networks     []Network `yaml:"networks"`
+	Machineuuid  string    `yaml:"machineuuid"`
+	Sshpublickey string    `yaml:"sshpublickey"`
+	Password     string    `yaml:"password"`
+	Devmode      bool      `yaml:"devmode"`
+	Console      string    `yaml:"console"`
 }
 
-func NewKnowledgeBase(path string) (*KnowledgeBase, error) {
+type Network struct {
+	Asn                 int64    `yaml:"asn"`
+	Destinationprefixes []string `yaml:"destinationprefixes"`
+	Ips                 []string `yaml:"ips"`
+	Nat                 bool     `yaml:"nat"`
+	Networkid           string   `yaml:"networkid"`
+	Prefixes            []string `yaml:"prefixes"`
+	Primary             bool     `yaml:"primary"`
+	Underlay            bool     `yaml:"underlay"`
+	Vrf                 int      `yaml:"vrf"`
+	Vlan                int      `yaml:"vlan,omitempty"`
+}
+
+func NewKnowledgeBase(path string) KnowledgeBase {
+	d := mustUnmarshal(path)
+	d.fillVLANIDs()
+	return d
+}
+
+func mustUnmarshal(path string) KnowledgeBase {
 	f, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	d := &KnowledgeBase{}
-	yaml.Unmarshal(f, &d)
+	err = yaml.Unmarshal(f, &d)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	d.fillVLANIDs()
-	return d, err
+	return *d
 }
 
 func (kb *KnowledgeBase) fillVLANIDs() {
@@ -56,19 +63,19 @@ func (kb *KnowledgeBase) fillVLANIDs() {
 
 func (kb *KnowledgeBase) validate() error {
 	b := kb.containsAsn()
-	if b == false {
+	if !b {
 		return errors.New("asn must not be missing")
 	}
-	b = kb.containsAtLeastOneLoopbackIp()
-	if b == false {
+	b = kb.containsAtLeastOneLoopbackIP()
+	if !b {
 		return errors.New("underlay ip(s) must not be absent")
 	}
 	b = kb.containsOnePrimary()
-	if b == false {
+	if !b {
 		return errors.New("expectation exactly one primary network is present failed")
 	}
 	b = kb.containsOneUnderlay()
-	if b == false {
+	if !b {
 		return errors.New("expectation exactly one underlay network is present failed")
 	}
 	return nil
@@ -102,7 +109,7 @@ func (kb *KnowledgeBase) containsOneUnderlay() bool {
 	return result
 }
 
-func (kb *KnowledgeBase) containsAtLeastOneLoopbackIp() bool {
+func (kb *KnowledgeBase) containsAtLeastOneLoopbackIP() bool {
 	for _, n := range kb.Networks {
 		if n.Underlay && len(n.Ips) >= 1 {
 			return true
@@ -118,4 +125,22 @@ func (kb *KnowledgeBase) containsAsn() bool {
 		}
 	}
 	return false
+}
+
+func (kb *KnowledgeBase) mustGetPrimary() Network {
+	for _, n := range kb.Networks {
+		if n.Primary {
+			return n
+		}
+	}
+	panic("no primary network available")
+}
+
+func (kb *KnowledgeBase) mustGetUnderlay() Network {
+	for _, n := range kb.Networks {
+		if n.Underlay {
+			return n
+		}
+	}
+	panic("no underlay network available")
 }

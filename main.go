@@ -1,10 +1,11 @@
 package main
 
 import (
-	"git.f-i-ts.de/cloud-native/metallib/network"
 	"io/ioutil"
 	"os"
 	"text/template"
+
+	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
 const (
@@ -13,19 +14,18 @@ const (
 )
 
 func main() {
+	// Todo: rethink: panic
+	// TODO: ensure the arg is present
 	a := os.Args[1]
-	d, err := NewKnowledgeBase(a)
-	if err != nil {
-		panic(err)
-	}
+	d := NewKnowledgeBase(a)
 
 	f := mustTmpFile("interfaces_")
-	ifaces := NewIfacesConfig(*d, f)
+	ifaces := NewIfacesConfig(d, f)
 	tpl := mustRead(TplIfaces)
 	mustApply(f, ifaces.Applier, tpl, "/etc/network/interfaces")
 
 	f = mustTmpFile("frr_")
-	frr := NewFrrConfig(*d, f)
+	frr := NewFrrConfig(d, f)
 	tpl = mustRead(TplFrr)
 	mustApply(f, frr.Applier, tpl, "/etc/network/interfaces")
 }
@@ -39,7 +39,7 @@ func mustApply(tmpFile string, applier network.Applier, tpl string, dest string)
 }
 
 func mustRead(name string) string {
-	c, err := ioutil.ReadFile(TplIfaces)
+	c, err := ioutil.ReadFile(name)
 	if err != nil {
 		panic(err)
 	}

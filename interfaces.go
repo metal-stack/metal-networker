@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"git.f-i-ts.de/cloud-native/metallib/network"
 	"os/exec"
+
+	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
 type IfaceConfig struct {
@@ -25,18 +26,18 @@ type InterfacesData struct {
 
 type EVPNInterfaces struct {
 	VRF struct {
-		Id      int
+		ID      int
 		Comment string
 	}
 	SVI struct {
-		VlanId    int
+		VlanID    int
 		Comment   string
 		Addresses []string
 	}
 	VXLAN struct {
 		Comment  string
-		Id       int
-		TunnelIp string
+		ID       int
+		TunnelIP string
 	}
 }
 
@@ -44,7 +45,7 @@ func NewIfacesConfig(kb KnowledgeBase, tmpFile string) IfaceConfig {
 	d := InterfacesData{}
 	d.Comment = fmt.Sprintf("# This file was auto generated for machine: '%s'.\n# Do not edit.", kb.Machineuuid)
 	d.Underlay.Comment = getUnderlayComment(kb)
-	d.Underlay.LoopbackIps = getUnderlayIPs(kb)
+	d.Underlay.LoopbackIps = kb.mustGetUnderlay().Ips
 	d.Bridge.Ports = getBridgePorts(kb)
 	d.Bridge.Vids = getBridgeVLANIDs(kb)
 	d.EVPNInterfaces = getEVPNInterfaces(kb)
@@ -79,24 +80,24 @@ func getEVPNInterfaces(data KnowledgeBase) []EVPNInterfaces {
 
 		e := EVPNInterfaces{}
 		e.SVI.Comment = fmt.Sprintf("svi (networkid: %s)", n.Networkid)
-		e.SVI.VlanId = n.Vlan
+		e.SVI.VlanID = n.Vlan
 		e.SVI.Addresses = n.Ips
 
 		e.VXLAN.Comment = fmt.Sprintf("vxlan (networkid: %s)", n.Networkid)
-		e.VXLAN.Id = n.Vrf
-		e.VXLAN.TunnelIp = getUnderlayIPs(data)[0]
+		e.VXLAN.ID = n.Vrf
+		e.VXLAN.TunnelIP = data.mustGetUnderlay().Ips[0]
 
 		e.VRF.Comment = fmt.Sprintf("vrf (networkid: %s)", n.Networkid)
-		e.VRF.Id = n.Vrf
+		e.VRF.ID = n.Vrf
 
 		result = append(result, e)
 	}
 	return result
 }
 
-func getBridgeVLANIDs(data KnowledgeBase) string {
+func getBridgeVLANIDs(kb KnowledgeBase) string {
 	result := ""
-	for _, n := range data.Networks {
+	for _, n := range kb.Networks {
 		if n.Underlay {
 			continue
 		}
@@ -109,9 +110,9 @@ func getBridgeVLANIDs(data KnowledgeBase) string {
 	return result
 }
 
-func getBridgePorts(data KnowledgeBase) string {
+func getBridgePorts(kb KnowledgeBase) string {
 	result := ""
-	for _, n := range data.Networks {
+	for _, n := range kb.Networks {
 		if n.Underlay {
 			continue
 		}
@@ -125,22 +126,7 @@ func getBridgePorts(data KnowledgeBase) string {
 	return result
 }
 
-func getUnderlayIPs(data KnowledgeBase) []string {
-	var result []string
-	for _, n := range data.Networks {
-		if n.Underlay {
-			result = n.Ips
-			break
-		}
-	}
-	return result
-}
-
-func getUnderlayComment(data KnowledgeBase) string {
-	for _, n := range data.Networks {
-		if n.Underlay {
-			return fmt.Sprintf("networkid: %s", n.Networkid)
-		}
-	}
-	return ""
+func getUnderlayComment(kb KnowledgeBase) string {
+	n := kb.mustGetUnderlay()
+	return fmt.Sprintf("networkid: %s", n.Networkid)
 }

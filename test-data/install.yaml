@@ -70,7 +70,7 @@ networks:
       - 10.0.12.1
     # [IGNORED in case of primary network]
     nat: false
-    # [IGNORED]
+    # [IGNORED in case of primary network]
     networkid: bc830818-2df1-4904-8c40-4322296d393d
     # Prefixes that originate the given IP's are considered for static route leak to route return traffic to the tenant.
     prefixes:
@@ -93,13 +93,13 @@ networks:
     nat: true
     # [IGNORED]
     networkid: internet-vagrant-lab
-    # [IGNORED]
+    # The prefixes that originate given ips are used to define the networks to announce from the VRF BGP instance.
     prefixes:
       - 185.24.0.0/22
       - 185.27.0.0/22
     primary: false
     underlay: false
-    # VRF id considered to define EVPN interfaces.firewall01.
+    # VRF id considered to define EVPN interfaces.
     vrf: 104009
   # === Firewall Underlay Network (firewall_underlay=true)
     # Considered to define the BGP ASN.
@@ -113,7 +113,7 @@ networks:
     nat: false
     # [UNUSED]
     networkid: underlay-vagrant-lab
-    # [UNUSED]
+    # [IGNORED in case of UNDERLAY]
     prefixes:
       - 10.0.12.0/22
     primary: false

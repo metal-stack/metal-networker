@@ -5,8 +5,8 @@ auto all
 
 # {{ .Underlay.Comment }}
 iface lo inet loopback
-{{- range $i, $n := .Underlay.LoopbackIps }}
-    address {{ $n }}/32
+{{- range .Underlay.LoopbackIps }}
+    address {{ . }}/32
 {{- end }}
 
 iface eth0 inet dhcp
@@ -22,29 +22,29 @@ iface bridge
     bridge-vids {{ .Bridge.Vids }}
     bridge-vlan-aware yes
 
-{{ range $i, $e := .EVPNInterfaces -}}
-# {{ $e.SVI.Comment }}
-iface vlan{{ $e.VRF.Id }}
+{{ range .EVPNInterfaces -}}
+# {{ .SVI.Comment }}
+iface vlan{{ .VRF.ID }}
     mtu 9000
-    vlan-id {{ $e.SVI.VlanId }}
+    vlan-id {{ .SVI.VlanID }}
     vlan-raw-device bridge
-    vrf vrf{{ $e.VRF.Id }}
-    {{- range $j, $a := $e.SVI.Addresses }}
-    address {{ $a }}/32
+    vrf vrf{{ .VRF.ID }}
+    {{- range .SVI.Addresses }}
+    address {{ . }}/32
     {{- end }}
 
-# {{ $e.VXLAN.Comment }}
-iface vni{{ $e.VXLAN.Id }}
+# {{ .VXLAN.Comment }}
+iface vni{{ .VXLAN.ID }}
     mtu 9000
-    bridge-access {{ $e.SVI.VlanId }}
+    bridge-access {{ .SVI.VlanID }}
     bridge-learning off
     mstpctl-bpduguard yes
     mstpctl-portbpdufilter yes
-    vxlan-id {{ $e.VXLAN.Id }}
-    vxlan-local-tunnelip {{ $e.VXLAN.TunnelIp }}
+    vxlan-id {{ .VXLAN.ID }}
+    vxlan-local-tunnelip {{ .VXLAN.TunnelIP }}
 
-# {{ $e.VRF.Comment }}
-iface vrf{{ $e.VRF.Id }}
+# {{ .VRF.Comment }}
+iface vrf{{ .VRF.ID }}
     mtu 9000
     vrf-table auto
 

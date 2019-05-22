@@ -1,15 +1,15 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func mustNewKnowledgeBase(t *testing.T) *KnowledgeBase {
+func mustNewKnowledgeBase(t *testing.T) KnowledgeBase {
 	assert := assert.New(t)
 
-	d, err := NewKnowledgeBase("test-data/install.yaml")
-	assert.NoError(err)
+	d := NewKnowledgeBase("test-data/install.yaml")
 	assert.NotNil(d)
 
 	return d
