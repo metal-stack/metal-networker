@@ -7,9 +7,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const VlanOffset = 1000
+// VLANOffset defines a number to start with when creating new VLAN IDs.
+const VLANOffset = 1000
 
-// Generated with: https://mengzhuo.github.io/yaml-to-go/.
+// KnowledgeBase was generated with: https://mengzhuo.github.io/yaml-to-go/.
+// It represents the input yaml that is needed to render network configuration files.
 type KnowledgeBase struct {
 	Hostname     string    `yaml:"hostname"`
 	Ipaddress    string    `yaml:"ipaddress"`
@@ -22,6 +24,7 @@ type KnowledgeBase struct {
 	Console      string    `yaml:"console"`
 }
 
+// Network is a representation of a tenant network.
 type Network struct {
 	Asn                 int64    `yaml:"asn"`
 	Destinationprefixes []string `yaml:"destinationprefixes"`
@@ -35,6 +38,7 @@ type Network struct {
 	Vlan                int      `yaml:"vlan,omitempty"`
 }
 
+// NewKnowledgeBase creates a new instance of this type.
 func NewKnowledgeBase(path string) KnowledgeBase {
 	d := mustUnmarshal(path)
 	d.fillVLANIDs()
@@ -57,7 +61,7 @@ func mustUnmarshal(path string) KnowledgeBase {
 
 func (kb *KnowledgeBase) fillVLANIDs() {
 	for i := 0; i < len(kb.Networks); i++ {
-		kb.Networks[i].Vlan = VlanOffset + i
+		kb.Networks[i].Vlan = VLANOffset + i
 	}
 }
 

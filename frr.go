@@ -9,11 +9,14 @@ import (
 	"os/exec"
 )
 
+// FRRVersion holds a string that is used in the frr.conf to define the FRR version.
 const FRRVersion = "7.0"
-const DefaultRoute = "0.0.0.0/0"
+
+// RouteLeakFmt holds a pattern to render route leak string.
 const RouteLeakFmt = "ip route %s vrf%d nexthop-vrf vrf%d"
 
-type FrrData struct {
+// FRRData represents the information required to render frr.conf.
+type FRRData struct {
 	FRRVersion string
 	ASN        int64
 	Comment    string
@@ -22,6 +25,7 @@ type FrrData struct {
 	VRFs       []VRF
 }
 
+// VRF represents data required to render VRF information into frr.conf.
 type VRF struct {
 	ID                int
 	VNI               int
@@ -29,12 +33,14 @@ type VRF struct {
 	NetworksAnnounced []string
 }
 
-type FrrConfig struct {
+// FRRConfig represents a thing to apply changes to frr.conf.
+type FRRConfig struct {
 	Applier network.Applier
 }
 
-func NewFrrConfig(kb KnowledgeBase, tmpFile string) FrrConfig {
-	d := FrrData{}
+// NewFRRConfig constructs a new instance of this type.
+func NewFRRConfig(kb KnowledgeBase, tmpFile string) FRRConfig {
+	d := FRRData{}
 	d.ASN = kb.mustGetUnderlay().Asn
 	d.Comment = fmt.Sprintf("# This file was auto generated for machine: '%s'.\n# Do not edit.", kb.Machineuuid)
 	d.FRRVersion = FRRVersion
@@ -42,18 +48,20 @@ func NewFrrConfig(kb KnowledgeBase, tmpFile string) FrrConfig {
 	d.RouterID = kb.mustGetUnderlay().Ips[0]
 	d.VRFs = getVRFs(kb)
 
-	v := FrrValidator{tmpFile}
+	v := FRRValidator{tmpFile}
 	r := network.NewDBusReloader("frr.service")
 	a := network.NewNetworkApplier(d, v, r)
 
-	return FrrConfig{a}
+	return FRRConfig{a}
 }
 
-type FrrValidator struct {
+// FRRValidator validates the frr.conf to apply.
+type FRRValidator struct {
 	path string
 }
 
-func (v FrrValidator) Validate() error {
+// Validate can be used to run validation on FRR configuration using vtysh.
+func (v FRRValidator) Validate() error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
 	return exec.Command("bash", "-c", vtysh, v.path).Run()
 }
@@ -70,11 +78,11 @@ func getVRFs(kb KnowledgeBase) []VRF {
 		vrf.ID = n.Vrf
 		vrf.VNI = n.Vrf
 		if n.Primary {
-			// The primary vrf contains a static route leak into vrfs of external networks.
+			// The primary vrf contains a static route leak into VRF's of external networks.
 			// In addition to this the primary vrf announces a default route to ask clients to route all traffic destined
 			// to external networks to here.
 			vrf.RouteLeaks = getOutRouteLeaks(kb)
-			vrf.NetworksAnnounced = []string{DefaultRoute}
+			vrf.NetworksAnnounced = []string{"0.0.0.0/0"}
 		} else {
 			// VRF BGP instances of external networks contain a route leak to return traffic to tenant servers.
 			vrf.RouteLeaks = getInRouteLeaks(kb)

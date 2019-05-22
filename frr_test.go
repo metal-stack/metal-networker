@@ -17,7 +17,7 @@ func TestCompileFrrConf(t *testing.T) {
 	kb := NewKnowledgeBase("test-data/install.yaml")
 	assert.NoError(err)
 
-	a := NewFrrConfig(kb, "")
+	a := NewFRRConfig(kb, "")
 	b := bytes.Buffer{}
 
 	f := "test-data/frr.conf.tpl"

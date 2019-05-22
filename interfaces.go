@@ -7,11 +7,13 @@ import (
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
+// IfaceConfig represents a thing to apply changes to interfaces configuration.
 type IfaceConfig struct {
 	Applier network.Applier
 }
 
-type InterfacesData struct {
+// IfacesData represents the information required to render interfaces configuration.
+type IfacesData struct {
 	Comment  string
 	Underlay struct {
 		Comment     string
@@ -21,10 +23,11 @@ type InterfacesData struct {
 		Ports string
 		Vids  string
 	}
-	EVPNInterfaces []EVPNInterfaces
+	EVPNInterfaces []EVPNIfaces
 }
 
-type EVPNInterfaces struct {
+// EVPNIfaces represents the information required to render EVPN interfaces configuration.
+type EVPNIfaces struct {
 	VRF struct {
 		ID      int
 		Comment string
@@ -41,8 +44,9 @@ type EVPNInterfaces struct {
 	}
 }
 
+// NewIfacesConfig constructs a new instance of this type.
 func NewIfacesConfig(kb KnowledgeBase, tmpFile string) IfaceConfig {
-	d := InterfacesData{}
+	d := IfacesData{}
 	d.Comment = fmt.Sprintf("# This file was auto generated for machine: '%s'.\n# Do not edit.", kb.Machineuuid)
 	d.Underlay.Comment = getUnderlayComment(kb)
 	d.Underlay.LoopbackIps = kb.mustGetUnderlay().Ips
@@ -56,29 +60,33 @@ func NewIfacesConfig(kb KnowledgeBase, tmpFile string) IfaceConfig {
 	return IfaceConfig{Applier: a}
 }
 
+// IfacesReloader can reload the service to apply changes to network interfaces.
 type IfacesReloader struct {
 }
 
+// Reload reloads the service that applies changes to network interfaces.
 func (r IfacesReloader) Reload() error {
 	return exec.Command("ifreload", "--all").Run()
 }
 
+// IfacesValidator can validate configuration for network interfaces.
 type IfacesValidator struct {
 	path string
 }
 
+// Validate validates network interfaces configuration.
 func (v IfacesValidator) Validate() error {
 	return exec.Command("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }
 
-func getEVPNInterfaces(data KnowledgeBase) []EVPNInterfaces {
-	var result []EVPNInterfaces
+func getEVPNInterfaces(data KnowledgeBase) []EVPNIfaces {
+	var result []EVPNIfaces
 	for _, n := range data.Networks {
 		if n.Underlay {
 			continue
 		}
 
-		e := EVPNInterfaces{}
+		e := EVPNIfaces{}
 		e.SVI.Comment = fmt.Sprintf("svi (networkid: %s)", n.Networkid)
 		e.SVI.VlanID = n.Vlan
 		e.SVI.Addresses = n.Ips

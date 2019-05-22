@@ -1,0 +1,14 @@
+# https://github.com/golangci/golangci-lint#config-file
+run:
+  deadline: 30s
+  tests: true
+
+linters-settings:
+  golint:
+    min-confidence: 0
+
+linters:
+  enable-all: true
+  disable:
+    - prealloc
+    - maligned

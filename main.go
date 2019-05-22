@@ -10,8 +10,11 @@ import (
 )
 
 const (
+	// TplIfaces defines the name of the template to render interfaces configuration.
 	TplIfaces = "interfaces.tpl"
-	TplFrr    = "frr.tpl"
+
+	// TplFRR defines the name of the template to render FRR configuration.
+	TplFRR = "frr.tpl"
 )
 
 func main() {
@@ -25,8 +28,8 @@ func main() {
 	mustApply(f, ifaces.Applier, tpl, "/etc/network/interfaces")
 
 	f = mustTmpFile("frr_")
-	frr := NewFrrConfig(d, f)
-	tpl = mustRead(TplFrr)
+	frr := NewFRRConfig(d, f)
+	tpl = mustRead(TplFRR)
 	mustApply(f, frr.Applier, tpl, "/etc/network/interfaces")
 }
 
