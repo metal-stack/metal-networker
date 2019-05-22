@@ -8,9 +8,7 @@ import (
 	"text/template"
 )
 
-const TemplateFile = "test-data/interfaces.tpl"
-
-func TestCompile(t *testing.T) {
+func TestCompileInterfaces(t *testing.T) {
 	assert := assert.New(t)
 	expected, err := ioutil.ReadFile("test-data/interfaces")
 	assert.NoError(err)
@@ -21,8 +19,9 @@ func TestCompile(t *testing.T) {
 	a := NewIfacesConfig(*kb, "")
 	b := bytes.Buffer{}
 
-	s, err := ioutil.ReadFile(TemplateFile)
-	tpl := template.Must(template.New(TemplateFile).Parse(string(s)))
+	f := "test-data/interfaces.tpl"
+	s, err := ioutil.ReadFile(f)
+	tpl := template.Must(template.New(f).Parse(string(s)))
 	err = a.Applier.Render(&b, *tpl)
 	assert.NoError(err)
 	assert.Equal(string(expected), b.String())

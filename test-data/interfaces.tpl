@@ -1,6 +1,5 @@
 {{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker.InterfacesData*/ -}}
-# This file was auto generated for machine: "e0ab02d2-27cd-5a5e-8efc-080ba80cf258".
-# Do not edit.
+{{ .Comment }}
 
 auto all
 
