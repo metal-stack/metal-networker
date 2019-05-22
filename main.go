@@ -1,6 +1,7 @@
 package main
 
 import (
+	"git.f-i-ts.de/cloud-native/metallib/network"
 	"io/ioutil"
 	"os"
 	"text/template"
@@ -8,10 +9,10 @@ import (
 
 const (
 	TplIfaces = "interfaces.tpl"
+	TplFrr    = "frr.tpl"
 )
 
 func main() {
-	// we need a preprocessor that aggregates (e.g. skip tenant child networks)/ prepares (split prefix/ length)
 	a := os.Args[1]
 	d, err := NewKnowledgeBase(a)
 	if err != nil {
@@ -19,10 +20,22 @@ func main() {
 	}
 
 	f := mustTmpFile("interfaces_")
-	c := NewIfacesConfig(*d, f)
+	ifaces := NewIfacesConfig(*d, f)
 	tpl := mustRead(TplIfaces)
+	mustApply(f, ifaces.Applier, tpl, "/etc/network/interfaces")
+
+	f = mustTmpFile("frr_")
+	frr := NewFrrConfig(*d, f)
+	tpl = mustRead(TplFrr)
+	mustApply(f, frr.Applier, tpl, "/etc/network/interfaces")
+}
+
+func mustApply(tmpFile string, applier network.Applier, tpl string, dest string) {
 	t := template.Must(template.New(TplIfaces).Parse(tpl))
-	c.Applier.Apply(*t, f, "/etc/network/interfaces")
+	err := applier.Apply(*t, tmpFile, dest)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func mustRead(name string) string {
