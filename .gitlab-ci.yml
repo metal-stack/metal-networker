@@ -1,12 +1,12 @@
 ---
-image: registry.cloud.fits/fits/buildtools:dev
+image: registry.fi-ts.io/cloud-native/go-builder:latest
 
-run-all-tests:
+test-all:
   stage: test
   script:
     - make test
 
-upload-to-blobstore:
+blobstore:
   stage: deploy
   script:
     - make
