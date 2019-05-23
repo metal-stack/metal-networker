@@ -20,7 +20,7 @@ func TestCompileFrrConf(t *testing.T) {
 	a := NewFRRConfig(kb, "")
 	b := bytes.Buffer{}
 
-	f := "test-data/frr.conf.tpl"
+	f := "test-data/" + TplFRR
 	s, err := ioutil.ReadFile(f)
 	assert.NoError(err)
 	tpl := template.Must(template.New(f).Parse(string(s)))

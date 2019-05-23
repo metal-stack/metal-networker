@@ -20,7 +20,7 @@ func TestCompileInterfaces(t *testing.T) {
 	a := NewIfacesConfig(kb, "")
 	b := bytes.Buffer{}
 
-	f := "test-data/interfaces.tpl"
+	f := "test-data/" + TplIfaces
 	s, err := ioutil.ReadFile(f)
 	assert.NoError(err)
 	tpl := template.Must(template.New(f).Parse(string(s)))
