@@ -40,6 +40,8 @@ func main() {
 	tpl = mustRead(TplFRR)
 	mustApply(f, frr.Applier, tpl, "/etc/network/interfaces")
 
+	ioutil.
+
 	log.Info("finished")
 }
 

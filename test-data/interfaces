@@ -7,10 +7,10 @@ auto all
 iface lo inet loopback
     address 10.1.0.1/32
 
-iface eth0 inet6 auto
+iface eth0 inet6
     mtu 9216
 
-iface eth1 inet6 auto
+iface eth1 inet6
     mtu 9216
 
 iface bridge
