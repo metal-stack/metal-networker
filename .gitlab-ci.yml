@@ -16,7 +16,7 @@ test-all:
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
     - mc cp metal-networker.tar.gz fits/cloud-native/metal-networker-${suffix}.tar.gz
 
-# This job is triggered only for a "stable" tagged branch to always have a version that is know working.
+# This job is triggered only for a "stable" tagged branch to always have a version that is known to work properly.
 stable:
   <<: *blobstore
   variables:
