@@ -6,8 +6,8 @@ test-all:
   script:
     - make test
 
-# This job is triggered only for a job that is triggered on tag "stable" to always have a working version in blobstore.
-blobstore:
+
+.blobstore_tpl: &blobstore
   stage: deploy
   script:
     - make
@@ -15,6 +15,21 @@ blobstore:
     - curl -fLS https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
     - chmod +x /usr/local/bin/mc
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
-    - mc cp metal-networker.tar.gz fits/cloud-native/metal-networker.tar.gz
+    - mc cp metal-networker.tar.gz fits/cloud-native/metal-networker-${suffix}.tar.gz
+
+# This job is triggered only for a "stable" tagged branch to always have a version that is know working.
+  working version in blobstore.
+stable:
+  <<: *blobstore
+  environment:
+    suffix: stable
   only:
     - stable
+
+# This job is triggered for every pipeline that runs in master branch to have bleeding edge version.
+latest:
+  <<: *blobstore
+  environment:
+    suffix: latest
+  only:
+    - master

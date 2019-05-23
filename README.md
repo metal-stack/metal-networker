@@ -8,9 +8,10 @@ The configuration file is expected to contain YAML. See [./test-data/install.yam
 
 ## Provision
 
-metal-networker is available from [https://blobstore.fi-ts.io/cloud-native/metal-networker.tar.gz](https://blobstore
-.fi-ts
-.io/cloud-native/metal-networker.tar.gz).
+metal-networker is available from the blobstore:
+ 
+ - [latest](https://blobstore.fi-ts.io/cloud-native/metal-networker-latest.tar.gz)
+ - [stable](https://blobstore.fi-ts.io/cloud-native/metal-networker-stable.tar.gz)
 
 ## Usage
 
