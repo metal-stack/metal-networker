@@ -9,12 +9,10 @@ iface lo inet loopback
     address {{ . }}/32
 {{- end }}
 
-iface eth0 inet dhcp
-
-iface eth1
+iface eth0
     mtu 9216
 
-iface eth2
+iface eth1
     mtu 9216
 
 iface bridge
