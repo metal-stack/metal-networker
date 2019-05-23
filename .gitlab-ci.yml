@@ -18,7 +18,6 @@ test-all:
     - mc cp metal-networker.tar.gz fits/cloud-native/metal-networker-${suffix}.tar.gz
 
 # This job is triggered only for a "stable" tagged branch to always have a version that is know working.
-  working version in blobstore.
 stable:
   <<: *blobstore
   environment:
