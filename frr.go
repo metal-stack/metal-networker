@@ -5,8 +5,6 @@ import (
 	"net"
 
 	"git.f-i-ts.de/cloud-native/metallib/network"
-
-	"os/exec"
 )
 
 // FRRVersion holds a string that is used in the frr.conf to define the FRR version.
@@ -64,7 +62,7 @@ type FRRValidator struct {
 func (v FRRValidator) Validate() error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
 	log.Infof("running '%s' to validate changes.'", vtysh)
-	return exec.Command("bash", "-c", vtysh, v.path).Run()
+	return NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }
 
 func getVRFs(kb KnowledgeBase) []VRF {
