@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"os/exec"
 
+	"go.uber.org/zap"
+
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
 // IfaceConfig represents a thing to apply changes to interfaces configuration.
 type IfaceConfig struct {
 	Applier network.Applier
+	Log     zap.Logger
 }
 
 // IfacesData represents the information required to render interfaces configuration.
@@ -66,6 +69,7 @@ type IfacesReloader struct {
 
 // Reload reloads the service that applies changes to network interfaces.
 func (r IfacesReloader) Reload() error {
+	log.Info("running 'ifreload --all' to apply changes")
 	return exec.Command("ifreload", "--all").Run()
 }
 
@@ -76,6 +80,7 @@ type IfacesValidator struct {
 
 // Validate validates network interfaces configuration.
 func (v IfacesValidator) Validate() error {
+	log.Info("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
 	return exec.Command("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }
 

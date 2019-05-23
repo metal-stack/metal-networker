@@ -12,3 +12,4 @@ linters:
   disable:
     - prealloc
     - maligned
+    - gochecknoglobals

@@ -1,10 +1,11 @@
 package main
 
 import (
-	"errors"
 	"io/ioutil"
 	"os"
 	"text/template"
+
+	"git.f-i-ts.de/cloud-native/metallib/zapup"
 
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
@@ -17,25 +18,33 @@ const (
 	TplFRR = "frr.tpl"
 )
 
+var log = zapup.MustRootLogger().Sugar()
+
 func main() {
-	// Todo: rethink: panic
+	log.Info("running...")
+
 	a := mustArg(1)
+	log.Info("loading: %s", a)
 	d := NewKnowledgeBase(a)
 
 	f := mustTmpFile("interfaces_")
 	ifaces := NewIfacesConfig(d, f)
+	log.Info("reading template: %s", TplIfaces)
 	tpl := mustRead(TplIfaces)
+	log.Info("applying changes to /etc/network/interfaces")
 	mustApply(f, ifaces.Applier, tpl, "/etc/network/interfaces")
 
 	f = mustTmpFile("frr_")
 	frr := NewFRRConfig(d, f)
+	log.Info("reading template: %s", TplFRR)
 	tpl = mustRead(TplFRR)
+	log.Info("applying changes to /etc/frr/frr.conf")
 	mustApply(f, frr.Applier, tpl, "/etc/network/interfaces")
 }
 
 func mustArg(index int) string {
 	if len(os.Args) != 2 {
-		panic(errors.New("expectation only the yaml input path is present as argument failed"))
+		log.Panic("expectation only the yaml input path is present as argument failed")
 	}
 	return os.Args[index]
 }
@@ -44,14 +53,14 @@ func mustApply(tmpFile string, applier network.Applier, tpl string, dest string)
 	t := template.Must(template.New(TplIfaces).Parse(tpl))
 	err := applier.Apply(*t, tmpFile, dest)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 }
 
 func mustRead(name string) string {
 	c, err := ioutil.ReadFile(name)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	return string(c)
 }
@@ -59,11 +68,11 @@ func mustRead(name string) string {
 func mustTmpFile(prefix string) string {
 	f, err := ioutil.TempFile("", prefix)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	err = f.Close()
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	return f.Name()
 }

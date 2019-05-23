@@ -48,13 +48,13 @@ func NewKnowledgeBase(path string) KnowledgeBase {
 func mustUnmarshal(path string) KnowledgeBase {
 	f, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
 	d := &KnowledgeBase{}
 	err = yaml.Unmarshal(f, &d)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	return *d
 }
@@ -137,7 +137,8 @@ func (kb *KnowledgeBase) mustGetPrimary() Network {
 			return n
 		}
 	}
-	panic("no primary network available")
+	log.Panic("no primary network available")
+	panic("")
 }
 
 func (kb *KnowledgeBase) mustGetUnderlay() Network {
@@ -146,5 +147,6 @@ func (kb *KnowledgeBase) mustGetUnderlay() Network {
 			return n
 		}
 	}
-	panic("no underlay network available")
+	log.Panic("no underlay network available")
+	panic("")
 }
