@@ -12,6 +12,6 @@ The binary is invoked with the configuration file as argument:
 
 ```bash
 # metal-networker <config-file>
-metal-networker install.yaml
+./metal-networker install.yaml
 
 ```
