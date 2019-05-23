@@ -10,10 +10,10 @@ blobstore:
   stage: deploy
   script:
     - make
-    - tar -cf metal-networker.tar bin/metal-networker test-data/interfaces.tpl test-data/frr.conf.tpl
+    - tar -czvf metal-networker.tar.gz -C ./bin metal-networker -C ../test-data interfaces.tpl frr.conf.tpl
     - curl -fLS https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
     - chmod +x /usr/local/bin/mc
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
-    - mc cp metal-networker.tar fits/cloud-native/metal-networker.tar
+    - mc cp metal-networker.tar fits/cloud-native/metal-networker.tar.gz
   only:
     - master
