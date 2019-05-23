@@ -2,7 +2,22 @@
 image: registry.cloud.fits/fits/buildtools:dev
 
 test:
+  stage: test
   script:
-    - go test ./...
+    - make test
+
+build:
+  stage: build
+  script:
+    - make
+
+release:
+  stage: deploy
+  script:
+    - make
+    - curl -fLS https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+    - chmod +x /usr/local/bin/mc
+    - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
+    - mc cp bin/metal-networker fits/cloud-native/metal-networker
   only:
     - master
