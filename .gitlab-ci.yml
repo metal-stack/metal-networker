@@ -6,6 +6,7 @@ test-all:
   script:
     - make test
 
+# This job is triggered only for a job that is triggered on tag "stable" to always have a working version in blobstore.
 blobstore:
   stage: deploy
   script:
@@ -16,4 +17,4 @@ blobstore:
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
     - mc cp metal-networker.tar.gz fits/cloud-native/metal-networker.tar.gz
   only:
-    - master
+    - stable
