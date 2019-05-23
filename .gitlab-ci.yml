@@ -20,7 +20,7 @@ test-all:
 # This job is triggered only for a "stable" tagged branch to always have a version that is know working.
 stable:
   <<: *blobstore
-  environment:
+  variables:
     suffix: stable
   only:
     - stable
@@ -28,7 +28,7 @@ stable:
 # This job is triggered for every pipeline that runs in master branch to have bleeding edge version.
 latest:
   <<: *blobstore
-  environment:
+  variables:
     suffix: latest
   only:
     - master
