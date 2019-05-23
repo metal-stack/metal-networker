@@ -5,6 +5,8 @@ import (
 	"os"
 	"text/template"
 
+	"git.f-i-ts.de/cloud-native/metallib/version"
+
 	"git.f-i-ts.de/cloud-native/metallib/zapup"
 
 	"git.f-i-ts.de/cloud-native/metallib/network"
@@ -21,7 +23,7 @@ const (
 var log = zapup.MustRootLogger().Sugar()
 
 func main() {
-	log.Info("running...")
+	log.Infof("running app version: %s", version.V.String())
 
 	a := mustArg(1)
 	log.Infof("loading: %s", a)
@@ -41,7 +43,7 @@ func main() {
 	mustApply(f, frr.Applier, tpl, "/etc/frr/frr.conf")
 	_ = os.Remove(f)
 
-	log.Info("finished")
+	log.Info("finished. Shutting down.")
 }
 
 func mustArg(index int) string {
