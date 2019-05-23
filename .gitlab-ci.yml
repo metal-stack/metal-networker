@@ -6,7 +6,6 @@ test-all:
   script:
     - make test
 
-
 .blobstore_tpl: &blobstore
   stage: deploy
   script:
