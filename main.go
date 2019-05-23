@@ -33,14 +33,14 @@ func main() {
 	tpl := mustRead(TplIfaces)
 	log.Info("applying changes to /etc/network/interfaces")
 	mustApply(f, ifaces.Applier, tpl, "/etc/network/interfaces")
+	_ = os.Remove(f)
 
 	f = mustTmpFile("frr_")
 	frr := NewFRRConfig(d, f)
 	log.Infof("reading template: %s", TplFRR)
 	tpl = mustRead(TplFRR)
 	mustApply(f, frr.Applier, tpl, "/etc/network/interfaces")
-
-	ioutil.
+	_ = os.Remove(f)
 
 	log.Info("finished")
 }
