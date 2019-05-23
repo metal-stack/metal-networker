@@ -14,6 +14,6 @@ blobstore:
     - curl -fLS https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
     - chmod +x /usr/local/bin/mc
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
-    - mc cp metal-networker.tar fits/cloud-native/metal-networker.tar.gz
+    - mc cp metal-networker.tar.gz fits/cloud-native/metal-networker.tar.gz
   only:
     - master
