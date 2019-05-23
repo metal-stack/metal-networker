@@ -24,22 +24,23 @@ func main() {
 	log.Info("running...")
 
 	a := mustArg(1)
-	log.Info("loading: %s", a)
+	log.Infof("loading: %s", a)
 	d := NewKnowledgeBase(a)
 
 	f := mustTmpFile("interfaces_")
 	ifaces := NewIfacesConfig(d, f)
-	log.Info("reading template: %s", TplIfaces)
+	log.Infof("reading template: %s", TplIfaces)
 	tpl := mustRead(TplIfaces)
 	log.Info("applying changes to /etc/network/interfaces")
 	mustApply(f, ifaces.Applier, tpl, "/etc/network/interfaces")
 
 	f = mustTmpFile("frr_")
 	frr := NewFRRConfig(d, f)
-	log.Info("reading template: %s", TplFRR)
+	log.Infof("reading template: %s", TplFRR)
 	tpl = mustRead(TplFRR)
-	log.Info("applying changes to /etc/frr/frr.conf")
 	mustApply(f, frr.Applier, tpl, "/etc/network/interfaces")
+
+	log.Info("finished")
 }
 
 func mustArg(index int) string {

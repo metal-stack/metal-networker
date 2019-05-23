@@ -69,7 +69,7 @@ type IfacesReloader struct {
 
 // Reload reloads the service that applies changes to network interfaces.
 func (r IfacesReloader) Reload() error {
-	log.Info("running 'ifreload --all' to apply changes")
+	log.Infof("running 'ifreload --all' to apply changes")
 	return exec.Command("ifreload", "--all").Run()
 }
 
@@ -80,7 +80,7 @@ type IfacesValidator struct {
 
 // Validate validates network interfaces configuration.
 func (v IfacesValidator) Validate() error {
-	log.Info("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
+	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
 	return exec.Command("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }
 

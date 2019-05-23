@@ -63,6 +63,7 @@ type FRRValidator struct {
 // Validate can be used to run validation on FRR configuration using vtysh.
 func (v FRRValidator) Validate() error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
+	log.Infof("running '%s' to validate changes.'", vtysh)
 	return exec.Command("bash", "-c", vtysh, v.path).Run()
 }
 
