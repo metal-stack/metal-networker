@@ -6,7 +6,7 @@ Configures ifup/ifdown and Free Range Routing (FRR) by applying setup from a con
 
 The configuration file is expected to contain YAML. See [./test-data/install.yaml](test-data/install.yaml).
 
-## Provision
+## Download
 
 metal-networker is available from the blobstore:
  
