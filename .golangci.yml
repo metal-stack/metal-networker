@@ -5,7 +5,7 @@ run:
 
 linters-settings:
   golint:
-    min-confidence: 0
+    min-confidence: 0.8
 
 linters:
   enable-all: true
@@ -13,3 +13,11 @@ linters:
     - prealloc
     - maligned
     - gochecknoglobals
+    - gosec
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - linters:
+        - gosec
+      text: "G304: Potential file inclusion via variable"
