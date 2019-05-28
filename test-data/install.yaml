@@ -93,7 +93,13 @@ networks:
     nat: true
     # [IGNORED]
     networkid: internet-vagrant-lab
-    # The prefixes that originate given ips are used to define the networks to announce from the VRF BGP instance.
+    # Slack Channel: "metal-lab", 21. Mai https://kube-native.slack.com/archives/CHEK1QFCH/p1558453368001200
+    # Markus [5:42 PM]
+    #@Thomas @Tobias NAT@firewall: IP muss ans SVI und in der NAT-Regel muss das VRF Interface angegeben werden mit SNAT und der Adresse des SVIs:
+    #```bash
+    #iptables -t nat -A POSTROUTING -s 10.0.208.0/24 -o vrfInternet -j SNAT --to-source 185.1.2.3
+    ## Für Logging
+    #iptables -t nat -A POSTROUTING -j LOG --log-level 6```
     prefixes:
       - 185.24.0.0/22
       - 185.27.0.0/22
