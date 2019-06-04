@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/template"
 
-	"git.f-i-ts.de/cloud-native/metallib/version"
+	"github.com/metal-pod/v"
 
 	"git.f-i-ts.de/cloud-native/metallib/zapup"
 
@@ -23,7 +23,7 @@ const (
 var log = zapup.MustRootLogger().Sugar()
 
 func main() {
-	log.Infof("running app version: %s", version.V.String())
+	log.Infof("running app version: %s", v.V.String())
 
 	a := mustArg(1)
 	log.Infof("loading: %s", a)
