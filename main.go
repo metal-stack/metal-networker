@@ -25,6 +25,7 @@ var log = zapup.MustRootLogger().Sugar()
 func main() {
 	log.Infof("running app version: %s", v.V.String())
 
+	reload := false
 	a := mustArg(1)
 	log.Infof("loading: %s", a)
 	d := NewKnowledgeBase(a)
@@ -33,14 +34,14 @@ func main() {
 	ifaces := NewIfacesConfig(d, f)
 	log.Infof("reading template: %s", TplIfaces)
 	tpl := mustRead(TplIfaces)
-	mustApply(f, ifaces.Applier, tpl, "/etc/network/interfaces")
+	mustApply(f, ifaces.Applier, tpl, "/etc/network/interfaces", reload)
 	_ = os.Remove(f)
 
 	f = mustTmpFile("frr_")
 	frr := NewFRRConfig(d, f)
 	log.Infof("reading template: %s", TplFRR)
 	tpl = mustRead(TplFRR)
-	mustApply(f, frr.Applier, tpl, "/etc/frr/frr.conf")
+	mustApply(f, frr.Applier, tpl, "/etc/frr/frr.conf", reload)
 	_ = os.Remove(f)
 
 	log.Info("finished. Shutting down.")
@@ -53,9 +54,9 @@ func mustArg(index int) string {
 	return os.Args[index]
 }
 
-func mustApply(tmpFile string, applier network.Applier, tpl string, dest string) {
+func mustApply(tmpFile string, applier network.Applier, tpl string, dest string, reload bool) {
 	t := template.Must(template.New(TplIfaces).Parse(tpl))
-	err := applier.Apply(*t, tmpFile, dest)
+	err := applier.Apply(*t, tmpFile, dest, reload)
 	if err != nil {
 		log.Panic(err)
 	}
