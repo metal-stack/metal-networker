@@ -46,6 +46,8 @@ type EVPNIfaces struct {
 		ID       int
 		TunnelIP string
 	}
+	PostUpCommands  []string
+	PreDownCommands []string
 }
 
 // NewIfacesConfig constructs a new instance of this type.
@@ -88,6 +90,7 @@ func (v IfacesValidator) Validate() error {
 
 func getEVPNInterfaces(data KnowledgeBase) []EVPNIfaces {
 	var result []EVPNIfaces
+	primary := data.mustGetPrimary()
 	for _, n := range data.Networks {
 		if n.Underlay {
 			continue
@@ -104,6 +107,14 @@ func getEVPNInterfaces(data KnowledgeBase) []EVPNIfaces {
 
 		e.VRF.Comment = fmt.Sprintf("vrf (networkid: %s)", n.Networkid)
 		e.VRF.ID = n.Vrf
+
+		svi := fmt.Sprintf("vlan%d", n.Vrf)
+		if n.Nat {
+			for _, p := range primary.Prefixes {
+				e.PostUpCommands = []string{fmt.Sprintf("iptables -t nat -A POSTROUTING -s %s -o %s -j MASQUERADE", p, svi)}
+				e.PreDownCommands = []string{fmt.Sprintf("iptables -t nat -D POSTROUTING -s %s -o %s -j MASQUERADE", p, svi)}
+			}
+		}
 
 		result = append(result, e)
 	}

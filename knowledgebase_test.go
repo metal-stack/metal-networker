@@ -27,9 +27,9 @@ func TestNewKnowledgeBase(t *testing.T) {
 	// primary network
 	n := d.Networks[0]
 	assert.Equal(1, len(n.Ips))
-	assert.Equal("10.0.12.1", n.Ips[0])
+	assert.Equal("10.0.16.2", n.Ips[0])
 	assert.Equal(1, len(n.Prefixes))
-	assert.Equal("10.0.12.0/22", n.Prefixes[0])
+	assert.Equal("10.0.16.0/22", n.Prefixes[0])
 	assert.True(n.Primary)
 	assert.Equal(3981, n.Vrf)
 
@@ -38,9 +38,9 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal(1, len(n.Destinationprefixes))
 	assert.Equal("0.0.0.0/0", n.Destinationprefixes[0])
 	assert.Equal(1, len(n.Ips))
-	assert.Equal("185.24.0.1", n.Ips[0])
+	assert.Equal("185.1.2.3", n.Ips[0])
 	assert.Equal(2, len(n.Prefixes))
-	assert.Equal("185.24.0.0/22", n.Prefixes[0])
+	assert.Equal("185.1.2.0/24", n.Prefixes[0])
 	assert.Equal("185.27.0.0/22", n.Prefixes[1])
 	assert.False(n.Underlay)
 	assert.False(n.Primary)

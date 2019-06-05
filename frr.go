@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net"
 
 	"github.com/metal-pod/v"
 
@@ -27,10 +26,14 @@ type FRRData struct {
 
 // VRF represents data required to render VRF information into frr.conf.
 type VRF struct {
-	ID                int
-	VNI               int
-	RouteLeaks        []string
-	NetworksAnnounced []string
+	ID           int
+	VNI          int
+	RouteImports []RouteImport
+}
+
+type RouteImport struct {
+	SourceVRF             string
+	AllowedImportPrefixes []string
 }
 
 // FRRConfig represents a thing to apply changes to frr.conf.
@@ -83,51 +86,47 @@ func getVRFs(kb KnowledgeBase) []VRF {
 			// The primary vrf contains a static route leak into VRF's of external networks.
 			// In addition to this the primary vrf announces a default route to ask clients to route all traffic destined
 			// to external networks to here.
-			vrf.RouteLeaks = getOutRouteLeaks(kb)
-			vrf.NetworksAnnounced = []string{"0.0.0.0/0"}
+			vrf.RouteImports = getRouteImportsPrimary(kb) // import destination prefixes
 		} else {
-			// VRF BGP instances of external networks contain a route leak to return traffic to tenant servers.
-			vrf.RouteLeaks = getInRouteLeaks(kb)
-			// TODO: Add information of additionally configured /32 prefixes of tenant servers to install.yaml.
-			// Non-primary network VRF BGP instances needs to announce the /32 IP addresses that have be
-			// configured to the tenant servers loopback interface in addition to the primary network ip. Currently
-			// this information is not part of the install.yaml input data.
-			vrf.NetworksAnnounced = []string{}
+			vrf.RouteImports = getRouteImportsNonPrimary(kb) // import destination prefixes
 		}
 		result = append(result, vrf)
 	}
 	return result
 }
 
-// Returns route leaks that are meant to be added to the tenant vrf to enable outgoing traffic into external networks.
-func getOutRouteLeaks(kb KnowledgeBase) []string {
-	var result []string
+func getRouteImportsPrimary(kb KnowledgeBase) []RouteImport {
+	result := []RouteImport{}
 	for _, n := range kb.Networks {
 		// The primary and underlay networks are not targets to route external traffic to.
 		if n.Primary || n.Underlay {
 			continue
 		}
-		for _, d := range n.Destinationprefixes {
-			rl := fmt.Sprintf(RouteLeakFmt, d, n.Vrf, n.Vrf)
-			result = append(result, rl)
+		if len(n.Destinationprefixes) == 0 {
+			continue
 		}
+		ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", n.Vrf), AllowedImportPrefixes: n.Destinationprefixes}
+		result = append(result, ri)
 	}
 	return result
 }
 
-// Returns route  leaks that are meant to be added to the external network vrfs to route traffic into the tenant vrf.
-func getInRouteLeaks(kb KnowledgeBase) []string {
-	var result []string
-	n := kb.mustGetPrimary()
-	for _, p := range n.Prefixes {
-		_, cidr, _ := net.ParseCIDR(p)
-		for _, i := range n.Ips {
-			ip := net.ParseIP(i)
-			if cidr.Contains(ip) {
-				rl := fmt.Sprintf(RouteLeakFmt, p, n.Vrf, n.Vrf)
-				result = append(result, rl)
-			}
+func getRouteImportsNonPrimary(kb KnowledgeBase) []RouteImport {
+	result := []RouteImport{}
+	primary := kb.mustGetPrimary()
+	allowed := []string{}
+	allowed = append(allowed, primary.Prefixes...)
+	for _, n := range kb.Networks {
+		// The primary and underlay networks are not targets to route external traffic to.
+		if n.Primary || n.Underlay {
+			continue
 		}
+		allowed = append(allowed, n.Prefixes...)
 	}
+	if len(allowed) == 0 {
+		return result
+	}
+	ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", primary.Vrf), AllowedImportPrefixes: allowed}
+	result = append(result, ri)
 	return result
 }
