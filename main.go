@@ -71,7 +71,7 @@ func mustRead(name string) string {
 }
 
 func mustTmpFile(prefix string) string {
-	f, err := ioutil.TempFile("", prefix)
+	f, err := ioutil.TempFile("/etc/metal/networker/", prefix)
 	if err != nil {
 		log.Panic(err)
 	}
