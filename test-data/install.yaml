@@ -67,14 +67,14 @@ networks:
     # Used to consider the set of prefixes that originate the given IP's to establish route leak in external
     # network VRF's for return traffic. Applied to the SVI (as /32)
     ips:
-      - 10.0.12.1
+      - 10.0.16.2
     # [IGNORED in case of primary network]
     nat: false
     # [IGNORED in case of primary network]
     networkid: bc830818-2df1-4904-8c40-4322296d393d
     # Prefixes that originate the given IP's are considered for static route leak to route return traffic to the tenant.
     prefixes:
-      - 10.0.12.0/22
+      - 10.0.16.0/22
     primary: true
     # [IGNORED in case of primary network]
     underlay: false
@@ -88,7 +88,7 @@ networks:
       - 0.0.0.0/0
     # Applied to the SVI (as /32)
     ips:
-      - 185.24.0.1
+      - 185.1.2.3
     # In case nat equals true a post-up hook is added to the SVI that enables MASQUERADING.
     nat: true
     # [IGNORED]
@@ -101,7 +101,7 @@ networks:
     ## Für Logging
     #iptables -t nat -A POSTROUTING -j LOG --log-level 6```
     prefixes:
-      - 185.24.0.0/22
+      - 185.1.2.0/24
       - 185.27.0.0/22
     primary: false
     underlay: false

@@ -9,14 +9,15 @@ username cumulus nopassword
 !
 service integrated-vtysh-config
 !
-log syslog informational
+log syslog debugging
+debug bgp updates
+debug bgp nht
+debug bgp update-groups
+debug bgp zebra
 {{ range .VRFs -}}
 !
 vrf vrf{{ .ID}}
  vni {{ .VNI }}
- {{ range .RouteLeaks -}}
- {{ . }}
- {{- end }}
 {{ end -}}
 !
 interface eth0
@@ -43,7 +44,7 @@ router bgp {{ .ASN }}
  !
  address-family l2vpn evpn
   neighbor FABRIC activate
-  neighbor FABRIC route-map only-self-out out
+  # neighbor FABRIC route-map only-self-out out darf nicht aktiv sein! sonst problem!
   advertise-all-vni
  exit-address-family
 !
@@ -54,8 +55,9 @@ router bgp {{ $ASN }} vrf vrf{{ $v.ID }}
  !
  address-family ipv4 unicast
   redistribute connected
-{{- range $v.NetworksAnnounced }}
-  network {{ . }}
+{{- range $i, $ri := $v.RouteImports }}
+  import vrf {{ $ri.SourceVRF }}
+  import vrf route-map vrf{{ $v.ID }}-import-map
 {{- end }}
  exit-address-family
  !
@@ -74,5 +76,18 @@ route-map only-self-out deny 99
 route-map LOOPBACKS permit 10
  match interface lo
 !
+{{- range $i, $v := .VRFs }}
+{{- range $j, $ri := $v.RouteImports }}
+{{- range $k, $allowed := $ri.AllowedImportPrefixes }}
+ip prefix-list vrf{{ $v.ID }}-import-prefixes seq 1{{ $j }}{{ $k }} permit {{ $allowed }}
+{{- end }}
+{{- end }}
+!
+route-map vrf{{ $v.ID }}-import-map permit 10
+ match ip address prefix-list vrf{{ $v.ID }}-import-prefixes
+!
+route-map vrf{{ $v.ID }}-import-map deny 99
+!
+{{- end }}
 line vty
 !
