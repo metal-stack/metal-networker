@@ -126,7 +126,12 @@ func getRouteImportsNonPrimary(kb KnowledgeBase) []RouteImport {
 	if len(allowed) == 0 {
 		return result
 	}
-	ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", primary.Vrf), AllowedImportPrefixes: allowed}
+
+	allowedWith32 := []string{}
+	for _, a := range allowed {
+		allowedWith32 = append(allowedWith32, a+" le 32")
+	}
+	ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", primary.Vrf), AllowedImportPrefixes: allowedWith32}
 	result = append(result, ri)
 	return result
 }

@@ -79,7 +79,7 @@ route-map LOOPBACKS permit 10
 {{- range $i, $v := .VRFs }}
 {{- range $j, $ri := $v.RouteImports }}
 {{- range $k, $allowed := $ri.AllowedImportPrefixes }}
-ip prefix-list vrf{{ $v.ID }}-import-prefixes seq 1{{ $j }}{{ $k }} permit {{ $allowed }} le 32
+ip prefix-list vrf{{ $v.ID }}-import-prefixes seq 1{{ $j }}{{ $k }} permit {{ $allowed }}
 {{- end }}
 {{- end }}
 !
