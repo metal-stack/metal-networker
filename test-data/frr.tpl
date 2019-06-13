@@ -20,11 +20,11 @@ vrf vrf{{ .ID}}
  vni {{ .VNI }}
 {{ end -}}
 !
-interface eth0
+interface lan0
  ipv6 nd ra-interval 6
  no ipv6 nd suppress-ra
 !
-interface eth1
+interface lan1
  ipv6 nd ra-interval 6
  no ipv6 nd suppress-ra
 !
@@ -34,8 +34,8 @@ router bgp {{ .ASN }}
  neighbor FABRIC peer-group
  neighbor FABRIC remote-as external
  neighbor FABRIC timers 1 3
- neighbor eth0 interface peer-group FABRIC
- neighbor eth1 interface peer-group FABRIC
+ neighbor lan0 interface peer-group FABRIC
+ neighbor lan1 interface peer-group FABRIC
  !
  address-family ipv4 unicast
   redistribute connected route-map LOOPBACKS
