@@ -1,5 +1,7 @@
 {{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker.InterfacesData*/ -}}
 {{ .Comment }}
+#
+# See /etc/systemd/network for additional network configuration.
 
 auto all
 
@@ -8,12 +10,6 @@ iface lo inet loopback
 {{- range .Underlay.LoopbackIps }}
     address {{ . }}/32
 {{- end }}
-
-iface lan0 inet6
-    mtu 9216
-
-iface lan1 inet6
-    mtu 9216
 
 iface bridge
     bridge-ports {{ .Bridge.Ports }}
