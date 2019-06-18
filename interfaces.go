@@ -62,19 +62,8 @@ func NewIfacesConfig(kb KnowledgeBase, tmpFile string) IfaceConfig {
 	d.EVPNInterfaces = getEVPNInterfaces(kb)
 
 	v := IfacesValidator{tmpFile}
-	r := IfacesReloader{}
-	a := network.NewNetworkApplier(d, v, r)
+	a := network.NewNetworkApplier(d, v, nil)
 	return IfaceConfig{Applier: a}
-}
-
-// IfacesReloader can reload the service to apply changes to network interfaces.
-type IfacesReloader struct {
-}
-
-// Reload reloads the service that applies changes to network interfaces.
-func (r IfacesReloader) Reload() error {
-	log.Infof("running 'ifreload --all' to apply changes")
-	return NewVerboseCmd("ifreload", "--all").Run()
 }
 
 // IfacesValidator can validate configuration for network interfaces.

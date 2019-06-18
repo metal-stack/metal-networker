@@ -28,6 +28,7 @@ type VRF struct {
 	RouteImports []RouteImport
 }
 
+// RouteImport represents data to apply for dynamic route leak configuration.
 type RouteImport struct {
 	SourceVRF             string
 	AllowedImportPrefixes []string
@@ -50,8 +51,7 @@ func NewFRRConfig(kb KnowledgeBase, tmpFile string) FRRConfig {
 	d.VRFs = getVRFs(kb)
 
 	v := FRRValidator{tmpFile}
-	r := network.NewDBusReloader("frr.service")
-	a := network.NewNetworkApplier(d, v, r)
+	a := network.NewNetworkApplier(d, v, nil)
 
 	return FRRConfig{a}
 }
