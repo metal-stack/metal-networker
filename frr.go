@@ -11,9 +11,6 @@ import (
 // FRRVersion holds a string that is used in the frr.conf to define the FRR version.
 const FRRVersion = "7.0"
 
-// RouteLeakFmt holds a pattern to render route leak string.
-const RouteLeakFmt = "ip route %s vrf%d nexthop-vrf vrf%d"
-
 // FRRData represents the information required to render frr.conf.
 type FRRData struct {
 	FRRVersion string
