@@ -1,4 +1,4 @@
-{{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker.IptablesData*/ -}}
+{{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf.IptablesData*/ -}}
 {{ .Comment }}
 
 ########################################################################################################################

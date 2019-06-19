@@ -1,12 +1,17 @@
-package main
+package netconf
 
 import (
 	"fmt"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
 
 	"go.uber.org/zap"
 
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
+
+// TplIfaces defines the name of the template to render interfaces configuration.
+const TplIfaces = "interfaces.tpl"
 
 // IfaceConfig represents a thing to apply changes to interfaces configuration.
 type IfaceConfig struct {
@@ -71,7 +76,7 @@ type IfacesValidator struct {
 // Validate validates network interfaces configuration.
 func (v IfacesValidator) Validate() error {
 	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
-	return NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
+	return exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }
 
 func getEVPNInterfaces(data KnowledgeBase) []EVPNIfaces {

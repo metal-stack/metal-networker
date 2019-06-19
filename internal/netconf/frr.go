@@ -1,13 +1,19 @@
-package main
+package netconf
 
 import (
 	"fmt"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
+
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
-// FRRVersion holds a string that is used in the frr.conf to define the FRR version.
-const FRRVersion = "7.0"
+const (
+	// FRRVersion holds a string that is used in the frr.conf to define the FRR version.
+	FRRVersion = "7.0"
+	// TplFRR defines the name of the template to render FRR configuration.
+	TplFRR = "frr.tpl"
+)
 
 // FRRData represents the information required to render frr.conf.
 type FRRData struct {
@@ -62,7 +68,7 @@ type FRRValidator struct {
 func (v FRRValidator) Validate() error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
 	log.Infof("running '%s' to validate changes.'", vtysh)
-	return NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
+	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }
 
 func getVRFs(kb KnowledgeBase) []VRF {

@@ -1,27 +1,17 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"text/template"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf"
 
 	"github.com/metal-pod/v"
 
 	"git.f-i-ts.de/cloud-native/metallib/zapup"
 
 	"git.f-i-ts.de/cloud-native/metallib/network"
-)
-
-const (
-	// TplIfaces defines the name of the template to render interfaces configuration.
-	TplIfaces = "interfaces.tpl"
-
-	// TplFRR defines the name of the template to render FRR configuration.
-	TplFRR = "frr.tpl"
-
-	// TplIptables defines the name of the template to render iptables configuration.
-	TplIptables = "rules.v4.tpl"
 )
 
 var log = zapup.MustRootLogger().Sugar()
@@ -31,26 +21,26 @@ func main() {
 
 	a := mustArg(1)
 	log.Infof("loading: %s", a)
-	d := NewKnowledgeBase(a)
+	d := netconf.NewKnowledgeBase(a)
 
 	f := mustTmpFile("interfaces_")
-	ifaces := NewIfacesConfig(d, f)
-	log.Infof("reading template: %s", TplIfaces)
-	tpl := mustRead(TplIfaces)
+	ifaces := netconf.NewIfacesConfig(d, f)
+	log.Infof("reading template: %s", netconf.TplIfaces)
+	tpl := mustRead(netconf.TplIfaces)
 	mustApply(f, ifaces.Applier, tpl, "/etc/network/interfaces", false)
 	_ = os.Remove(f)
 
 	f = mustTmpFile("frr_")
-	frr := NewFRRConfig(d, f)
-	log.Infof("reading template: %s", TplFRR)
-	tpl = mustRead(TplFRR)
+	frr := netconf.NewFRRConfig(d, f)
+	log.Infof("reading template: %s", netconf.TplFRR)
+	tpl = mustRead(netconf.TplFRR)
 	mustApply(f, frr.Applier, tpl, "/etc/frr/frr.conf", false)
 	_ = os.Remove(f)
 
 	f = mustTmpFile("rules.v4_")
-	iptables := NewIptablesConfig(d, f)
-	log.Infof("reading template: %s", TplIptables)
-	tpl = mustRead(TplIptables)
+	iptables := netconf.NewIptablesConfig(d, f)
+	log.Infof("reading template: %s", netconf.TplIptables)
+	tpl = mustRead(netconf.TplIptables)
 	mustApply(f, iptables.Applier, tpl, "/etc/iptables/rules.v4", false)
 	_ = os.Remove(f)
 
@@ -65,7 +55,7 @@ func mustArg(index int) string {
 }
 
 func mustApply(tmpFile string, applier network.Applier, tpl string, dest string, reload bool) {
-	t := template.Must(template.New(TplIfaces).Parse(tpl))
+	t := template.Must(template.New(netconf.TplIfaces).Parse(tpl))
 	err := applier.Apply(*t, tmpFile, dest, reload)
 	if err != nil {
 		log.Panic(err)
@@ -90,9 +80,4 @@ func mustTmpFile(prefix string) string {
 		log.Panic(err)
 	}
 	return f.Name()
-}
-
-func versionHeader(uuid string) string {
-	return fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n# Do not edit.",
-		uuid, v.V.String())
 }

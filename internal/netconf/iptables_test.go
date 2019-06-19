@@ -1,4 +1,4 @@
-package main
+package netconf
 
 import (
 	"bytes"
@@ -9,18 +9,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCompileInterfaces(t *testing.T) {
+func TestCompileRules(t *testing.T) {
 	assert := assert.New(t)
-	expected, err := ioutil.ReadFile("testdata/interfaces")
+	expected, err := ioutil.ReadFile("testdata/rules.v4")
 	assert.NoError(err)
 
 	kb := NewKnowledgeBase("testdata/install.yaml")
 	assert.NoError(err)
 
-	a := NewIfacesConfig(kb, "")
+	a := NewIptablesConfig(kb, "")
 	b := bytes.Buffer{}
 
-	f := "testdata/" + TplIfaces
+	f := TplIptables
 	s, err := ioutil.ReadFile(f)
 	assert.NoError(err)
 	tpl := template.Must(template.New(f).Parse(string(s)))

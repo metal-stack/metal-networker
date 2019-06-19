@@ -1,4 +1,4 @@
-package main
+package netconf
 
 import (
 	"bytes"
@@ -20,7 +20,7 @@ func TestCompileFrrConf(t *testing.T) {
 	a := NewFRRConfig(kb, "")
 	b := bytes.Buffer{}
 
-	f := "testdata/" + TplFRR
+	f := TplFRR
 	s, err := ioutil.ReadFile(f)
 	assert.NoError(err)
 	tpl := template.Must(template.New(f).Parse(string(s)))

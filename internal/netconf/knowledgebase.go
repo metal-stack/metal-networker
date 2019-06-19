@@ -1,11 +1,18 @@
-package main
+package netconf
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
+
+	"git.f-i-ts.de/cloud-native/metallib/zapup"
+
+	"github.com/metal-pod/v"
 
 	"gopkg.in/yaml.v3"
 )
+
+var log = zapup.MustRootLogger().Sugar()
 
 // VLANOffset defines a number to start with when creating new VLAN IDs.
 const VLANOffset = 1000
@@ -149,4 +156,9 @@ func (kb *KnowledgeBase) mustGetUnderlay() Network {
 	}
 	log.Panic("no underlay network available")
 	panic("")
+}
+
+func versionHeader(uuid string) string {
+	return fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n# Do not edit.",
+		uuid, v.V.String())
 }

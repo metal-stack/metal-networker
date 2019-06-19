@@ -1,4 +1,4 @@
-{{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker.FrrData*/ -}}
+{{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf.FRRData*/ -}}
 {{- $ASN := .ASN -}}
 {{- $RouterId := .RouterID -}}
 {{ .Comment }}

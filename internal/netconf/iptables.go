@@ -1,7 +1,9 @@
-package main
+package netconf
 
 import (
 	"fmt"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
 
 	"github.com/metal-pod/v"
 
@@ -9,6 +11,9 @@ import (
 
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
+
+// TplIptables defines the name of the template to render iptables configuration.
+const TplIptables = "rules.v4.tpl"
 
 // IptablesConfig represents a thing to apply changes to iptables configuration.
 type IptablesConfig struct {
@@ -72,5 +77,5 @@ type IptablesValidator struct {
 // Validate validates network interfaces configuration.
 func (v IptablesValidator) Validate() error {
 	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
-	return NewVerboseCmd("iptables-restore", "--test", "--verbose", v.path).Run()
+	return exec.NewVerboseCmd("iptables-restore", "--test", "--verbose", v.path).Run()
 }
