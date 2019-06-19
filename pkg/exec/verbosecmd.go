@@ -6,7 +6,8 @@ import (
 	"os/exec"
 )
 
-// VerboseCmd represents a system command with verbose output.
+// VerboseCmd represents a system command with verbose output to be able to get an idea of the issue in case the cmd
+// fails.
 type VerboseCmd struct {
 	Cmd exec.Cmd
 }
