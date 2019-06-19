@@ -26,12 +26,6 @@ iface vlan{{ .VRF.ID }}
     {{- range .SVI.Addresses }}
     address {{ . }}/32
     {{- end }}
-    {{- range .PostUpCommands }}
-    post-up {{ . }}
-    {{- end }}
-    {{- range .PreDownCommands }}
-    pre-down {{ . }}
-    {{- end }}
 
 # {{ .VXLAN.Comment }}
 iface vni{{ .VXLAN.ID }}

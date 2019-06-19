@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/metal-pod/v"
-
 	"go.uber.org/zap"
 
 	"git.f-i-ts.de/cloud-native/metallib/network"
@@ -53,8 +51,7 @@ type EVPNIfaces struct {
 // NewIfacesConfig constructs a new instance of this type.
 func NewIfacesConfig(kb KnowledgeBase, tmpFile string) IfaceConfig {
 	d := IfacesData{}
-	d.Comment = fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n# Do not edit.",
-		kb.Machineuuid, v.V.String())
+	d.Comment = versionHeader(kb.Machineuuid)
 	d.Underlay.Comment = getUnderlayComment(kb)
 	d.Underlay.LoopbackIps = kb.mustGetUnderlay().Ips
 	d.Bridge.Ports = getBridgePorts(kb)

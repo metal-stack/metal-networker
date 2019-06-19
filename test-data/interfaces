@@ -44,8 +44,6 @@ iface vlan104009
     vlan-raw-device bridge
     vrf vrf104009
     address 185.1.2.3/32
-    post-up iptables -t nat -A POSTROUTING -s 10.0.16.0/22 -o vlan104009 -j MASQUERADE
-    pre-down iptables -t nat -D POSTROUTING -s 10.0.16.0/22 -o vlan104009 -j MASQUERADE
 
 # vxlan (networkid: internet-vagrant-lab)
 iface vni104009

@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/metal-pod/v"
-
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
@@ -43,8 +41,7 @@ type FRRConfig struct {
 func NewFRRConfig(kb KnowledgeBase, tmpFile string) FRRConfig {
 	d := FRRData{}
 	d.ASN = kb.mustGetUnderlay().Asn
-	d.Comment = fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n# Do not edit.",
-		kb.Machineuuid, v.V.String())
+	d.Comment = versionHeader(kb.Machineuuid)
 	d.FRRVersion = FRRVersion
 	d.Hostname = kb.Hostname
 	d.RouterID = kb.mustGetUnderlay().Ips[0]
