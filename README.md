@@ -1,21 +1,27 @@
 # metal-networker
 
-Configures ifup/ifdown and Free Range Routing (FRR) by applying setup from a configuration file.
+Configures networking related resources such as interfaces, frr, iptables.
 
-## Configuration File
+## Preconditions
 
-The configuration file is expected to contain YAML. See [./test-data/install.yaml](test-data/install.yaml).
+Ubuntu operating system in place with the following packages installed: 
+
+- ifupdown2
+- frr > 7.0
+- iptables
+- iptables-persistence
 
 ## Download
 
 metal-networker is available from the blobstore:
  
- - [latest](https://blobstore.fi-ts.io/cloud-native/metal-networker-latest.tar.gz)
- - [stable](https://blobstore.fi-ts.io/cloud-native/metal-networker-stable.tar.gz)
+ - [latest](https://blobstore.fi-ts.io/cloud-native/metal-networker-latest.tar.gz): Bleeding edge. Contains bugs and issues.
+ - [stable](https://blobstore.fi-ts.io/cloud-native/metal-networker-stable.tar.gz): Contains no known issues. Considered ready for use in production.
 
 ## Usage
 
-The binary is invoked with the configuration file as argument:
+metal-networker must be invoked with the configuration file as argument. It is expected that the configuration file 
+contains valid YAML. See [./test-data/install.yaml](test-data/install.yaml).
 
 ```bash
 # metal-networker <config-file>
