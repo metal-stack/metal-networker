@@ -89,17 +89,11 @@ networks:
     # Applied to the SVI (as /32)
     ips:
       - 185.1.2.3
-    # In case nat equals true a post-up hook is added to the SVI that enables MASQUERADING.
+    # In case nat equals true, Source NAT via SVI is added.
     nat: true
     # [IGNORED]
     networkid: internet-vagrant-lab
-    # Slack Channel: "metal-lab", 21. Mai https://kube-native.slack.com/archives/CHEK1QFCH/p1558453368001200
-    # Markus [5:42 PM]
-    #@Thomas @Tobias NAT@firewall: IP muss ans SVI und in der NAT-Regel muss das VRF Interface angegeben werden mit SNAT und der Adresse des SVIs:
-    #```bash
-    #iptables -t nat -A POSTROUTING -s 10.0.208.0/24 -o vrfInternet -j SNAT --to-source 185.1.2.3
-    ## Für Logging
-    #iptables -t nat -A POSTROUTING -j LOG --log-level 6```
+    # In case of nat the prefixes are used to define the Source NAT source specification.
     prefixes:
       - 185.1.2.0/24
       - 185.27.0.0/22
@@ -115,7 +109,6 @@ networks:
     # Applied to local loopback as /32.
     ips:
       - 10.1.0.1
-    # In case nat equals true a post-up hook is added to the interface that enables MASQUERADING.
     nat: false
     # [UNUSED]
     networkid: underlay-vagrant-lab
