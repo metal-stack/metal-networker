@@ -10,7 +10,7 @@ test-all:
   stage: deploy
   script:
     - make
-    - tar -czvf metal-networker.tar.gz -C ./bin metal-networker -C ../test-data interfaces.tpl frr.tpl rules.v4.tpl
+    - tar -czvf metal-networker.tar.gz -C ./bin metal-networker -C ../testdata interfaces.tpl frr.tpl rules.v4.tpl
     - curl -fLS https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
     - chmod +x /usr/local/bin/mc
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"

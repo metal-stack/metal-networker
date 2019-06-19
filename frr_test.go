@@ -11,16 +11,16 @@ import (
 
 func TestCompileFrrConf(t *testing.T) {
 	assert := assert.New(t)
-	expected, err := ioutil.ReadFile("test-data/frr.conf")
+	expected, err := ioutil.ReadFile("testdata/frr.conf")
 	assert.NoError(err)
 
-	kb := NewKnowledgeBase("test-data/install.yaml")
+	kb := NewKnowledgeBase("testdata/install.yaml")
 	assert.NoError(err)
 
 	a := NewFRRConfig(kb, "")
 	b := bytes.Buffer{}
 
-	f := "test-data/" + TplFRR
+	f := "testdata/" + TplFRR
 	s, err := ioutil.ReadFile(f)
 	assert.NoError(err)
 	tpl := template.Must(template.New(f).Parse(string(s)))

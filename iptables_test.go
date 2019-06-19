@@ -11,16 +11,16 @@ import (
 
 func TestCompileRules(t *testing.T) {
 	assert := assert.New(t)
-	expected, err := ioutil.ReadFile("test-data/rules.v4")
+	expected, err := ioutil.ReadFile("testdata/rules.v4")
 	assert.NoError(err)
 
-	kb := NewKnowledgeBase("test-data/install.yaml")
+	kb := NewKnowledgeBase("testdata/install.yaml")
 	assert.NoError(err)
 
 	a := NewIptablesConfig(kb, "")
 	b := bytes.Buffer{}
 
-	f := "test-data/" + TplIptables
+	f := "testdata/" + TplIptables
 	s, err := ioutil.ReadFile(f)
 	assert.NoError(err)
 	tpl := template.Must(template.New(f).Parse(string(s)))

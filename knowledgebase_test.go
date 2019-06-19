@@ -9,7 +9,7 @@ import (
 func mustNewKnowledgeBase(t *testing.T) KnowledgeBase {
 	assert := assert.New(t)
 
-	d := NewKnowledgeBase("test-data/install.yaml")
+	d := NewKnowledgeBase("testdata/install.yaml")
 	assert.NotNil(d)
 
 	return d
