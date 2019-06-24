@@ -56,6 +56,7 @@ COMMIT
 :OUTPUT ACCEPT [0:0]
 :POSTROUTING ACCEPT [0:0]
 --append POSTROUTING --source 10.0.16.0/22 --out-interface vlan104009 --match comment --comment "snat (networkid: internet-vagrant-lab)" --jump MASQUERADE
+--append POSTROUTING --source 10.0.16.0/22 --out-interface vlan104010 --match comment --comment "snat (networkid: mpls-nbg-w8101-test)" --jump MASQUERADE
 
 COMMIT
 # END OF *nat ##########################################################################################################
