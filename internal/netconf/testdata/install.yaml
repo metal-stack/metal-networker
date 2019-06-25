@@ -119,6 +119,23 @@ networks:
     underlay: true
     # [IGNORED] Underlay runs in default VRF.
     vrf: 0
+  - asn: 4200003073
+    # Considered to establish static route leak to reach out from tenant VRF into the external networks.
+    destinationprefixes:
+      - 100.127.1.0/24
+    # Applied to local loopback as /32.
+    ips:
+      - 100.127.129.1
+    nat: true
+    # [UNUSED]
+    networkid: mpls-nbg-w8101-test
+    # [IGNORED in case of UNDERLAY]
+    prefixes:
+      - 100.127.129.0/24
+    primary: false
+    underlay: false
+    # [IGNORED] Underlay runs in default VRF.
+    vrf: 104010
 # [IGNORED]
 machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
 # [IGNORED]

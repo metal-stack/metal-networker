@@ -22,7 +22,7 @@ func TestNewKnowledgeBase(t *testing.T) {
 
 	assert.Equal("firewall", d.Hostname)
 	assert.NotEmpty(d.Networks)
-	assert.Equal(3, len(d.Networks))
+	assert.Equal(4, len(d.Networks))
 
 	// primary network
 	n := d.Networks[0]
@@ -55,6 +55,19 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal(1, len(n.Prefixes))
 	assert.Equal("10.0.12.0/22", n.Prefixes[0])
 	assert.True(n.Underlay)
+
+	// external network mpls
+	n = d.Networks[3]
+	assert.Equal(1, len(n.Destinationprefixes))
+	assert.Equal("100.127.1.0/24", n.Destinationprefixes[0])
+	assert.Equal(1, len(n.Ips))
+	assert.Equal("100.127.129.1", n.Ips[0])
+	assert.Equal(1, len(n.Prefixes))
+	assert.Equal("100.127.129.0/24", n.Prefixes[0])
+	assert.False(n.Underlay)
+	assert.False(n.Primary)
+	assert.True(n.Nat)
+	assert.Equal(104010, n.Vrf)
 }
 
 func TestValidationSucceeds(t *testing.T) {

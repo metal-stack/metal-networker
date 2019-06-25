@@ -10,8 +10,8 @@ iface lo inet loopback
     address 10.1.0.1/32
 
 iface bridge
-    bridge-ports vni3981 vni104009
-    bridge-vids 1000 1001
+    bridge-ports vni3981 vni104009 vni104010
+    bridge-vids 1000 1001 1003
     bridge-vlan-aware yes
 
 # svi (networkid: bc830818-2df1-4904-8c40-4322296d393d)
@@ -57,6 +57,29 @@ iface vni104009
 
 # vrf (networkid: internet-vagrant-lab)
 iface vrf104009
+    mtu 9000
+    vrf-table auto
+
+# svi (networkid: mpls-nbg-w8101-test)
+iface vlan104010
+    mtu 9000
+    vlan-id 1003
+    vlan-raw-device bridge
+    vrf vrf104010
+    address 100.127.129.1/32
+
+# vxlan (networkid: mpls-nbg-w8101-test)
+iface vni104010
+    mtu 9000
+    bridge-access 1003
+    bridge-learning off
+    mstpctl-bpduguard yes
+    mstpctl-portbpdufilter yes
+    vxlan-id 104010
+    vxlan-local-tunnelip 10.1.0.1
+
+# vrf (networkid: mpls-nbg-w8101-test)
+iface vrf104010
     mtu 9000
     vrf-table auto
 

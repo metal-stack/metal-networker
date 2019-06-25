@@ -44,7 +44,6 @@ router bgp {{ .ASN }}
  !
  address-family l2vpn evpn
   neighbor FABRIC activate
-  # neighbor FABRIC route-map only-self-out out darf nicht aktiv sein! sonst problem!
   advertise-all-vni
  exit-address-family
 !
@@ -57,8 +56,8 @@ router bgp {{ $ASN }} vrf vrf{{ $v.ID }}
   redistribute connected
 {{- range $i, $ri := $v.RouteImports }}
   import vrf {{ $ri.SourceVRF }}
-  import vrf route-map vrf{{ $v.ID }}-import-map
 {{- end }}
+  import vrf route-map vrf{{ $v.ID }}-import-map
  exit-address-family
  !
  address-family l2vpn evpn

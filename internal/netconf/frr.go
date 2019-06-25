@@ -2,6 +2,7 @@ package netconf
 
 import (
 	"fmt"
+	"strings"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
 
@@ -73,6 +74,7 @@ func (v FRRValidator) Validate() error {
 
 func getVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
+	primary := kb.mustGetPrimary()
 	for _, n := range kb.Networks {
 		// VRF BGP Instances are configured for tenant network (primary) and all external networks
 		// (non underlay) to enable traffic from tenant network into external networks and vice versa.
@@ -82,13 +84,13 @@ func getVRFs(kb KnowledgeBase) []VRF {
 		vrf := VRF{}
 		vrf.ID = n.Vrf
 		vrf.VNI = n.Vrf
+		// Between VRFs we use dynamic route leak to import the desired prefixes
 		if n.Primary {
-			// The primary vrf contains a static route leak into VRF's of external networks.
-			// In addition to this the primary vrf announces a default route to ask clients to route all traffic destined
-			// to external networks to here.
-			vrf.RouteImports = getRouteImportsPrimary(kb) // import destination prefixes
+			// Import destination prefixes of external networks to the primary vrf.
+			vrf.RouteImports = getRouteImportsPrimary(kb)
 		} else {
-			vrf.RouteImports = getRouteImportsNonPrimary(kb) // import destination prefixes
+			// Import prefixes of external networks that might be used by the tenant into the external vrf.
+			vrf.RouteImports = getRouteImportsNonPrimary(primary, n)
 		}
 		result = append(result, vrf)
 	}
@@ -105,33 +107,34 @@ func getRouteImportsPrimary(kb KnowledgeBase) []RouteImport {
 		if len(n.Destinationprefixes) == 0 {
 			continue
 		}
-		ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", n.Vrf), AllowedImportPrefixes: n.Destinationprefixes}
+		allowed := []string{}
+		for _, dp := range n.Destinationprefixes {
+			if strings.HasSuffix(dp, "/0") {
+				allowed = append(allowed, dp)
+			} else {
+				allowed = append(allowed, dp+" le 32")
+			}
+		}
+		ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", n.Vrf), AllowedImportPrefixes: allowed}
 		result = append(result, ri)
 	}
 	return result
 }
 
-func getRouteImportsNonPrimary(kb KnowledgeBase) []RouteImport {
+func getRouteImportsNonPrimary(primary, n Network) []RouteImport {
 	result := []RouteImport{}
-	primary := kb.mustGetPrimary()
-	allowed := []string{}
-	allowed = append(allowed, primary.Prefixes...)
-	for _, n := range kb.Networks {
-		// The primary and underlay networks are not targets to route external traffic to.
-		if n.Primary || n.Underlay {
-			continue
-		}
-		allowed = append(allowed, n.Prefixes...)
-	}
-	if len(allowed) == 0 {
+	a := []string{}
+	a = append(a, primary.Prefixes...)
+	a = append(a, n.Prefixes...)
+	if len(a) == 0 {
 		return result
 	}
 
-	allowedWith32 := []string{}
-	for _, a := range allowed {
-		allowedWith32 = append(allowedWith32, a+" le 32")
+	allowed := []string{}
+	for _, p := range a {
+		allowed = append(allowed, p+" le 32")
 	}
-	ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", primary.Vrf), AllowedImportPrefixes: allowedWith32}
+	ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", primary.Vrf), AllowedImportPrefixes: allowed}
 	result = append(result, ri)
 	return result
 }
