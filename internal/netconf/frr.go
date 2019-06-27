@@ -47,11 +47,11 @@ type FRRConfig struct {
 // NewFRRConfig constructs a new instance of this type.
 func NewFRRConfig(kb KnowledgeBase, tmpFile string) FRRConfig {
 	d := FRRData{}
-	d.ASN = kb.mustGetUnderlay().Asn
+	d.ASN = kb.getUnderlayNetwork().Asn
 	d.Comment = versionHeader(kb.Machineuuid)
 	d.FRRVersion = FRRVersion
 	d.Hostname = kb.Hostname
-	d.RouterID = kb.mustGetUnderlay().Ips[0]
+	d.RouterID = kb.getUnderlayNetwork().Ips[0]
 	d.VRFs = getVRFs(kb)
 
 	v := FRRValidator{tmpFile}
@@ -74,16 +74,10 @@ func (v FRRValidator) Validate() error {
 
 func getVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
-	primary := kb.mustGetPrimary()
-	for _, n := range kb.Networks {
-		// VRF BGP Instances are configured for tenant network (primary) and all external networks
-		// (non underlay) to enable traffic from tenant network into external networks and vice versa.
-		if n.Underlay {
-			continue
-		}
-		vrf := VRF{}
-		vrf.ID = n.Vrf
-		vrf.VNI = n.Vrf
+	primary := kb.getPrimaryNetwork()
+	networks := kb.GetNetworks(Primary, External)
+	for _, n := range networks {
+		vrf := VRF{ID: n.Vrf, VNI: n.Vrf}
 		// Between VRFs we use dynamic route leak to import the desired prefixes
 		if n.Primary {
 			// Import routes to reach out from primary network into external networks.
@@ -99,9 +93,10 @@ func getVRFs(kb KnowledgeBase) []VRF {
 
 func getRouteImportsIntoExternalNetworks(kb KnowledgeBase) []RouteImport {
 	var result []RouteImport
-	for _, n := range kb.Networks {
+	networks := kb.GetNetworks(External)
+	for _, n := range networks {
 		isEmptyDestination := len(n.Destinationprefixes) == 0
-		if n.Primary || n.Underlay || isEmptyDestination {
+		if isEmptyDestination {
 			continue
 		}
 		var allowed []string

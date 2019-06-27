@@ -5,6 +5,8 @@ import (
 	"os"
 	"text/template"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-networker/internal/system"
+
 	"git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf"
 
 	"github.com/metal-pod/v"
@@ -43,6 +45,13 @@ func main() {
 	tpl = mustRead(netconf.TplIptables)
 	mustApply(f, iptables.Applier, tpl, "/etc/iptables/rules.v4", false)
 	_ = os.Remove(f)
+
+	cc, err := system.NewChronyServiceEnabler(d)
+	if err != nil {
+		log.Warnf("Cannot enable Chrony service: %v", err)
+	} else {
+		cc.Enable()
+	}
 
 	log.Info("finished. Shutting down.")
 }
