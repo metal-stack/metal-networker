@@ -86,25 +86,22 @@ func getVRFs(kb KnowledgeBase) []VRF {
 		vrf.VNI = n.Vrf
 		// Between VRFs we use dynamic route leak to import the desired prefixes
 		if n.Primary {
-			// Import destination prefixes of external networks to the primary vrf.
-			vrf.RouteImports = getRouteImportsPrimary(kb)
+			// Import routes to reach out from primary network into external networks.
+			vrf.RouteImports = getRouteImportsIntoExternalNetworks(kb)
 		} else {
-			// Import prefixes of external networks that might be used by the tenant into the external vrf.
-			vrf.RouteImports = getRouteImportsNonPrimary(primary, n)
+			// Import routes to reach out from an external network into primary and other external networks.
+			vrf.RouteImports = getRouteImportsInto(primary, n)
 		}
 		result = append(result, vrf)
 	}
 	return result
 }
 
-func getRouteImportsPrimary(kb KnowledgeBase) []RouteImport {
+func getRouteImportsIntoExternalNetworks(kb KnowledgeBase) []RouteImport {
 	var result []RouteImport
 	for _, n := range kb.Networks {
-		// The primary and underlay networks are not targets to route external traffic to.
-		if n.Primary || n.Underlay {
-			continue
-		}
-		if len(n.Destinationprefixes) == 0 {
+		isEmptyDestination := len(n.Destinationprefixes) == 0
+		if n.Primary || n.Underlay || isEmptyDestination {
 			continue
 		}
 		var allowed []string
@@ -112,6 +109,7 @@ func getRouteImportsPrimary(kb KnowledgeBase) []RouteImport {
 			if strings.HasSuffix(dp, "/0") {
 				allowed = append(allowed, dp)
 			} else {
+				// Prefix list will be applied if the prefix length is less than or equal to the le prefix length.
 				allowed = append(allowed, dp+" le 32")
 			}
 		}
@@ -121,7 +119,7 @@ func getRouteImportsPrimary(kb KnowledgeBase) []RouteImport {
 	return result
 }
 
-func getRouteImportsNonPrimary(primary, n Network) []RouteImport {
+func getRouteImportsInto(primary, n Network) []RouteImport {
 	var result []RouteImport
 	var a []string
 	a = append(a, primary.Prefixes...)
