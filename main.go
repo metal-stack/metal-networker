@@ -46,11 +46,14 @@ func main() {
 	mustApply(f, iptables.Applier, tpl, "/etc/iptables/rules.v4", false)
 	_ = os.Remove(f)
 
-	cc, err := system.NewChronyServiceEnabler(d)
+	chrony, err := system.NewChronyServiceEnabler(d)
 	if err != nil {
-		log.Warnf("Cannot enable Chrony service: %v", err)
+		log.Warnf("failed to configure Chrony: %v", err)
 	} else {
-		cc.Enable()
+		err := chrony.Enable()
+		if err != nil {
+			log.Errorf("enabling Chrony failed: %v", err)
+		}
 	}
 
 	log.Info("finished. Shutting down.")
