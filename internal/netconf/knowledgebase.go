@@ -25,7 +25,7 @@ const (
 	Underlay NetworkType = iota
 	// Primary represents the primary network.
 	Primary
-	// External represents the external network.
+	// External represents an external network.
 	External
 )
 
