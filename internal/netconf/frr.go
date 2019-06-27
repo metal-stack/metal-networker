@@ -98,7 +98,7 @@ func getVRFs(kb KnowledgeBase) []VRF {
 }
 
 func getRouteImportsPrimary(kb KnowledgeBase) []RouteImport {
-	result := []RouteImport{}
+	var result []RouteImport
 	for _, n := range kb.Networks {
 		// The primary and underlay networks are not targets to route external traffic to.
 		if n.Primary || n.Underlay {
@@ -107,7 +107,7 @@ func getRouteImportsPrimary(kb KnowledgeBase) []RouteImport {
 		if len(n.Destinationprefixes) == 0 {
 			continue
 		}
-		allowed := []string{}
+		var allowed []string
 		for _, dp := range n.Destinationprefixes {
 			if strings.HasSuffix(dp, "/0") {
 				allowed = append(allowed, dp)
@@ -122,15 +122,15 @@ func getRouteImportsPrimary(kb KnowledgeBase) []RouteImport {
 }
 
 func getRouteImportsNonPrimary(primary, n Network) []RouteImport {
-	result := []RouteImport{}
-	a := []string{}
+	var result []RouteImport
+	var a []string
 	a = append(a, primary.Prefixes...)
 	a = append(a, n.Prefixes...)
 	if len(a) == 0 {
 		return result
 	}
 
-	allowed := []string{}
+	var allowed []string
 	for _, p := range a {
 		allowed = append(allowed, p+" le 32")
 	}
