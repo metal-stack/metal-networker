@@ -48,10 +48,11 @@ func NewIptablesConfig(kb KnowledgeBase, tmpFile string) IptablesConfig {
 
 func getSNAT(kb KnowledgeBase) []SNAT {
 	var result []SNAT
-	primary := kb.mustGetPrimary()
+	primary := kb.getPrimaryNetwork()
 
-	for _, n := range kb.Networks {
-		if n.Underlay || !n.Nat {
+	networks := kb.GetNetworks(Primary, External)
+	for _, n := range networks {
+		if !n.Nat {
 			continue
 		}
 

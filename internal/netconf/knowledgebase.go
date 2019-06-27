@@ -17,6 +17,18 @@ var log = zapup.MustRootLogger().Sugar()
 // VLANOffset defines a number to start with when creating new VLAN IDs.
 const VLANOffset = 1000
 
+// NetworkType represents the functional type of a network.
+type NetworkType int
+
+const (
+	// Underlay represents the Underlay network.
+	Underlay NetworkType = iota
+	// Primary represents the primary network.
+	Primary
+	// External represents an external network.
+	External
+)
+
 // KnowledgeBase was generated with: https://mengzhuo.github.io/yaml-to-go/.
 // It represents the input yaml that is needed to render network configuration files.
 type KnowledgeBase struct {
@@ -93,31 +105,16 @@ func (kb *KnowledgeBase) validate() error {
 }
 
 func (kb *KnowledgeBase) containsOnePrimary() bool {
-	result := false
-	for _, n := range kb.Networks {
-		if n.Primary {
-			if result {
-				result = false
-				break
-			}
-			result = true
-		}
-	}
-	return result
+	return kb.containsSingleNetworkOf(Primary)
 }
 
 func (kb *KnowledgeBase) containsOneUnderlay() bool {
-	result := false
-	for _, n := range kb.Networks {
-		if n.Underlay {
-			if result {
-				result = false
-				break
-			}
-			result = true
-		}
-	}
-	return result
+	return kb.containsSingleNetworkOf(Underlay)
+}
+
+func (kb *KnowledgeBase) containsSingleNetworkOf(networkType NetworkType) bool {
+	possibleNetworks := kb.GetNetworks(networkType)
+	return len(possibleNetworks) == 1
 }
 
 func (kb *KnowledgeBase) containsAtLeastOneLoopbackIP() bool {
@@ -138,24 +135,37 @@ func (kb *KnowledgeBase) containsAsn() bool {
 	return false
 }
 
-func (kb *KnowledgeBase) mustGetPrimary() Network {
-	for _, n := range kb.Networks {
-		if n.Primary {
-			return n
+func (kb *KnowledgeBase) GetNetworks(networkType ...NetworkType) []Network {
+	var result []Network
+	for _, t := range networkType {
+		for _, n := range kb.Networks {
+			switch t {
+			case Primary:
+				if n.Primary {
+					result = append(result, n)
+				}
+			case Underlay:
+				if n.Underlay {
+					result = append(result, n)
+				}
+			case External:
+				if !n.Underlay && !n.Primary {
+					result = append(result, n)
+				}
+			}
 		}
 	}
-	log.Panic("no primary network available")
-	panic("")
+	return result
 }
 
-func (kb *KnowledgeBase) mustGetUnderlay() Network {
-	for _, n := range kb.Networks {
-		if n.Underlay {
-			return n
-		}
-	}
-	log.Panic("no underlay network available")
-	panic("")
+func (kb KnowledgeBase) getPrimaryNetwork() Network {
+	// Safe access since a priory validation ensures there is exactly one.
+	return kb.GetNetworks(Primary)[0]
+}
+
+func (kb KnowledgeBase) getUnderlayNetwork() Network {
+	// Safe access since a priory validation ensures there is exactly one.
+	return kb.GetNetworks(Underlay)[0]
 }
 
 func versionHeader(uuid string) string {

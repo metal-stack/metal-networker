@@ -58,7 +58,7 @@ func NewIfacesConfig(kb KnowledgeBase, tmpFile string) IfaceConfig {
 	d := IfacesData{}
 	d.Comment = versionHeader(kb.Machineuuid)
 	d.Underlay.Comment = getUnderlayComment(kb)
-	d.Underlay.LoopbackIps = kb.mustGetUnderlay().Ips
+	d.Underlay.LoopbackIps = kb.getUnderlayNetwork().Ips
 	d.Bridge.Ports = getBridgePorts(kb)
 	d.Bridge.Vids = getBridgeVLANIDs(kb)
 	d.EVPNInterfaces = getEVPNInterfaces(kb)
@@ -79,10 +79,10 @@ func (v IfacesValidator) Validate() error {
 	return exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }
 
-func getEVPNInterfaces(data KnowledgeBase) []EVPNIfaces {
+func getEVPNInterfaces(kb KnowledgeBase) []EVPNIfaces {
 	var result []EVPNIfaces
-	primary := data.mustGetPrimary()
-	for _, n := range data.Networks {
+	primary := kb.getPrimaryNetwork()
+	for _, n := range kb.Networks {
 		if n.Underlay {
 			continue
 		}
@@ -94,7 +94,7 @@ func getEVPNInterfaces(data KnowledgeBase) []EVPNIfaces {
 
 		e.VXLAN.Comment = fmt.Sprintf("vxlan (networkid: %s)", n.Networkid)
 		e.VXLAN.ID = n.Vrf
-		e.VXLAN.TunnelIP = data.mustGetUnderlay().Ips[0]
+		e.VXLAN.TunnelIP = kb.getUnderlayNetwork().Ips[0]
 
 		e.VRF.Comment = fmt.Sprintf("vrf (networkid: %s)", n.Networkid)
 		e.VRF.ID = n.Vrf
@@ -114,10 +114,8 @@ func getEVPNInterfaces(data KnowledgeBase) []EVPNIfaces {
 
 func getBridgeVLANIDs(kb KnowledgeBase) string {
 	result := ""
-	for _, n := range kb.Networks {
-		if n.Underlay {
-			continue
-		}
+	networks := kb.GetNetworks(Primary, External)
+	for _, n := range networks {
 		if result == "" {
 			result = fmt.Sprintf("%d", n.Vlan)
 		} else {
@@ -129,7 +127,8 @@ func getBridgeVLANIDs(kb KnowledgeBase) string {
 
 func getBridgePorts(kb KnowledgeBase) string {
 	result := ""
-	for _, n := range kb.Networks {
+	networks := kb.GetNetworks(Primary, External)
+	for _, n := range networks {
 		if n.Underlay {
 			continue
 		}
@@ -144,6 +143,6 @@ func getBridgePorts(kb KnowledgeBase) string {
 }
 
 func getUnderlayComment(kb KnowledgeBase) string {
-	n := kb.mustGetUnderlay()
+	n := kb.getUnderlayNetwork()
 	return fmt.Sprintf("networkid: %s", n.Networkid)
 }

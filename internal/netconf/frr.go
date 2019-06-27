@@ -47,11 +47,11 @@ type FRRConfig struct {
 // NewFRRConfig constructs a new instance of this type.
 func NewFRRConfig(kb KnowledgeBase, tmpFile string) FRRConfig {
 	d := FRRData{}
-	d.ASN = kb.mustGetUnderlay().Asn
+	d.ASN = kb.getUnderlayNetwork().Asn
 	d.Comment = versionHeader(kb.Machineuuid)
 	d.FRRVersion = FRRVersion
 	d.Hostname = kb.Hostname
-	d.RouterID = kb.mustGetUnderlay().Ips[0]
+	d.RouterID = kb.getUnderlayNetwork().Ips[0]
 	d.VRFs = getVRFs(kb)
 
 	v := FRRValidator{tmpFile}
@@ -74,44 +74,37 @@ func (v FRRValidator) Validate() error {
 
 func getVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
-	primary := kb.mustGetPrimary()
-	for _, n := range kb.Networks {
-		// VRF BGP Instances are configured for tenant network (primary) and all external networks
-		// (non underlay) to enable traffic from tenant network into external networks and vice versa.
-		if n.Underlay {
-			continue
-		}
-		vrf := VRF{}
-		vrf.ID = n.Vrf
-		vrf.VNI = n.Vrf
+	primary := kb.getPrimaryNetwork()
+	networks := kb.GetNetworks(Primary, External)
+	for _, n := range networks {
+		vrf := VRF{ID: n.Vrf, VNI: n.Vrf}
 		// Between VRFs we use dynamic route leak to import the desired prefixes
 		if n.Primary {
-			// Import destination prefixes of external networks to the primary vrf.
-			vrf.RouteImports = getRouteImportsPrimary(kb)
+			// Import routes to reach out from primary network into external networks.
+			vrf.RouteImports = getRouteImportsIntoExternalNetworks(kb)
 		} else {
-			// Import prefixes of external networks that might be used by the tenant into the external vrf.
-			vrf.RouteImports = getRouteImportsNonPrimary(primary, n)
+			// Import routes to reach out from an external network into primary and other external networks.
+			vrf.RouteImports = getRouteImportsInto(primary, n)
 		}
 		result = append(result, vrf)
 	}
 	return result
 }
 
-func getRouteImportsPrimary(kb KnowledgeBase) []RouteImport {
-	result := []RouteImport{}
-	for _, n := range kb.Networks {
-		// The primary and underlay networks are not targets to route external traffic to.
-		if n.Primary || n.Underlay {
+func getRouteImportsIntoExternalNetworks(kb KnowledgeBase) []RouteImport {
+	var result []RouteImport
+	networks := kb.GetNetworks(External)
+	for _, n := range networks {
+		isEmptyDestination := len(n.Destinationprefixes) == 0
+		if isEmptyDestination {
 			continue
 		}
-		if len(n.Destinationprefixes) == 0 {
-			continue
-		}
-		allowed := []string{}
+		var allowed []string
 		for _, dp := range n.Destinationprefixes {
 			if strings.HasSuffix(dp, "/0") {
 				allowed = append(allowed, dp)
 			} else {
+				// Prefix list will be applied if the prefix length is less than or equal to the le prefix length.
 				allowed = append(allowed, dp+" le 32")
 			}
 		}
@@ -121,16 +114,16 @@ func getRouteImportsPrimary(kb KnowledgeBase) []RouteImport {
 	return result
 }
 
-func getRouteImportsNonPrimary(primary, n Network) []RouteImport {
-	result := []RouteImport{}
-	a := []string{}
+func getRouteImportsInto(primary, n Network) []RouteImport {
+	var result []RouteImport
+	var a []string
 	a = append(a, primary.Prefixes...)
 	a = append(a, n.Prefixes...)
 	if len(a) == 0 {
 		return result
 	}
 
-	allowed := []string{}
+	var allowed []string
 	for _, p := range a {
 		allowed = append(allowed, p+" le 32")
 	}
