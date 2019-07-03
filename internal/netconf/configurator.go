@@ -117,6 +117,7 @@ func applyAndCleanUp(applier network.Applier, tpl, src, dest string) {
 
 func mustApply(applier network.Applier, tpl, src, dest string) {
 	t := template.Must(template.New(TplFirewallIfaces).Parse(tpl))
+	log.Infof("applying changes to: %s", dest)
 	err := applier.Apply(*t, src, dest, false)
 	if err != nil {
 		log.Panic(err)
