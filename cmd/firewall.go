@@ -19,7 +19,7 @@ var (
 		Long: `"metal-networker firewall configure" configures network aspects of a bare metal server to function as
 a 'firewall'`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return Configure(netconf.Machine, cmd, args)
+			return Configure(netconf.Firewall, cmd, args)
 		},
 	}
 )
