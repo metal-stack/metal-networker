@@ -55,7 +55,7 @@
 # Applies to hostname of the firewall.
 hostname: firewall
 # [IGNORED]
-ipaddress: 10.0.12.1
+ipaddress: 10.0.16.2
 # [IGNORED]
 asn: "4200003073"
 networks:
@@ -64,8 +64,9 @@ networks:
   - asn: 4200003073
     # [IGNORED in case of primary network]
     destinationprefixes: []
-    # Used to consider the set of prefixes that originate the given IP's to establish route leak in external
+    # For Firewall: Used to consider the set of prefixes that originate the given IP's to establish route leak in external
     # network VRF's for return traffic. Applied to the SVI (as /32)
+    # For Machine: Used to set the loopback ips.
     ips:
       - 10.0.16.2
     # [IGNORED in case of primary network]
@@ -146,5 +147,21 @@ password: KAWT5DugqSPAezMl
 devmode: false
 # [IGNORED]
 console: ttyS1,115200n8
+timestamp: "2019-07-01T09:41:43Z"
+nics:
+  - mac: "00:03:00:11:11:01"
+    name: lan0
+    neighbors:
+      - mac: 44:38:39:00:00:1a
+        name: null
+        neighbors: []
+  - mac: "00:03:00:11:12:01"
+    name: lan1
+    neighbors:
+      - mac: "44:38:39:00:00:04"
+        name: null
+        neighbors: []
+
+
 
 

@@ -3,29 +3,37 @@ package netconf
 import (
 	"fmt"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
-
-	"go.uber.org/zap"
-
 	"git.f-i-ts.de/cloud-native/metallib/network"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
 )
 
-// TplIfaces defines the name of the template to render interfaces configuration.
-const TplIfaces = "interfaces.tpl"
+// TplFirewallIfaces defines the name of the template to render interfaces configuration.
+const (
+	TplFirewallIfaces = "interfaces.firewall.tpl"
+	TplMachineIfaces  = "interfaces.machine.tpl"
+)
 
-// IfaceConfig represents a thing to apply changes to interfaces configuration.
-type IfaceConfig struct {
-	Applier network.Applier
-	Log     zap.Logger
-}
-
-// IfacesData represents the information required to render interfaces configuration.
-type IfacesData struct {
+// CommonIfacesData contains attributes required to render common network interfaces configuration of a bare metal
+// server.
+type CommonIfacesData struct {
 	Comment  string
 	Underlay struct {
 		Comment     string
 		LoopbackIps []string
 	}
+}
+
+// MachineIfacesData contains attributes required to render network interfaces configuration of a bare metal
+// server that functions as 'machine'.
+type MachineIfacesData struct {
+	CommonIfacesData
+}
+
+// FirewallIfacesData contains attributes required to render network interfaces configuration of a bare metal
+// server that functions as 'firewall'.
+type FirewallIfacesData struct {
+	CommonIfacesData
 	Bridge struct {
 		Ports string
 		Vids  string
@@ -53,28 +61,66 @@ type EVPNIfaces struct {
 	PreDownCommands []string
 }
 
-// NewIfacesConfig constructs a new instance of this type.
-func NewIfacesConfig(kb KnowledgeBase, tmpFile string) IfaceConfig {
-	d := IfacesData{}
-	d.Comment = versionHeader(kb.Machineuuid)
-	d.Underlay.Comment = getUnderlayComment(kb)
-	d.Underlay.LoopbackIps = kb.getUnderlayNetwork().Ips
-	d.Bridge.Ports = getBridgePorts(kb)
-	d.Bridge.Vids = getBridgeVLANIDs(kb)
-	d.EVPNInterfaces = getEVPNInterfaces(kb)
-
-	v := IfacesValidator{tmpFile}
-	a := network.NewNetworkApplier(d, v, nil)
-	return IfaceConfig{Applier: a}
-}
-
-// IfacesValidator can validate configuration for network interfaces.
-type IfacesValidator struct {
+// CommonIfacesValidator defines the base type of an interfaces validator.
+type CommonIfacesValidator struct {
 	path string
 }
 
-// Validate validates network interfaces configuration.
-func (v IfacesValidator) Validate() error {
+// MachineIfacesValidator defines a type to validate interfaces configuration of a bare metal server that function as
+// 'machine'.
+type MachineIfacesValidator struct {
+	CommonIfacesValidator
+}
+
+// FirewallIfacesValidator defines a type to validate interfaces configuration of a bare metal server that function as
+// 'firewall'.
+type FirewallIfacesValidator struct {
+	CommonIfacesValidator
+}
+
+// NewIfacesConfigApplier constructs a new instance of this type.
+func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
+	var data interface{}
+	var validator network.Validator
+
+	switch kind {
+	case Firewall:
+		common := CommonIfacesData{}
+		common.Comment = versionHeader(kb.Machineuuid)
+		common.Underlay.Comment = getUnderlayComment(kb)
+		common.Underlay.LoopbackIps = kb.getUnderlayNetwork().Ips
+
+		f := FirewallIfacesData{}
+		f.CommonIfacesData = common
+		f.Bridge.Ports = getBridgePorts(kb)
+		f.Bridge.Vids = getBridgeVLANIDs(kb)
+		f.EVPNInterfaces = getEVPNInterfaces(kb)
+
+		data = f
+		validator = FirewallIfacesValidator{CommonIfacesValidator{path: tmpFile}}
+	case Machine:
+		common := CommonIfacesData{}
+		common.Comment = versionHeader(kb.Machineuuid)
+		common.Underlay.Comment = getUnderlayComment(kb)
+		common.Underlay.LoopbackIps = kb.getPrimaryNetwork().Ips
+
+		data = MachineIfacesData{common}
+		validator = MachineIfacesValidator{CommonIfacesValidator{path: tmpFile}}
+	default:
+		log.Fatalf("unknown configuratorType of configurator: %v", kind)
+	}
+
+	return network.NewNetworkApplier(data, validator, nil)
+}
+
+// Validate 'machine' network interfaces configuration.
+func (v MachineIfacesValidator) Validate() error {
+	log.Infof("running 'ifup --no-act --all --interfaces %s' to validate changes", v.path)
+	return exec.NewVerboseCmd("ifup", "--no-act", "--all", "--interfaces", v.path).Run()
+}
+
+// Validate 'firewall' network interfaces configuration.
+func (v FirewallIfacesValidator) Validate() error {
 	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
 	return exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }

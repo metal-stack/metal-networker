@@ -1,15 +1,10 @@
-package system
+package netconf
 
 import (
 	"fmt"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf"
-	"git.f-i-ts.de/cloud-native/metallib/zapup"
-
 	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
 )
-
-var log = zapup.MustRootLogger().Sugar()
 
 // ChronyServiceEnabler can enable chrony systemd service for the given VRF.
 type ChronyServiceEnabler struct {
@@ -17,7 +12,7 @@ type ChronyServiceEnabler struct {
 }
 
 // NewChronyServiceEnabler constructs a new instance of this type.
-func NewChronyServiceEnabler(kb netconf.KnowledgeBase) (ChronyServiceEnabler, error) {
+func NewChronyServiceEnabler(kb KnowledgeBase) (ChronyServiceEnabler, error) {
 	vrf, err := getDefaultRouteVRFName(kb)
 	return ChronyServiceEnabler{VRF: vrf}, err
 }
@@ -29,8 +24,8 @@ func (c ChronyServiceEnabler) Enable() error {
 	return exec.NewVerboseCmd("bash", "-c", cmd).Run()
 }
 
-func getDefaultRouteVRFName(kb netconf.KnowledgeBase) (string, error) {
-	networks := kb.GetNetworks(netconf.External)
+func getDefaultRouteVRFName(kb KnowledgeBase) (string, error) {
+	networks := kb.GetNetworks(External)
 	for _, n := range networks {
 		for _, d := range n.Destinationprefixes {
 			if d == "0.0.0.0/0" {

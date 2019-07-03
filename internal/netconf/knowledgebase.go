@@ -41,6 +41,18 @@ type KnowledgeBase struct {
 	Password     string    `yaml:"password"`
 	Devmode      bool      `yaml:"devmode"`
 	Console      string    `yaml:"console"`
+	Nics         []NIC     `yaml:"nics"`
+}
+
+// NIC is a representation of network interfaces attributes.
+type NIC struct {
+	Mac       string `yaml:"mac"`
+	Name      string `yaml:"name"`
+	Neighbors []struct {
+		Mac       string        `yaml:"mac"`
+		Name      interface{}   `yaml:"name"`
+		Neighbors []interface{} `yaml:"neighbors"`
+	} `yaml:"neighbors"`
 }
 
 // Network is a representation of a tenant network.
@@ -59,6 +71,7 @@ type Network struct {
 
 // NewKnowledgeBase creates a new instance of this type.
 func NewKnowledgeBase(path string) KnowledgeBase {
+	log.Infof("loading: %s", path)
 	d := mustUnmarshal(path)
 	d.fillVLANIDs()
 	return d
@@ -135,6 +148,7 @@ func (kb *KnowledgeBase) containsAsn() bool {
 	return false
 }
 
+// GetNetworks returns all networks present.
 func (kb *KnowledgeBase) GetNetworks(networkType ...NetworkType) []Network {
 	var result []Network
 	for _, t := range networkType {

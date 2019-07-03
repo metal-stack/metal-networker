@@ -12,18 +12,30 @@ import (
 const (
 	// FRRVersion holds a string that is used in the frr.conf to define the FRR version.
 	FRRVersion = "7.0"
-	// TplFRR defines the name of the template to render FRR configuration.
-	TplFRR = "frr.tpl"
+	// TplFirewallFRR defines the name of the template to render FRR configuration to a 'firewall'.
+	TplFirewallFRR = "frr.firewall.tpl"
+	// TplMachineFRR defines the name of the template to render FRR configuration to a 'machine'.
+	TplMachineFRR = "frr.machine.tpl"
 )
 
-// FRRData represents the information required to render frr.conf.
-type FRRData struct {
-	FRRVersion string
+// CommonFRRData contains attributes that are common to FRR configuration of all kind of bare metal servers.
+type CommonFRRData struct {
 	ASN        int64
 	Comment    string
+	FRRVersion string
 	Hostname   string
 	RouterID   string
-	VRFs       []VRF
+}
+
+// MachineFRRData contains attributes required to render frr.conf of bare metal servers that function as 'machine'.
+type MachineFRRData struct {
+	CommonFRRData
+}
+
+// FirewallFRRData contains attributes required to render frr.conf of bare metal servers that function as 'firewall'.
+type FirewallFRRData struct {
+	CommonFRRData
+	VRFs []VRF
 }
 
 // VRF represents data required to render VRF information into frr.conf.
@@ -39,30 +51,35 @@ type RouteImport struct {
 	AllowedImportPrefixes []string
 }
 
-// FRRConfig represents a thing to apply changes to frr.conf.
-type FRRConfig struct {
-	Applier network.Applier
-}
-
-// NewFRRConfig constructs a new instance of this type.
-func NewFRRConfig(kb KnowledgeBase, tmpFile string) FRRConfig {
-	d := FRRData{}
-	d.ASN = kb.getUnderlayNetwork().Asn
-	d.Comment = versionHeader(kb.Machineuuid)
-	d.FRRVersion = FRRVersion
-	d.Hostname = kb.Hostname
-	d.RouterID = kb.getUnderlayNetwork().Ips[0]
-	d.VRFs = getVRFs(kb)
-
-	v := FRRValidator{tmpFile}
-	a := network.NewNetworkApplier(d, v, nil)
-
-	return FRRConfig{a}
-}
-
 // FRRValidator validates the frr.conf to apply.
 type FRRValidator struct {
 	path string
+}
+
+// NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
+func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
+	var data interface{}
+
+	switch kind {
+	case Firewall:
+		net := kb.getUnderlayNetwork()
+		common := newCommonFRRData(net, kb)
+		data = FirewallFRRData{CommonFRRData: common, VRFs: getVRFs(kb)}
+	case Machine:
+		net := kb.getPrimaryNetwork()
+		common := newCommonFRRData(net, kb)
+		data = MachineFRRData{common}
+	default:
+		log.Fatalf("unknown kind of bare metal: %v", kind)
+	}
+
+	validator := FRRValidator{tmpFile}
+	return network.NewNetworkApplier(data, validator, nil)
+}
+
+func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {
+	return CommonFRRData{FRRVersion: FRRVersion, Hostname: kb.Hostname, Comment: versionHeader(kb.Machineuuid),
+		ASN: net.Asn, RouterID: net.Ips[0]}
 }
 
 // Validate can be used to run validation on FRR configuration using vtysh.

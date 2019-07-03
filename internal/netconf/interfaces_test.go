@@ -6,25 +6,45 @@ import (
 	"testing"
 	"text/template"
 
+	"git.f-i-ts.de/cloud-native/metallib/network"
+
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCompileInterfaces(t *testing.T) {
+type FileRenderInfo struct {
+	expectedOutput   string
+	configuratorType BareMetalType
+	tpl              string
+	newApplierFunc   func(BareMetalType, KnowledgeBase, string) network.Applier
+}
+
+func renderFilesAndVerifyExpectations(t *testing.T, tests []FileRenderInfo) {
 	assert := assert.New(t)
-	expected, err := ioutil.ReadFile("testdata/interfaces")
-	assert.NoError(err)
 
-	kb := NewKnowledgeBase("testdata/install.yaml")
-	assert.NoError(err)
+	for _, t := range tests {
+		expected, err := ioutil.ReadFile(t.expectedOutput)
+		assert.NoError(err)
 
-	a := NewIfacesConfig(kb, "")
-	b := bytes.Buffer{}
+		kb := NewKnowledgeBase("testdata/install.yaml")
+		assert.NoError(err)
+		a := t.newApplierFunc(t.configuratorType, kb, "")
+		b := bytes.Buffer{}
 
-	f := TplIfaces
-	s, err := ioutil.ReadFile(f)
-	assert.NoError(err)
-	tpl := template.Must(template.New(f).Parse(string(s)))
-	err = a.Applier.Render(&b, *tpl)
-	assert.NoError(err)
-	assert.Equal(string(expected), b.String())
+		s, err := ioutil.ReadFile(t.tpl)
+		assert.NoError(err)
+		tpl := template.Must(template.New(t.tpl).Parse(string(s)))
+		err = a.Render(&b, *tpl)
+		assert.NoError(err)
+		assert.Equal(string(expected), b.String())
+	}
+}
+
+func TestCompileInterfaces(t *testing.T) {
+	tests := []FileRenderInfo{
+		{expectedOutput: "testdata/interfaces.firewall", configuratorType: Firewall, tpl: TplFirewallIfaces,
+			newApplierFunc: NewIfacesConfigApplier},
+		{expectedOutput: "testdata/interfaces.machine", configuratorType: Machine, tpl: TplMachineIfaces,
+			newApplierFunc: NewIfacesConfigApplier},
+	}
+	renderFilesAndVerifyExpectations(t, tests)
 }
