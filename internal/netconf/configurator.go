@@ -13,6 +13,8 @@ import (
 type BareMetalType int
 
 const (
+	FileModeSystemd = 0644
+	FileModeDefault = 0600
 	// Firewall defines the bare metal server to function as firewall.
 	Firewall BareMetalType = iota
 	// Machine defines the bare metal server to function as machine.
@@ -68,7 +70,7 @@ func (configurator FirewallConfigurator) Configure() {
 
 	src := mustTmpFile("rules.v4_")
 	applier := NewIptablesConfigApplier(configurator.Kb, src)
-	applyAndCleanUp(applier, TplIptables, src, "/etc/iptables/rules.v4")
+	applyAndCleanUp(applier, TplIptables, src, "/etc/iptables/rules.v4", FileModeDefault)
 
 	chrony, err := NewChronyServiceEnabler(configurator.Kb)
 	if err != nil {
@@ -84,34 +86,38 @@ func (configurator FirewallConfigurator) Configure() {
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 	src := mustTmpFile("interfaces_")
 	applier := NewIfacesConfigApplier(kind, kb, src)
-	applyAndCleanUp(applier, TplFirewallIfaces, src, "/etc/network/interfaces")
+	applyAndCleanUp(applier, TplFirewallIfaces, src, "/etc/network/interfaces", FileModeDefault)
 
 	src = mustTmpFile("hosts_")
 	applier = NewHostsApplier(kb, src)
-	applyAndCleanUp(applier, TplHosts, src, "/etc/hosts")
+	applyAndCleanUp(applier, TplHosts, src, "/etc/hosts", FileModeDefault)
 
 	src = mustTmpFile("frr_")
 	applier = NewFrrConfigApplier(kind, kb, src)
-	applyAndCleanUp(applier, TplFirewallFRR, src, "/etc/frr/frr.conf")
+	applyAndCleanUp(applier, TplFirewallFRR, src, "/etc/frr/frr.conf", FileModeDefault)
 
 	for i, nic := range kb.Nics {
 		prefix := fmt.Sprintf("lan%d_link_", i)
 		src = mustTmpFile(prefix)
 		applier = NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src)
 		dest := fmt.Sprintf("/etc/systemd/network/%d0-lan%d.link", i+1, i)
-		applyAndCleanUp(applier, TplSystemdLink, src, dest)
+		applyAndCleanUp(applier, TplSystemdLink, src, dest, FileModeSystemd)
 
 		prefix = fmt.Sprintf("lan%d_network_", i)
 		src = mustTmpFile(prefix)
 		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src)
 		dest = fmt.Sprintf("/etc/systemd/network/%d0-lan%d.network", i+1, i)
-		applyAndCleanUp(applier, TplSystemdNetwork, src, dest)
+		applyAndCleanUp(applier, TplSystemdNetwork, src, dest, FileModeSystemd)
 	}
 }
 
-func applyAndCleanUp(applier network.Applier, tpl, src, dest string) {
+func applyAndCleanUp(applier network.Applier, tpl, src, dest string, mode os.FileMode) {
 	file := mustRead(tpl)
 	mustApply(applier, file, src, dest)
+	err := os.Chmod(dest, mode)
+	if err != nil {
+		log.Errorf("error to chmod %s to %ui", dest, mode)
+	}
 	_ = os.Remove(src)
 }
 
