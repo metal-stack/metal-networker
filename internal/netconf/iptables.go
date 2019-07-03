@@ -7,19 +7,11 @@ import (
 
 	"github.com/metal-pod/v"
 
-	"go.uber.org/zap"
-
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
 // TplIptables defines the name of the template to render iptables configuration.
 const TplIptables = "rules.v4.tpl"
-
-// IptablesConfig represents a thing to apply changes to iptables configuration.
-type IptablesConfig struct {
-	Applier network.Applier
-	Log     zap.Logger
-}
 
 // IptablesData represents the information required to render iptables configuration.
 type IptablesData struct {
@@ -34,16 +26,20 @@ type SNAT struct {
 	SourceSpecs  []string
 }
 
-// NewIptablesConfig constructs a new instance of this type.
-func NewIptablesConfig(kb KnowledgeBase, tmpFile string) IptablesConfig {
-	d := IptablesData{}
-	d.Comment = fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n# Do not edit.",
-		kb.Machineuuid, v.V.String())
-	d.SNAT = getSNAT(kb)
+// IptablesValidator can validate configuration for network interfaces.
+type IptablesValidator struct {
+	path string
+}
 
-	v := IptablesValidator{tmpFile}
-	a := network.NewNetworkApplier(d, v, nil)
-	return IptablesConfig{Applier: a}
+// NewIptablesConfigApplier constructs a new instance of this type.
+func NewIptablesConfigApplier(kb KnowledgeBase, tmpFile string) network.Applier {
+	data := IptablesData{}
+	data.Comment = fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n# Do not edit.",
+		kb.Machineuuid, v.V.String())
+	data.SNAT = getSNAT(kb)
+
+	validator := IptablesValidator{tmpFile}
+	return network.NewNetworkApplier(data, validator, nil)
 }
 
 func getSNAT(kb KnowledgeBase) []SNAT {
@@ -68,11 +64,6 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 		result = append(result, s)
 	}
 	return result
-}
-
-// IptablesValidator can validate configuration for network interfaces.
-type IptablesValidator struct {
-	path string
 }
 
 // Validate validates network interfaces configuration.

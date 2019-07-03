@@ -9,21 +9,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCompileRules(t *testing.T) {
+func TestNewHostsApplier(t *testing.T) {
 	assert := assert.New(t)
-	expected, err := ioutil.ReadFile("testdata/rules.v4")
+
+	expected, err := ioutil.ReadFile("testdata/hosts")
 	assert.NoError(err)
 
 	kb := NewKnowledgeBase("testdata/install.yaml")
 	assert.NoError(err)
-
-	a := NewIptablesConfigApplier(kb, "")
+	a := NewHostsApplier(kb, "")
 	b := bytes.Buffer{}
 
-	f := TplIptables
-	s, err := ioutil.ReadFile(f)
+	s, err := ioutil.ReadFile(TplHosts)
 	assert.NoError(err)
-	tpl := template.Must(template.New(f).Parse(string(s)))
+	tpl := template.Must(template.New(TplHosts).Parse(string(s)))
 	err = a.Render(&b, *tpl)
 	assert.NoError(err)
 	assert.Equal(string(expected), b.String())

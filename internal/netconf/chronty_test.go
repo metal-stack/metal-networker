@@ -1,25 +1,24 @@
-package system
+package netconf
 
 import (
 	"testing"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestChronyServiceEnabler_Enable(t *testing.T) {
 	assert := assert.New(t)
 
-	network := netconf.Network{Primary: false, Underlay: false, Destinationprefixes: []string{"0.0.0.0/0"}, Vrf: 104009}
+	network := Network{Primary: false, Underlay: false, Destinationprefixes: []string{"0.0.0.0/0"}, Vrf: 104009}
 	tests := []struct {
-		kb              netconf.KnowledgeBase
+		kb              KnowledgeBase
 		vrf             string
 		isErrorExpected bool
 	}{
-		{kb: netconf.KnowledgeBase{Networks: []netconf.Network{network}},
+		{kb: KnowledgeBase{Networks: []Network{network}},
 			vrf:             "vrf104009",
 			isErrorExpected: false},
-		{kb: netconf.KnowledgeBase{Networks: []netconf.Network{}},
+		{kb: KnowledgeBase{Networks: []Network{}},
 			vrf:             "",
 			isErrorExpected: true},
 	}

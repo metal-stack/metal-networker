@@ -25,6 +25,6 @@ contains valid YAML. See [./internal/netconf/testdata/install.yaml](internal/net
 
 ```bash
 # metal-networker <config-file>
-./metal-networker install.yaml
+./metal-networker machine|firewall configure --input install.yaml
 
 ```
