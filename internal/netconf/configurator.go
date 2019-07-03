@@ -13,7 +13,9 @@ import (
 type BareMetalType int
 
 const (
+	// FileModeSystemd represents a file mode that allows systemd to read e.g. /etc/systemd/network files.
 	FileModeSystemd = 0644
+	// FileModeDefault represents the default file mode sufficient e.g. to /etc/network/interfaces or /etc/frr.conf.
 	FileModeDefault = 0600
 	// Firewall defines the bare metal server to function as firewall.
 	Firewall BareMetalType = iota
@@ -112,6 +114,7 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 }
 
 func applyAndCleanUp(applier network.Applier, tpl, src, dest string, mode os.FileMode) {
+	log.Infof("rendering %s to %s (mode: %ui)", tpl, dest, mode)
 	file := mustRead(tpl)
 	mustApply(applier, file, src, dest)
 	err := os.Chmod(dest, mode)
@@ -123,7 +126,6 @@ func applyAndCleanUp(applier network.Applier, tpl, src, dest string, mode os.Fil
 
 func mustApply(applier network.Applier, tpl, src, dest string) {
 	t := template.Must(template.New(TplFirewallIfaces).Parse(tpl))
-	log.Infof("applying changes to: %s", dest)
 	err := applier.Apply(*t, src, dest, false)
 	if err != nil {
 		log.Panic(err)
@@ -131,7 +133,6 @@ func mustApply(applier network.Applier, tpl, src, dest string) {
 }
 
 func mustRead(name string) string {
-	log.Infof("reading template: %s", name)
 	c, err := ioutil.ReadFile(name)
 	if err != nil {
 		log.Panic(err)
