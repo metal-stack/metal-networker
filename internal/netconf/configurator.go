@@ -88,7 +88,11 @@ func (configurator FirewallConfigurator) Configure() {
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 	src := mustTmpFile("interfaces_")
 	applier := NewIfacesConfigApplier(kind, kb, src)
-	applyAndCleanUp(applier, TplFirewallIfaces, src, "/etc/network/interfaces", FileModeDefault)
+	tpl := TplFirewallIfaces
+	if kind == Machine {
+		tpl = TplMachineIfaces
+	}
+	applyAndCleanUp(applier, tpl, src, "/etc/network/interfaces", FileModeDefault)
 
 	src = mustTmpFile("hosts_")
 	applier = NewHostsApplier(kb, src)
@@ -96,7 +100,11 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 
 	src = mustTmpFile("frr_")
 	applier = NewFrrConfigApplier(kind, kb, src)
-	applyAndCleanUp(applier, TplFirewallFRR, src, "/etc/frr/frr.conf", FileModeDefault)
+	tpl = TplFirewallFRR
+	if kind == Machine {
+		tpl = TplMachineFRR
+	}
+	applyAndCleanUp(applier, tpl, src, "/etc/frr/frr.conf", FileModeDefault)
 
 	for i, nic := range kb.Nics {
 		prefix := fmt.Sprintf("lan%d_link_", i)
