@@ -15,6 +15,8 @@ type BareMetalType int
 const (
 	// FileModeSystemd represents a file mode that allows systemd to read e.g. /etc/systemd/network files.
 	FileModeSystemd = 0644
+	// FileModeSixFourFour represents file mode 0644
+	FileModeSixFourFour = 0644
 	// FileModeDefault represents the default file mode sufficient e.g. to /etc/network/interfaces or /etc/frr.conf.
 	FileModeDefault = 0600
 	// Firewall defines the bare metal server to function as firewall.
@@ -97,6 +99,10 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 	src = mustTmpFile("hosts_")
 	applier = NewHostsApplier(kb, src)
 	applyAndCleanUp(applier, TplHosts, src, "/etc/hosts", FileModeDefault)
+
+	src = mustTmpFile("hostname_")
+	applier = NewHostnameApplier(kb, src)
+	applyAndCleanUp(applier, TplHostname, src, "/etc/hostname", FileModeSixFourFour)
 
 	src = mustTmpFile("frr_")
 	applier = NewFrrConfigApplier(kind, kb, src)
