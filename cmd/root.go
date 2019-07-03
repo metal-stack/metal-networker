@@ -107,7 +107,7 @@ func Configure(kind netconf.BareMetalType, cmd *cobra.Command, args []string) er
 
 	kb := netconf.NewKnowledgeBase(input)
 	netconf.NewConfigurator(kind, kb).Configure()
-	log.Info("finished. Shutting down.")
+	log.Info("completed. Exiting..")
 
 	return nil
 }
