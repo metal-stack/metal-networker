@@ -3,9 +3,9 @@
 #
 # See /etc/systemd/network for additional network configuration.
 
-# {{ .CommonIfacesData.Underlay.Comment }}
+# {{ .CommonIfacesData.Loopback.Comment }}
 auto lo
 iface lo inet static
-{{- range .CommonIfacesData.Underlay.LoopbackIps }}
+{{- range .CommonIfacesData.Loopback.IPs }}
     address {{ . }}/32
 {{- end }}

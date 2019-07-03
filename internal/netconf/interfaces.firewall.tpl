@@ -5,9 +5,9 @@
 
 auto all
 
-# {{ .Underlay.Comment }}
+# {{ .Loopback.Comment }}
 iface lo inet loopback
-{{- range .Underlay.LoopbackIps }}
+{{- range .Loopback.IPs }}
     address {{ . }}/32
 {{- end }}
 

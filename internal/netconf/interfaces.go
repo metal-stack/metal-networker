@@ -18,9 +18,9 @@ const (
 // server.
 type CommonIfacesData struct {
 	Comment  string
-	Underlay struct {
-		Comment     string
-		LoopbackIps []string
+	Loopback struct {
+		Comment string
+		IPs     []string
 	}
 }
 
@@ -87,8 +87,8 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 	case Firewall:
 		common := CommonIfacesData{}
 		common.Comment = versionHeader(kb.Machineuuid)
-		common.Underlay.Comment = getUnderlayComment(kb)
-		common.Underlay.LoopbackIps = kb.getUnderlayNetwork().Ips
+		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getUnderlayNetwork().Networkid)
+		common.Loopback.IPs = kb.getUnderlayNetwork().Ips
 
 		f := FirewallIfacesData{}
 		f.CommonIfacesData = common
@@ -101,8 +101,8 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 	case Machine:
 		common := CommonIfacesData{}
 		common.Comment = versionHeader(kb.Machineuuid)
-		common.Underlay.Comment = getUnderlayComment(kb)
-		common.Underlay.LoopbackIps = kb.getPrimaryNetwork().Ips
+		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getPrimaryNetwork().Networkid)
+		common.Loopback.IPs = kb.getPrimaryNetwork().Ips
 
 		data = MachineIfacesData{common}
 		validator = MachineIfacesValidator{CommonIfacesValidator{path: tmpFile}}
@@ -186,9 +186,4 @@ func getBridgePorts(kb KnowledgeBase) string {
 		}
 	}
 	return result
-}
-
-func getUnderlayComment(kb KnowledgeBase) string {
-	n := kb.getUnderlayNetwork()
-	return fmt.Sprintf("networkid: %s", n.Networkid)
 }

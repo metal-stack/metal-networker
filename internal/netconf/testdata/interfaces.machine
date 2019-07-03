@@ -3,7 +3,7 @@
 #
 # See /etc/systemd/network for additional network configuration.
 
-# networkid: underlay-vagrant-lab
+# networkid: bc830818-2df1-4904-8c40-4322296d393d
 auto lo
 iface lo inet static
     address 10.0.16.2/32

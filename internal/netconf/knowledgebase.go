@@ -21,7 +21,7 @@ const VLANOffset = 1000
 type NetworkType int
 
 const (
-	// Underlay represents the Underlay network.
+	// Loopback represents the Loopback network.
 	Underlay NetworkType = iota
 	// Primary represents the primary network.
 	Primary
