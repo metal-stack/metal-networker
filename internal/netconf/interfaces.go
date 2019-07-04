@@ -14,79 +14,80 @@ const (
 	TplMachineIfaces  = "interfaces.machine.tpl"
 )
 
-// CommonIfacesData contains attributes required to render common network interfaces configuration of a bare metal
-// server.
-type CommonIfacesData struct {
-	Comment  string
-	Loopback struct {
-		Comment string
-		IPs     []string
-	}
-}
-
-// MachineIfacesData contains attributes required to render network interfaces configuration of a bare metal
-// server that functions as 'machine'.
-type MachineIfacesData struct {
-	CommonIfacesData
-}
-
-// FirewallIfacesData contains attributes required to render network interfaces configuration of a bare metal
-// server that functions as 'firewall'.
-type FirewallIfacesData struct {
-	CommonIfacesData
-	Bridge struct {
-		Ports string
-		Vids  string
-	}
-	EVPNInterfaces []EVPNIfaces
-}
-
-// EVPNIfaces represents the information required to render EVPN interfaces configuration.
-type EVPNIfaces struct {
-	VRF struct {
-		ID      int
-		Comment string
-	}
-	SVI struct {
-		VlanID    int
-		Comment   string
-		Addresses []string
-	}
-	VXLAN struct {
+type (
+	// CommonIfacesData contains attributes required to render common network interfaces configuration of a bare metal
+	// server.
+	CommonIfacesData struct {
 		Comment  string
-		ID       int
-		TunnelIP string
+		Loopback struct {
+			Comment string
+			IPs     []string
+		}
 	}
-	PostUpCommands  []string
-	PreDownCommands []string
-}
 
-// CommonIfacesValidator defines the base type of an interfaces validator.
-type CommonIfacesValidator struct {
-	path string
-}
+	// MachineIfacesData contains attributes required to render network interfaces configuration of a bare metal
+	// server that functions as 'machine'.
+	MachineIfacesData struct {
+		CommonIfacesData
+	}
 
-// MachineIfacesValidator defines a type to validate interfaces configuration of a bare metal server that function as
-// 'machine'.
-type MachineIfacesValidator struct {
-	CommonIfacesValidator
-}
+	// FirewallIfacesData contains attributes required to render network interfaces configuration of a bare metal
+	// server that functions as 'firewall'.
+	FirewallIfacesData struct {
+		CommonIfacesData
+		Bridge struct {
+			Ports string
+			Vids  string
+		}
+		EVPNInterfaces []EVPNIfaces
+	}
 
-// FirewallIfacesValidator defines a type to validate interfaces configuration of a bare metal server that function as
-// 'firewall'.
-type FirewallIfacesValidator struct {
-	CommonIfacesValidator
-}
+	// EVPNIfaces represents the information required to render EVPN interfaces configuration.
+	EVPNIfaces struct {
+		VRF struct {
+			ID      int
+			Comment string
+		}
+		SVI struct {
+			VlanID    int
+			Comment   string
+			Addresses []string
+		}
+		VXLAN struct {
+			Comment  string
+			ID       int
+			TunnelIP string
+		}
+	}
+
+	// CommonIfacesValidator defines the base type of an interfaces validator.
+	CommonIfacesValidator struct {
+		path string
+	}
+
+	// MachineIfacesValidator defines a type to validate interfaces configuration of a bare metal server that function as
+	// 'machine'.
+	MachineIfacesValidator struct {
+		CommonIfacesValidator
+	}
+
+	// FirewallIfacesValidator defines a type to validate interfaces configuration of a bare metal server that function as
+	// 'firewall'.
+	FirewallIfacesValidator struct {
+		CommonIfacesValidator
+	}
+)
 
 // NewIfacesConfigApplier constructs a new instance of this type.
 func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
 	var data interface{}
 	var validator network.Validator
+	common := CommonIfacesData{
+		Comment: versionHeader(kb.Machineuuid),
+	}
 
 	switch kind {
 	case Firewall:
-		common := CommonIfacesData{}
-		common.Comment = versionHeader(kb.Machineuuid)
 		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getUnderlayNetwork().Networkid)
 		common.Loopback.IPs = kb.getUnderlayNetwork().Ips
 
@@ -99,8 +100,6 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		data = f
 		validator = FirewallIfacesValidator{CommonIfacesValidator{path: tmpFile}}
 	case Machine:
-		common := CommonIfacesData{}
-		common.Comment = versionHeader(kb.Machineuuid)
 		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getPrimaryNetwork().Networkid)
 		common.Loopback.IPs = kb.getPrimaryNetwork().Ips
 
@@ -127,7 +126,6 @@ func (v FirewallIfacesValidator) Validate() error {
 
 func getEVPNInterfaces(kb KnowledgeBase) []EVPNIfaces {
 	var result []EVPNIfaces
-	primary := kb.getPrimaryNetwork()
 	for _, n := range kb.Networks {
 		if n.Underlay {
 			continue
@@ -144,14 +142,6 @@ func getEVPNInterfaces(kb KnowledgeBase) []EVPNIfaces {
 
 		e.VRF.Comment = fmt.Sprintf("vrf (networkid: %s)", n.Networkid)
 		e.VRF.ID = n.Vrf
-
-		svi := fmt.Sprintf("vlan%d", n.Vrf)
-		if n.Nat {
-			for _, p := range primary.Prefixes {
-				e.PostUpCommands = []string{fmt.Sprintf("iptables -t nat -A POSTROUTING -s %s -o %s -j MASQUERADE", p, svi)}
-				e.PreDownCommands = []string{fmt.Sprintf("iptables -t nat -D POSTROUTING -s %s -o %s -j MASQUERADE", p, svi)}
-			}
-		}
 
 		result = append(result, e)
 	}

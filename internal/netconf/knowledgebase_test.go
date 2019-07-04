@@ -70,57 +70,176 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal(104010, n.Vrf)
 }
 
-func TestValidationSucceeds(t *testing.T) {
-	assert := assert.New(t)
-
-	d := mustNewKnowledgeBase(t)
-	v := d.validate()
-	assert.NoError(v)
+func stubKnowledgeBase() KnowledgeBase {
+	return KnowledgeBase{Networks: []Network{
+		{Primary: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 1011209},
+		{Underlay: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 0},
+		{Primary: false, Underlay: false, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: 1011209, Vrf: 1011209},
+	}, Nics: []NIC{{Mac: "00:00:00:00:00:00"}}}
 }
 
-func TestValidationFailsForUnderlay(t *testing.T) {
+func TestKnowledgeBase_Validate(t *testing.T) {
 	assert := assert.New(t)
-	d := mustNewKnowledgeBase(t)
 
-	for i := 0; i < len(d.Networks); i++ {
-		d.Networks[i].Underlay = false
+	tests := []struct {
+		expectedErrMsg string
+		kb             KnowledgeBase
+		kinds          []BareMetalType
+	}{{
+		expectedErrMsg: "",
+		kb:             stubKnowledgeBase(),
+		kinds:          []BareMetalType{Firewall, Machine},
+	},
+		{
+			expectedErrMsg: "expectation at least one network is present failed",
+			kb:             stripNetworks(stubKnowledgeBase()),
+			kinds:          []BareMetalType{Firewall, Machine},
+		},
+		{
+			expectedErrMsg: "at least one IP must be present to be considered as LOOPBACK IP (" +
+				"'primary: true' network IP for machine, 'underlay: true' network IP for firewall",
+			kb:    stripIPs(stubKnowledgeBase()),
+			kinds: []BareMetalType{Firewall, Machine},
+		},
+		{expectedErrMsg: "expectation exactly one underlay network is present failed",
+			kb:    maskUnderlayNetworks(stubKnowledgeBase()),
+			kinds: []BareMetalType{Firewall}},
+		{expectedErrMsg: "expectation exactly one 'primary: true' network is present failed",
+			kb:    maskPrimaryNetworks(stubKnowledgeBase()),
+			kinds: []BareMetalType{Firewall, Machine}},
+		{expectedErrMsg: "'asn' of primary (machine) resp. underlay (firewall) network must not be missing",
+			kb:    stripPrimaryNetworkASN(stubKnowledgeBase()),
+			kinds: []BareMetalType{Machine}},
+		{expectedErrMsg: "'asn' of primary (machine) resp. underlay (firewall) network must not be missing",
+			kb:    stripUnderlayNetworkASN(stubKnowledgeBase()),
+			kinds: []BareMetalType{Firewall}},
+		{expectedErrMsg: "at least one 'nics/nic' definition must be present",
+			kb:    stripNICs(stubKnowledgeBase()),
+			kinds: []BareMetalType{Machine}},
+		{expectedErrMsg: "each 'nic' definition must contain a valid 'mac'",
+			kb:    stripMACs(stubKnowledgeBase()),
+			kinds: []BareMetalType{Firewall, Machine}},
+		{expectedErrMsg: "primary network must not lack prefixes since nat is required",
+			kb:    setupIllegalNat(stubKnowledgeBase()),
+			kinds: []BareMetalType{Firewall}},
+		{expectedErrMsg: "non-primary, non-underlay networks must contain destination prefix(es) to make any sense of it",
+			kb:    stripDestinationPrefixesFromExternalNetworks(stubKnowledgeBase()),
+			kinds: []BareMetalType{Firewall}},
+		{expectedErrMsg: "networks with 'underlay: false' must contain a value vor 'vrf' as it is used for BGP",
+			kb:    stripVRFValueOfNonUnderlayNetworks(stubKnowledgeBase()),
+			kinds: []BareMetalType{Firewall}},
+		{expectedErrMsg: "each 'nic' definition must contain a valid 'mac'",
+			kb:    unlegalizeMACs(stubKnowledgeBase()),
+			kinds: []BareMetalType{Firewall, Machine}},
 	}
-	err := d.validate()
-	assert.Error(err, "missing validation error for absent underlay")
 
-	for i := 0; i < len(d.Networks); i++ {
-		d.Networks[i].Underlay = true
-	}
-	err = d.validate()
-	assert.Error(err, "missing validation error for multiple underlays failed")
-}
-
-func TestValidationFailsForPrimary(t *testing.T) {
-	assert := assert.New(t)
-	d := mustNewKnowledgeBase(t)
-
-	for i := 0; i < len(d.Networks); i++ {
-		d.Networks[i].Primary = false
-	}
-	err := d.validate()
-	assert.Error(err, "missing validation error for absent primary")
-
-	for i := 0; i < len(d.Networks); i++ {
-		d.Networks[i].Primary = true
-	}
-	err = d.validate()
-	assert.Error(err, "missing validation error for multiple primaries failed")
-}
-
-func TestValidationFailsForMissingLoopbackIp(t *testing.T) {
-	assert := assert.New(t)
-	d := mustNewKnowledgeBase(t)
-
-	for i, n := range d.Networks {
-		if n.Underlay {
-			d.Networks[i].Ips = []string{}
+	for _, test := range tests {
+		for _, kind := range test.kinds {
+			actualErr := test.kb.Validate(kind)
+			if test.expectedErrMsg == "" {
+				assert.NoError(actualErr)
+				continue
+			}
+			assert.EqualError(actualErr, test.expectedErrMsg, "expected error: %s", test.expectedErrMsg)
 		}
 	}
-	err := d.validate()
-	assert.Error(err, "missing validation error for absent loopback ip")
+}
+
+func stripVRFValueOfNonUnderlayNetworks(kb KnowledgeBase) KnowledgeBase {
+	for i := 0; i < len(kb.Networks); i++ {
+		// underlay runs in default vrf and no name is required
+		if kb.Networks[i].Underlay {
+			continue
+		}
+		kb.Networks[i].Vrf = 0
+	}
+	return kb
+}
+
+// It makes no sense to have an external network without destination prefixes.
+// Destination prefixes are used to import routes from the external network.
+// Without route import there is no communication into that external network.
+func stripDestinationPrefixesFromExternalNetworks(kb KnowledgeBase) KnowledgeBase {
+	kb.Networks[0].Nat = true
+	for i := 0; i < len(kb.Networks); i++ {
+		if !kb.Networks[i].Underlay && !kb.Networks[i].Primary {
+			kb.Networks[i].Destinationprefixes = []string{}
+		}
+	}
+	return kb
+}
+
+func setupIllegalNat(kb KnowledgeBase) KnowledgeBase {
+	kb.Networks[0].Nat = true
+	for i := 0; i < len(kb.Networks); i++ {
+		if kb.Networks[i].Primary {
+			kb.Networks[i].Prefixes = []string{}
+		}
+	}
+	return kb
+}
+
+func unlegalizeMACs(kb KnowledgeBase) KnowledgeBase {
+	for i := 0; i < len(kb.Nics); i++ {
+		kb.Nics[i].Mac = "1:2.3"
+	}
+	return kb
+}
+
+func stripMACs(kb KnowledgeBase) KnowledgeBase {
+	for i := 0; i < len(kb.Nics); i++ {
+		kb.Nics[i].Mac = ""
+	}
+	return kb
+}
+
+func stripNICs(kb KnowledgeBase) KnowledgeBase {
+	kb.Nics = []NIC{}
+	return kb
+}
+
+func stripUnderlayNetworkASN(kb KnowledgeBase) KnowledgeBase {
+	for i := 0; i < len(kb.Networks); i++ {
+		if kb.Networks[i].Underlay {
+			kb.Networks[i].Asn = 0
+		}
+	}
+	return kb
+}
+
+func stripPrimaryNetworkASN(kb KnowledgeBase) KnowledgeBase {
+	for i := 0; i < len(kb.Networks); i++ {
+		if kb.Networks[i].Primary {
+			kb.Networks[i].Asn = 0
+		}
+	}
+	return kb
+}
+
+func stripIPs(kb KnowledgeBase) KnowledgeBase {
+	for i := 0; i < len(kb.Networks); i++ {
+		kb.Networks[i].Ips = []string{}
+	}
+	return kb
+}
+
+func stripNetworks(kb KnowledgeBase) KnowledgeBase {
+	kb.Networks = []Network{}
+	return kb
+}
+
+func maskUnderlayNetworks(kb KnowledgeBase) KnowledgeBase {
+	for i := 0; i < len(kb.Networks); i++ {
+		kb.Networks[i].Underlay = false
+		// avoid to run into validation error for absent vrf
+		kb.Networks[i].Vrf = 10112009
+	}
+	return kb
+}
+
+func maskPrimaryNetworks(kb KnowledgeBase) KnowledgeBase {
+	for i := 0; i < len(kb.Networks); i++ {
+		kb.Networks[i].Primary = false
+	}
+	return kb
 }

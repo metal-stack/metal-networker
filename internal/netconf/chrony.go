@@ -34,5 +34,5 @@ func getDefaultRouteVRFName(kb KnowledgeBase) (string, error) {
 			}
 		}
 	}
-	return "", fmt.Errorf("there is no network providing a 0.0.0.0/0 route")
+	return "", fmt.Errorf("there is no network providing a default (0.0.0.0/0) route")
 }

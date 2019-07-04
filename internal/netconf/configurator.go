@@ -25,25 +25,27 @@ const (
 	Machine
 )
 
-// Configurator is an interface to configure bare metal servers.
-type Configurator interface {
-	Configure()
-}
+type (
+	// Configurator is an interface to configure bare metal servers.
+	Configurator interface {
+		Configure()
+	}
 
-// CommonConfigurator contains information that is common to all configurators.
-type CommonConfigurator struct {
-	Kb KnowledgeBase
-}
+	// CommonConfigurator contains information that is common to all configurators.
+	CommonConfigurator struct {
+		Kb KnowledgeBase
+	}
 
-// MachineConfigurator is a configurator that configures a bare metal server as 'machine'.
-type MachineConfigurator struct {
-	*CommonConfigurator
-}
+	// MachineConfigurator is a configurator that configures a bare metal server as 'machine'.
+	MachineConfigurator struct {
+		*CommonConfigurator
+	}
 
-// FirewallConfigurator is a configurator that configures a bare metal server as 'firewall'.
-type FirewallConfigurator struct {
-	*CommonConfigurator
-}
+	// FirewallConfigurator is a configurator that configures a bare metal server as 'firewall'.
+	FirewallConfigurator struct {
+		*CommonConfigurator
+	}
+)
 
 // NewConfigurator creates a new configurator.
 func NewConfigurator(kind BareMetalType, kb KnowledgeBase) Configurator {
