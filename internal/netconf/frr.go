@@ -18,43 +18,45 @@ const (
 	TplMachineFRR = "frr.machine.tpl"
 )
 
-// CommonFRRData contains attributes that are common to FRR configuration of all kind of bare metal servers.
-type CommonFRRData struct {
-	ASN        int64
-	Comment    string
-	FRRVersion string
-	Hostname   string
-	RouterID   string
-}
+type (
+	// CommonFRRData contains attributes that are common to FRR configuration of all kind of bare metal servers.
+	CommonFRRData struct {
+		ASN        int64
+		Comment    string
+		FRRVersion string
+		Hostname   string
+		RouterID   string
+	}
 
-// MachineFRRData contains attributes required to render frr.conf of bare metal servers that function as 'machine'.
-type MachineFRRData struct {
-	CommonFRRData
-}
+	// MachineFRRData contains attributes required to render frr.conf of bare metal servers that function as 'machine'.
+	MachineFRRData struct {
+		CommonFRRData
+	}
 
-// FirewallFRRData contains attributes required to render frr.conf of bare metal servers that function as 'firewall'.
-type FirewallFRRData struct {
-	CommonFRRData
-	VRFs []VRF
-}
+	// FirewallFRRData contains attributes required to render frr.conf of bare metal servers that function as 'firewall'.
+	FirewallFRRData struct {
+		CommonFRRData
+		VRFs []VRF
+	}
 
-// VRF represents data required to render VRF information into frr.conf.
-type VRF struct {
-	ID           int
-	VNI          int
-	RouteImports []RouteImport
-}
+	// VRF represents data required to render VRF information into frr.conf.
+	VRF struct {
+		ID           int
+		VNI          int
+		RouteImports []RouteImport
+	}
 
-// RouteImport represents data to apply for dynamic route leak configuration.
-type RouteImport struct {
-	SourceVRF             string
-	AllowedImportPrefixes []string
-}
+	// RouteImport represents data to apply for dynamic route leak configuration.
+	RouteImport struct {
+		SourceVRF             string
+		AllowedImportPrefixes []string
+	}
 
-// FRRValidator validates the frr.conf to apply.
-type FRRValidator struct {
-	path string
-}
+	// FRRValidator validates the frr.conf to apply.
+	FRRValidator struct {
+		path string
+	}
+)
 
 // NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
 func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
@@ -91,24 +93,23 @@ func (v FRRValidator) Validate() error {
 
 func getVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
-	primary := kb.getPrimaryNetwork()
 	networks := kb.GetNetworks(Primary, External)
 	for _, n := range networks {
 		vrf := VRF{ID: n.Vrf, VNI: n.Vrf}
 		// Between VRFs we use dynamic route leak to import the desired prefixes
 		if n.Primary {
 			// Import routes to reach out from primary network into external networks.
-			vrf.RouteImports = getRouteImportsIntoExternalNetworks(kb)
+			vrf.RouteImports = getImportsFromExternalNetworks(kb)
 		} else {
 			// Import routes to reach out from an external network into primary and other external networks.
-			vrf.RouteImports = getRouteImportsInto(primary, n)
+			vrf.RouteImports = getImportsFromPrimaryNetwork(kb, n)
 		}
 		result = append(result, vrf)
 	}
 	return result
 }
 
-func getRouteImportsIntoExternalNetworks(kb KnowledgeBase) []RouteImport {
+func getImportsFromExternalNetworks(kb KnowledgeBase) []RouteImport {
 	var result []RouteImport
 	networks := kb.GetNetworks(External)
 	for _, n := range networks {
@@ -131,17 +132,20 @@ func getRouteImportsIntoExternalNetworks(kb KnowledgeBase) []RouteImport {
 	return result
 }
 
-func getRouteImportsInto(primary, n Network) []RouteImport {
+func getImportsFromPrimaryNetwork(kb KnowledgeBase, n Network) []RouteImport {
 	var result []RouteImport
-	var a []string
-	a = append(a, primary.Prefixes...)
-	a = append(a, n.Prefixes...)
-	if len(a) == 0 {
+	var prefixes []string
+	primary := kb.getPrimaryNetwork()
+	// considers the case: machine's associated IP within the primary network
+	prefixes = append(prefixes, primary.Prefixes...)
+	// considers the case: machine's associated IP within the given network
+	prefixes = append(prefixes, n.Prefixes...)
+	if len(prefixes) == 0 {
 		return result
 	}
 
 	var allowed []string
-	for _, p := range a {
+	for _, p := range prefixes {
 		allowed = append(allowed, p+" le 32")
 	}
 	ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", primary.Vrf), AllowedImportPrefixes: allowed}

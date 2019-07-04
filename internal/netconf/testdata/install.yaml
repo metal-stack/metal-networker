@@ -54,10 +54,6 @@
 ---
 # Applies to hostname of the firewall.
 hostname: firewall
-# [IGNORED]
-ipaddress: 10.0.16.2
-# [IGNORED]
-asn: "4200003073"
 networks:
   # === Tenant Network (primary=true)
     # [IGNORED]
@@ -73,7 +69,7 @@ networks:
     nat: false
     # [IGNORED in case of primary network]
     networkid: bc830818-2df1-4904-8c40-4322296d393d
-    # Prefixes that originate the given IP's are considered for static route leak to route return traffic to the tenant.
+    # considered as source range for nat and to figure out allowed prefixes for route imports from primary network into non-primary, non-underlay network
     prefixes:
       - 10.0.16.0/22
     primary: true
@@ -92,9 +88,8 @@ networks:
       - 185.1.2.3
     # In case nat equals true, Source NAT via SVI is added.
     nat: true
-    # [IGNORED]
     networkid: internet-vagrant-lab
-    # In case of nat the prefixes are used to define the Source NAT source specification.
+    # considered to figure out allowed prefixes for route imports from primary network into non-primary, non-underlay network
     prefixes:
       - 185.1.2.0/24
       - 185.27.0.0/22
@@ -111,7 +106,6 @@ networks:
     ips:
       - 10.1.0.1
     nat: false
-    # [UNUSED]
     networkid: underlay-vagrant-lab
     # [IGNORED in case of UNDERLAY]
     prefixes:
@@ -121,23 +115,20 @@ networks:
     # [IGNORED] Underlay runs in default VRF.
     vrf: 0
   - asn: 4200003073
-    # Considered to establish static route leak to reach out from tenant VRF into the external networks.
+    # considered to figure out allowed prefixes for route imports from external network into tenant network
     destinationprefixes:
       - 100.127.1.0/24
     # Applied to local loopback as /32.
     ips:
       - 100.127.129.1
     nat: true
-    # [UNUSED]
     networkid: mpls-nbg-w8101-test
-    # [IGNORED in case of UNDERLAY]
+    # considered to figure out allowed prefixes for route imports from primary network into non-primary, non-underlay network
     prefixes:
       - 100.127.129.0/24
     primary: false
     underlay: false
-    # [IGNORED] Underlay runs in default VRF.
     vrf: 104010
-# [IGNORED]
 machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
 # [IGNORED]
 sshpublickey: ""

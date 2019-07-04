@@ -5,17 +5,19 @@ import "git.f-i-ts.de/cloud-native/metallib/network"
 // TplHosts defines the name of the template to render hosts file.
 const TplHosts = "hosts.tpl"
 
-// HostsData contains data to render hosts file.
-type HostsData struct {
-	Comment  string
-	Hostname string
-	IP       string
-}
+type (
+	// HostsData contains data to render hosts file.
+	HostsData struct {
+		Comment  string
+		Hostname string
+		IP       string
+	}
 
-// HostsValidator validates hosts file.
-type HostsValidator struct {
-	path string
-}
+	// HostsValidator validates hosts file.
+	HostsValidator struct {
+		path string
+	}
+)
 
 // NewHostsApplier creates a new hosts applier.
 func NewHostsApplier(kb KnowledgeBase, tmpFile string) network.Applier {

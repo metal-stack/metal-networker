@@ -9,17 +9,19 @@ import (
 // firewallCmd represents the firewall command
 var (
 	firewallCmd = &cobra.Command{
-		Use:   "firewall",
-		Short: "Treat a bare metal server as a 'firewall'",
-		Long:  `"metal-networker firewall" treats a bare metal server as 'firewall'`,
+		Use:     "firewall",
+		Aliases: []string{"fw"},
+		Short:   "Treat a bare metal server as a 'firewall'",
+		Long:    `"metal-networker firewall" treats a bare metal server as 'firewall'`,
 	}
 	firewallConfigureCmd = &cobra.Command{
-		Use:   "configure",
-		Short: "Configures network aspects",
+		Use:     "configure",
+		Aliases: []string{"c"},
+		Short:   "Configures network aspects",
 		Long: `"metal-networker firewall configure" configures network aspects of a bare metal server to function as
 a 'firewall'`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return Configure(netconf.Firewall, cmd, args)
+			return configure(netconf.Firewall, cmd, args)
 		},
 	}
 )

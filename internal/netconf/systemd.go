@@ -15,28 +15,30 @@ const (
 	MTUMachine = 9000
 )
 
-// SystemdCommonData contains attributes common to systemd.network and systemd.link files.
-type SystemdCommonData struct {
-	Comment string
-	Index   int
-}
+type (
+	// SystemdCommonData contains attributes common to systemd.network and systemd.link files.
+	SystemdCommonData struct {
+		Comment string
+		Index   int
+	}
 
-// SystemdNetworkData contains attributes required to render systemd.network files.
-type SystemdNetworkData struct {
-	SystemdCommonData
-}
+	// SystemdNetworkData contains attributes required to render systemd.network files.
+	SystemdNetworkData struct {
+		SystemdCommonData
+	}
 
-// SystemdLinkData contains attributes required to render systemd.link files.
-type SystemdLinkData struct {
-	SystemdCommonData
-	MAC string
-	MTU int
-}
+	// SystemdLinkData contains attributes required to render systemd.link files.
+	SystemdLinkData struct {
+		SystemdCommonData
+		MAC string
+		MTU int
+	}
 
-// SystemdValidator validates systemd.network and system.link files.
-type SystemdValidator struct {
-	path string
-}
+	// SystemdValidator validates systemd.network and system.link files.
+	SystemdValidator struct {
+		path string
+	}
+)
 
 // NewSystemdNetworkApplier creates a new Applier to configure systemd.network.
 func NewSystemdNetworkApplier(machineUUID string, nicIndex int, tmpFile string) network.Applier {
@@ -59,12 +61,14 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 		log.Fatalf("unknown configuratorType of configurator: %validator", kind)
 	}
 
-	data := SystemdLinkData{}
-	data.Comment = versionHeader(machineUUID)
-	data.MTU = mtu
-	data.Index = nicIndex
-	data.MAC = nic.Mac
-
+	data := SystemdLinkData{
+		SystemdCommonData: SystemdCommonData{
+			Comment: versionHeader(machineUUID),
+			Index:   nicIndex,
+		},
+		MTU: mtu,
+		MAC: nic.Mac,
+	}
 	validator := SystemdValidator{tmpFile}
 	return network.NewNetworkApplier(data, validator, nil)
 }
