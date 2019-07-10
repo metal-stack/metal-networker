@@ -9,32 +9,31 @@
 #
 *filter
 # Allow any traffic by default.
-:INPUT ACCEPT [0:0]
+:INPUT DROP [0:0]
 :FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [0:0]
+:OUTPUT DROP [0:0]
 :refuse - [0:0]
 
 # Control behavior for incoming packets.
 ## Accept
+--append INPUT --match conntrack --ctstate RELATED,ESTABLISHED --match comment --comment "stateful input" --jump ACCEPT
 --append INPUT --in-interface lo --match comment --comment "BGP unnumbered" --jump ACCEPT
 --append INPUT --source 10.0.0.0/8 --protocol udp --match udp --destination-port 4789 --match comment --comment "incoming VXLAN" --jump ACCEPT
---append INPUT --match conntrack --ctstate RELATED,ESTABLISHED --match comment --comment "stateful input" --jump ACCEPT
 --append INPUT --protocol tcp --match tcp --destination-port 22 --match conntrack --ctstate NEW --jump ACCEPT --match comment --comment "SSH incoming connections"
-### Drop
+## Drop
 --append INPUT --match conntrack --ctstate INVALID --match comment --comment "drop invalid packets to prevent malicious activity" --jump DROP
 --append INPUT --jump refuse
 
 # Control behavior for forwarded packets.
-## Accept
---append FORWARD --jump ACCEPT
 ## Drop
---append FORWARD --jump refuse
+--append FORWARD --match conntrack --ctstate INVALID --match comment --comment "drop invalid packets from forwarding to prevent malicious activity" --jump DROP
+--append FORWARD --protocol tcp --match tcp --destination-port 179 --match conntrack --ctstate NEW --match comment --comment "block bgp forward to machines" --jump refuse
+## Accept
 
 # Control behavior for outgoing packets.
 # Accept
---append OUTPUT --jump ACCEPT
---append OUTPUT --destination 10.0.0.0/8 --protocol udp --match udp --destination-port 4789 --match comment --comment "outgoing VXLAN" --jump ACCEPT
 --append OUTPUT --match conntrack --ctstate RELATED,ESTABLISHED --match comment --comment "stateful output"  --jump ACCEPT
+--append OUTPUT --destination 10.0.0.0/8 --protocol udp --match udp --destination-port 4789 --match comment --comment "outgoing VXLAN" --jump ACCEPT
 # Drop
 --append OUTPUT --match conntrack --ctstate INVALID --match comment --comment "drop invalid packets" --jump DROP
 --append OUTPUT --jump refuse
