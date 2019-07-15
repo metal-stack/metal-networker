@@ -47,7 +47,7 @@ func TestNewSystemdLinkConfig(t *testing.T) {
 		expected, err := ioutil.ReadFile(t.expectedOutput)
 		assert.NoError(err)
 
-		nic := NewKnowledgeBase("testdata/install.yaml").Nics[t.nicIndex]
+		nic := NewKnowledgeBase("testdata/firewall.yaml").Nics[t.nicIndex]
 		assert.NoError(err)
 		a := NewSystemdLinkApplier(t.configuratorType, t.machineUUID, t.nicIndex, nic, "")
 		b := bytes.Buffer{}

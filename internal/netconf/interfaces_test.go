@@ -12,6 +12,7 @@ import (
 )
 
 type FileRenderInfo struct {
+	input            string
 	expectedOutput   string
 	configuratorType BareMetalType
 	tpl              string
@@ -25,7 +26,7 @@ func renderFilesAndVerifyExpectations(t *testing.T, tests []FileRenderInfo) {
 		expected, err := ioutil.ReadFile(t.expectedOutput)
 		assert.NoError(err)
 
-		kb := NewKnowledgeBase("testdata/install.yaml")
+		kb := NewKnowledgeBase(t.input)
 		assert.NoError(err)
 		a := t.newApplierFunc(t.configuratorType, kb, "")
 		b := bytes.Buffer{}
@@ -41,9 +42,9 @@ func renderFilesAndVerifyExpectations(t *testing.T, tests []FileRenderInfo) {
 
 func TestCompileInterfaces(t *testing.T) {
 	tests := []FileRenderInfo{
-		{expectedOutput: "testdata/interfaces.firewall", configuratorType: Firewall, tpl: TplFirewallIfaces,
+		{input: "testdata/firewall.yaml", expectedOutput: "testdata/interfaces.firewall", configuratorType: Firewall, tpl: TplFirewallIfaces,
 			newApplierFunc: NewIfacesConfigApplier},
-		{expectedOutput: "testdata/interfaces.machine", configuratorType: Machine, tpl: TplMachineIfaces,
+		{input: "testdata/machine.yaml", expectedOutput: "testdata/interfaces.machine", configuratorType: Machine, tpl: TplMachineIfaces,
 			newApplierFunc: NewIfacesConfigApplier},
 	}
 	renderFilesAndVerifyExpectations(t, tests)

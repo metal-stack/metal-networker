@@ -14,7 +14,7 @@ func TestNameHostname(t *testing.T) {
 	expected, err := ioutil.ReadFile("testdata/hostname")
 	assert.NoError(err)
 
-	kb := NewKnowledgeBase("testdata/install.yaml")
+	kb := NewKnowledgeBase("testdata/firewall.yaml")
 	assert.NoError(err)
 
 	a := NewHostnameApplier(kb, "")

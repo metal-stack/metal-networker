@@ -1,0 +1,81 @@
+---
+hostname: machine
+networks:
+  # === Tenant Network (primary=true)
+    # [IGNORED]
+  - asn: 4200003073
+    # [IGNORED in case of primary network]
+    destinationprefixes: []
+    # For Machine: Used to set the loopback ips.
+    ips:
+      - 10.0.16.2
+    # [IGNORED in case of primary network]
+    nat: false
+    # [IGNORED in case of primary network]
+    networkid: bc830818-2df1-4904-8c40-4322296d393d
+    # considered as source range for nat and to figure out allowed prefixes for route imports from primary network into non-primary, non-underlay network
+    prefixes:
+      - 10.0.16.0/22
+    primary: true
+    # [IGNORED in case of primary network]
+    underlay: false
+    # Defines the tenant VRF id.
+    vrf: 3981
+  # === External infrastructure networks to route to
+    # [IGNORED]
+  - asn: 4200003073
+    # Considered to establish static route leak to reach out from tenant VRF into the external networks.
+    destinationprefixes:
+      - 0.0.0.0/0
+    # For Machine: Used to set the loopback ips.
+    ips:
+      - 185.1.2.3
+    # In case nat equals true, Source NAT via SVI is added.
+    nat: true
+    networkid: internet-vagrant-lab
+    # considered to figure out allowed prefixes for route imports from primary network into non-primary, non-underlay network
+    prefixes:
+      - 185.1.2.0/24
+      - 185.27.0.0/22
+    primary: false
+    underlay: false
+    # VRF id considered to define EVPN interfaces.
+    vrf: 104009
+  - asn: 4200003073
+    # considered to figure out allowed prefixes for route imports from external network into tenant network
+    destinationprefixes:
+      - 100.127.1.0/24
+    # For Machine: Used to set the loopback ips.
+    ips:
+      - 100.127.129.1
+    nat: true
+    networkid: mpls-nbg-w8101-test
+    # considered to figure out allowed prefixes for route imports from primary network into non-primary, non-underlay network
+    prefixes:
+      - 100.127.129.0/24
+    primary: false
+    underlay: false
+    vrf: 104010
+machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
+# [IGNORED]
+sshpublickey: ""
+# [IGNORED]
+password: KAWT5DugqSPAezMl
+# [IGNORED]
+devmode: false
+# [IGNORED]
+console: ttyS1,115200n8
+timestamp: "2019-07-01T09:41:43Z"
+nics:
+  - mac: "00:03:00:11:11:01"
+    name: lan0
+    neighbors:
+      - mac: 44:38:39:00:00:1a
+        name: null
+        neighbors: []
+  - mac: "00:03:00:11:12:01"
+    name: lan1
+    neighbors:
+      - mac: "44:38:39:00:00:04"
+        name: null
+        neighbors: []

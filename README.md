@@ -21,7 +21,7 @@ metal-networker is available from the blobstore:
 ## Usage
 
 metal-networker must be invoked with the configuration file as argument. It is expected that the configuration file 
-contains valid YAML. See [./internal/netconf/testdata/install.yaml](internal/netconf/testdata/install.yaml).
+contains valid YAML. See [./internal/netconf/testdata/firewall.yaml](internal/netconf/testdata/firewall.yaml) for a valid configuration for firewalls and [./internal/netconf/testdata/machine.yaml](internal/netconf/testdata/machine.yaml) for a valid configuration for machines.
 
 ```bash
 # metal-networker <config-file>
