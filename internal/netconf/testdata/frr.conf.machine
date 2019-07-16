@@ -2,7 +2,7 @@
 # Do not edit.
 frr version 7.0
 frr defaults datacenter
-hostname firewall
+hostname machine
 username cumulus nopassword
 !
 service integrated-vtysh-config

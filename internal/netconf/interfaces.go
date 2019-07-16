@@ -101,7 +101,15 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		validator = FirewallIfacesValidator{CommonIfacesValidator{path: tmpFile}}
 	case Machine:
 		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getPrimaryNetwork().Networkid)
-		common.Loopback.IPs = kb.getPrimaryNetwork().Ips
+		// ensure that the ips of the primary network are the first ips at the loopback interface
+		loIPs := kb.getPrimaryNetwork().Ips
+		// append addresses of other networks as well
+		for _, net := range kb.Networks {
+			if !net.Primary {
+				loIPs = append(loIPs, net.Ips...)
+			}
+		}
+		common.Loopback.IPs = loIPs
 
 		data = MachineIfacesData{common}
 		validator = MachineIfacesValidator{CommonIfacesValidator{path: tmpFile}}

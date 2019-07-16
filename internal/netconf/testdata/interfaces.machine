@@ -7,3 +7,5 @@
 auto lo
 iface lo inet static
     address 10.0.16.2/32
+    address 185.1.2.3/32
+    address 100.127.129.1/32

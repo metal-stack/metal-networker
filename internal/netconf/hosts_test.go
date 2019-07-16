@@ -15,7 +15,7 @@ func TestNewHostsApplier(t *testing.T) {
 	expected, err := ioutil.ReadFile("testdata/hosts")
 	assert.NoError(err)
 
-	kb := NewKnowledgeBase("testdata/install.yaml")
+	kb := NewKnowledgeBase("testdata/firewall.yaml")
 	assert.NoError(err)
 	a := NewHostsApplier(kb, "")
 	b := bytes.Buffer{}
