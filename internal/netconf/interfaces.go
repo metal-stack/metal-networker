@@ -60,21 +60,9 @@ type (
 		}
 	}
 
-	// CommonIfacesValidator defines the base type of an interfaces validator.
-	CommonIfacesValidator struct {
+	// IfacesValidator defines the base type of an interfaces validator.
+	IfacesValidator struct {
 		path string
-	}
-
-	// MachineIfacesValidator defines a type to validate interfaces configuration of a bare metal server that function as
-	// 'machine'.
-	MachineIfacesValidator struct {
-		CommonIfacesValidator
-	}
-
-	// FirewallIfacesValidator defines a type to validate interfaces configuration of a bare metal server that function as
-	// 'firewall'.
-	FirewallIfacesValidator struct {
-		CommonIfacesValidator
 	}
 )
 
@@ -98,7 +86,7 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		f.EVPNInterfaces = getEVPNInterfaces(kb)
 
 		data = f
-		validator = FirewallIfacesValidator{CommonIfacesValidator{path: tmpFile}}
+		validator = IfacesValidator{path: tmpFile}
 	case Machine:
 		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getPrimaryNetwork().Networkid)
 		// ensure that the ips of the primary network are the first ips at the loopback interface
@@ -112,7 +100,7 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		common.Loopback.IPs = loIPs
 
 		data = MachineIfacesData{common}
-		validator = MachineIfacesValidator{CommonIfacesValidator{path: tmpFile}}
+		validator = IfacesValidator{path: tmpFile}
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
@@ -120,14 +108,8 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
-// Validate 'machine' network interfaces configuration.
-func (v MachineIfacesValidator) Validate() error {
-	log.Infof("running 'ifup --no-act --all --interfaces %s' to validate changes", v.path)
-	return exec.NewVerboseCmd("ifup", "--no-act", "--all", "--interfaces", v.path).Run()
-}
-
-// Validate 'firewall' network interfaces configuration.
-func (v FirewallIfacesValidator) Validate() error {
+// Validate network interfaces configuration. Assumes ifupdown2 is available.
+func (v IfacesValidator) Validate() error {
 	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
 	return exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }
