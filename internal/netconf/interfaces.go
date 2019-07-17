@@ -69,7 +69,6 @@ type (
 // NewIfacesConfigApplier constructs a new instance of this type.
 func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
 	var data interface{}
-	var validator network.Validator
 	common := CommonIfacesData{
 		Comment: versionHeader(kb.Machineuuid),
 	}
@@ -86,7 +85,6 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		f.EVPNInterfaces = getEVPNInterfaces(kb)
 
 		data = f
-		validator = IfacesValidator{path: tmpFile}
 	case Machine:
 		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getPrimaryNetwork().Networkid)
 		// ensure that the ips of the primary network are the first ips at the loopback interface
@@ -100,11 +98,11 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		common.Loopback.IPs = loIPs
 
 		data = MachineIfacesData{common}
-		validator = IfacesValidator{path: tmpFile}
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
 
+	validator := IfacesValidator{path: tmpFile}
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
