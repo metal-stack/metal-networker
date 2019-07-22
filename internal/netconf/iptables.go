@@ -30,20 +30,29 @@ type (
 		SourceSpecs  []string
 	}
 
-	// IptablesValidator can validate configuration for network interfaces.
+	// IptablesValidator can validate configuration for iptables rules.
 	IptablesValidator struct {
 		path string
+	}
+
+	// IptablesV4Validator can validate configuration for ipv4 iptables rules.
+	IptablesV4Validator struct {
+		IptablesValidator
+	}
+
+	// IptablesV6Validator can validate configuration for ipv6 iptables rules.
+	IptablesV6Validator struct {
+		IptablesValidator
 	}
 )
 
 // NewIptablesConfigApplier constructs a new instance of this type.
-func NewIptablesConfigApplier(kb KnowledgeBase, tmpFile string) network.Applier {
+func NewIptablesConfigApplier(kb KnowledgeBase, validator network.Validator) network.Applier {
 	data := IptablesData{
 		Comment: fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n"+
 			"# Do not edit.", kb.Machineuuid, v.V.String()),
 		SNAT: getSNAT(kb),
 	}
-	validator := IptablesValidator{tmpFile}
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
@@ -73,7 +82,13 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 }
 
 // Validate validates network interfaces configuration.
-func (v IptablesValidator) Validate() error {
-	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
+func (v IptablesV4Validator) Validate() error {
+	log.Infof("running 'iptables-restore --test --verbose %s' to validate changes.", v.path)
 	return exec.NewVerboseCmd("iptables-restore", "--test", "--verbose", v.path).Run()
+}
+
+// Validate validates network interfaces configuration.
+func (v IptablesV6Validator) Validate() error {
+	log.Infof("running 'ip6tables-restore --test --verbose %s' to validate changes.", v.path)
+	return exec.NewVerboseCmd("ip6tables-restore", "--test", "--verbose", v.path).Run()
 }

@@ -42,10 +42,20 @@ func renderFilesAndVerifyExpectations(t *testing.T, tests []FileRenderInfo) {
 
 func TestCompileInterfaces(t *testing.T) {
 	tests := []FileRenderInfo{
-		{input: "testdata/firewall.yaml", expectedOutput: "testdata/interfaces.firewall", configuratorType: Firewall, tpl: TplFirewallIfaces,
-			newApplierFunc: NewIfacesConfigApplier},
-		{input: "testdata/machine.yaml", expectedOutput: "testdata/interfaces.machine", configuratorType: Machine, tpl: TplMachineIfaces,
-			newApplierFunc: NewIfacesConfigApplier},
+		{
+			input:            "testdata/firewall.yaml",
+			expectedOutput:   "testdata/interfaces.firewall",
+			configuratorType: Firewall,
+			tpl:              TplFirewallIfaces,
+			newApplierFunc:   NewIfacesConfigApplier,
+		},
+		{
+			input:            "testdata/machine.yaml",
+			expectedOutput:   "testdata/interfaces.machine",
+			configuratorType: Machine,
+			tpl:              TplMachineIfaces,
+			newApplierFunc:   NewIfacesConfigApplier,
+		},
 	}
 	renderFilesAndVerifyExpectations(t, tests)
 }

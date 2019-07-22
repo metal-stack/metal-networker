@@ -27,7 +27,7 @@ func TestCompileRules(t *testing.T) {
 		kb := NewKnowledgeBase("testdata/firewall.yaml")
 		assert.NoError(err)
 
-		a := NewIptablesConfigApplier(kb, "")
+		a := NewIptablesConfigApplier(kb, nil)
 		b := bytes.Buffer{}
 
 		f := test.template
