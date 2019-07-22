@@ -18,7 +18,8 @@
 ## Accept
 --append INPUT --match conntrack --ctstate RELATED,ESTABLISHED --match comment --comment "stateful input" --jump ACCEPT
 --append INPUT --in-interface lo --match comment --comment "BGP unnumbered" --jump ACCEPT
---append INPUT --source 10.0.0.0/8 --protocol udp --match udp --destination-port 4789 --match comment --comment "incoming VXLAN" --jump ACCEPT
+--append INPUT --in-interface lan0 --source 10.0.0.0/8 --protocol udp --match udp --destination-port 4789 --match comment --comment "incoming VXLAN lan0" --jump ACCEPT
+--append INPUT --in-interface lan1 --source 10.0.0.0/8 --protocol udp --match udp --destination-port 4789 --match comment --comment "incoming VXLAN lan1" --jump ACCEPT
 --append INPUT --protocol tcp --match tcp --destination-port 22 --match conntrack --ctstate NEW --jump ACCEPT --match comment --comment "SSH incoming connections"
 ## Drop
 --append INPUT --match conntrack --ctstate INVALID --match comment --comment "drop invalid packets to prevent malicious activity" --jump DROP
@@ -31,7 +32,7 @@
 ## Accept
 
 # Control behavior for outgoing packets.
-# Accept
+--append OUTPUT --out-interface lo --match comment --comment "lo output required e.g. for chrony" --jump ACCEPT
 --append OUTPUT --match conntrack --ctstate RELATED,ESTABLISHED --match comment --comment "stateful output"  --jump ACCEPT
 --append OUTPUT --destination 10.0.0.0/8 --protocol udp --match udp --destination-port 4789 --match comment --comment "outgoing VXLAN" --jump ACCEPT
 # Drop
