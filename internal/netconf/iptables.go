@@ -10,8 +10,11 @@ import (
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
-// TplIptables defines the name of the template to render iptables configuration.
-const TplIptables = "rules.v4.tpl"
+// TplIptablesV4 defines the name of the template to render iptables configuration.
+const (
+	TplIptablesV4 = "rules.v4.tpl"
+	TplIptablesV6 = "rules.v6.tpl"
+)
 
 type (
 	// IptablesData represents the information required to render iptables configuration.

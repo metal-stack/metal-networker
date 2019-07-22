@@ -11,20 +11,31 @@ import (
 
 func TestCompileRules(t *testing.T) {
 	assert := assert.New(t)
-	expected, err := ioutil.ReadFile("testdata/rules.v4")
-	assert.NoError(err)
 
-	kb := NewKnowledgeBase("testdata/firewall.yaml")
-	assert.NoError(err)
+	tests := []struct {
+		expected string
+		template string
+	}{
+		{expected: "testdata/rules.v4", template: TplIptablesV4},
+		{expected: "testdata/rules.v6", template: TplIptablesV6},
+	}
 
-	a := NewIptablesConfigApplier(kb, "")
-	b := bytes.Buffer{}
+	for _, test := range tests {
+		expected, err := ioutil.ReadFile(test.expected)
+		assert.NoError(err)
 
-	f := TplIptables
-	s, err := ioutil.ReadFile(f)
-	assert.NoError(err)
-	tpl := template.Must(template.New(f).Parse(string(s)))
-	err = a.Render(&b, *tpl)
-	assert.NoError(err)
-	assert.Equal(string(expected), b.String())
+		kb := NewKnowledgeBase("testdata/firewall.yaml")
+		assert.NoError(err)
+
+		a := NewIptablesConfigApplier(kb, "")
+		b := bytes.Buffer{}
+
+		f := test.template
+		s, err := ioutil.ReadFile(f)
+		assert.NoError(err)
+		tpl := template.Must(template.New(f).Parse(string(s)))
+		err = a.Render(&b, *tpl)
+		assert.NoError(err)
+		assert.Equal(string(expected), b.String())
+	}
 }
