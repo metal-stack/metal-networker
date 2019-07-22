@@ -80,7 +80,7 @@ func (configurator FirewallConfigurator) Configure() {
 
 	src = mustTmpFile("rules.v6_")
 	applier = NewIptablesConfigApplier(configurator.Kb, src)
-	applyAndCleanUp(applier, TplIptablesV4, src, "/etc/iptables/rules.v6", FileModeDefault)
+	applyAndCleanUp(applier, TplIptablesV6, src, "/etc/iptables/rules.v6", FileModeDefault)
 
 	chrony, err := NewChronyServiceEnabler(configurator.Kb)
 	if err != nil {
