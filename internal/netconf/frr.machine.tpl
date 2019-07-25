@@ -31,6 +31,10 @@ router bgp {{ .ASN }}
  neighbor TOR timers 1 3
  neighbor lan0 interface peer-group TOR
  neighbor lan1 interface peer-group TOR
+ neighbor LOCAL peer-group
+ neighbor LOCAL remote-as internal
+ neighbor LOCAL timers 1 3
+ bgp listen range {{ .LocalBGPIP }}/32 peer-group LOCAL
  !
  address-family ipv4 unicast
   redistribute connected
