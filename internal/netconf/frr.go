@@ -3,6 +3,7 @@ package netconf
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
@@ -17,6 +18,8 @@ const (
 	TplFirewallFRR = "frr.firewall.tpl"
 	// TplMachineFRR defines the name of the template to render FRR configuration to a 'machine'.
 	TplMachineFRR = "frr.machine.tpl"
+	// IPPrefixListSeqSeed specifies the initial value for prefix lists sequence number.
+	IPPrefixListSeqSeed = 100
 )
 
 type (
@@ -43,15 +46,25 @@ type (
 
 	// VRF represents data required to render VRF information into frr.conf.
 	VRF struct {
-		ID           int
-		VNI          int
-		RouteImports []RouteImport
+		ID             int
+		VNI            int
+		ImportVRFNames []string
+		IPPrefixLists  []IPPrefixList
+		RouteMap       RouteMap
 	}
 
-	// RouteImport represents data to apply for dynamic route leak configuration.
-	RouteImport struct {
-		SourceVRF             string
-		AllowedImportPrefixes []string
+	// RouteMap represents a route-map to permit or deny routes.
+	RouteMap struct {
+		Name    string
+		Entries []string
+		Policy  string
+		Order   int
+	}
+
+	// IPPrefixList represents 'ip prefix-list' filtering mechanism to be used in combination with route-maps.
+	IPPrefixList struct {
+		Name string
+		Spec string
 	}
 
 	// FRRValidator validates the frr.conf to apply.
@@ -68,7 +81,8 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 	case Firewall:
 		net := kb.getUnderlayNetwork()
 		common := newCommonFRRData(net, kb)
-		data = FirewallFRRData{CommonFRRData: common, VRFs: getVRFs(kb)}
+		vrfs := assembleVRFs(kb)
+		data = FirewallFRRData{CommonFRRData: common, VRFs: vrfs}
 	case Machine:
 		net := kb.getPrimaryNetwork()
 		common := newCommonFRRData(net, kb)
@@ -101,64 +115,96 @@ func (v FRRValidator) Validate() error {
 	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }
 
-func getVRFs(kb KnowledgeBase) []VRF {
+func getDestinationPrefixes(networks []Network) []string {
+	var result []string
+	for _, network := range networks {
+		result = append(result, network.Destinationprefixes...)
+	}
+	return result
+}
+
+func getPrefixes(networks ...Network) []string {
+	var result []string
+	for _, network := range networks {
+		result = append(result, network.Prefixes...)
+	}
+	return result
+}
+
+func assembleVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
 	networks := kb.GetNetworks(Primary, External)
-	for _, n := range networks {
-		vrf := VRF{ID: n.Vrf, VNI: n.Vrf}
-		// Between VRFs we use dynamic route leak to import the desired prefixes
-		if n.Primary {
-			// Import routes to reach out from primary network into external networks.
-			vrf.RouteImports = getImportsFromExternalNetworks(kb)
+	for _, network := range networks {
+		var targets []Network
+		var prefixes []string
+		if network.Primary {
+			// reach out from primary into to external networks
+			targets = kb.GetNetworks(External)
+			prefixes = getDestinationPrefixes(targets)
 		} else {
-			// Import routes to reach out from an external network into primary and other external networks.
-			vrf.RouteImports = getImportsFromPrimaryNetwork(kb, n)
+			// reach out from external into primary and other external networks
+			targets = kb.GetNetworks(Primary)
+			prefixes = getPrefixes(append(targets, network)...)
+		}
+		vrfName := "vrf" + strconv.Itoa(network.Vrf)
+		vrf := VRF{
+			ID:             network.Vrf,
+			VNI:            network.Vrf,
+			ImportVRFNames: vrfNamesOf(targets...),
+			IPPrefixLists:  assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed),
+			RouteMap:       assembleRouteMapFor(vrfName),
 		}
 		result = append(result, vrf)
 	}
 	return result
 }
 
-func getImportsFromExternalNetworks(kb KnowledgeBase) []RouteImport {
-	var result []RouteImport
-	networks := kb.GetNetworks(External)
-	for _, n := range networks {
-		isEmptyDestination := len(n.Destinationprefixes) == 0
-		if isEmptyDestination {
-			continue
-		}
-		var allowed []string
-		for _, dp := range n.Destinationprefixes {
-			if strings.HasSuffix(dp, "/0") {
-				allowed = append(allowed, dp)
-			} else {
-				// Prefix list will be applied if the prefix length is less than or equal to the le prefix length.
-				allowed = append(allowed, dp+" le 32")
-			}
-		}
-		ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", n.Vrf), AllowedImportPrefixes: allowed}
-		result = append(result, ri)
+func assembleRouteMapFor(vrfName string) RouteMap {
+	var result RouteMap
+	entries := []string{"match ip address prefix-list " + vrfName + "-import-prefixes"}
+	result = RouteMap{
+		Name:    vrfName + "-import-map",
+		Policy:  "permit",
+		Order:   10,
+		Entries: entries,
 	}
 	return result
 }
 
-func getImportsFromPrimaryNetwork(kb KnowledgeBase, n Network) []RouteImport {
-	var result []RouteImport
-	var prefixes []string
-	primary := kb.getPrimaryNetwork()
-	// considers the case: machine's associated IP within the primary network
-	prefixes = append(prefixes, primary.Prefixes...)
-	// considers the case: machine's associated IP within the given network
-	prefixes = append(prefixes, n.Prefixes...)
-	if len(prefixes) == 0 {
-		return result
+func vrfNamesOf(networks ...Network) []string {
+	var result []string
+	for _, n := range networks {
+		vrf := fmt.Sprintf("vrf%d", n.Vrf)
+		result = append(result, vrf)
 	}
+	return result
+}
 
-	var allowed []string
-	for _, p := range prefixes {
-		allowed = append(allowed, p+" le 32")
+func buildIPPrefixListSpecs(seq int, prefix string) []string {
+	var result []string
+	spec := fmt.Sprintf("seq %d permit %s", seq, prefix)
+	if !strings.HasSuffix(prefix, "/0") {
+		spec += " le 32"
 	}
-	ri := RouteImport{SourceVRF: fmt.Sprintf("vrf%d", primary.Vrf), AllowedImportPrefixes: allowed}
-	result = append(result, ri)
+	result = append(result, spec)
+	return result
+}
+
+func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int) []IPPrefixList {
+	var result []IPPrefixList
+	for _, prefix := range prefixes {
+		if len(prefix) == 0 {
+			continue
+		}
+		specs := buildIPPrefixListSpecs(seed, prefix)
+		for _, spec := range specs {
+			prefixList := IPPrefixList{
+				Name: vrfName + "-import-prefixes",
+				Spec: spec,
+			}
+			result = append(result, prefixList)
+		}
+		seed += len(specs)
+	}
 	return result
 }

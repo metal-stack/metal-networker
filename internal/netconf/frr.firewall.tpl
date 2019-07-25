@@ -47,46 +47,43 @@ router bgp {{ .ASN }}
   advertise-all-vni
  exit-address-family
 !
-{{ range $i, $v := .VRFs -}}
-router bgp {{ $ASN }} vrf vrf{{ $v.ID }}
+{{- range .VRFs }}
+router bgp {{ $ASN }} vrf vrf{{ .ID }}
  bgp router-id {{ $RouterId }}
  bgp bestpath as-path multipath-relax
  !
  address-family ipv4 unicast
   redistribute connected
-{{- range $i, $ri := $v.RouteImports }}
-  import vrf {{ $ri.SourceVRF }}
-{{- end }}
-  import vrf route-map vrf{{ $v.ID }}-import-map
+ {{- range .ImportVRFNames }}
+  import vrf {{ . }}
+ {{- end }}
+  import vrf route-map vrf{{ .ID }}-import-map
  exit-address-family
  !
  address-family l2vpn evpn
   advertise ipv4 unicast
  exit-address-family
 !
-{{ end -}}
-bgp as-path access-list SELF permit ^$
+{{- end }}
+{{- range .VRFs }}
+ {{- range .IPPrefixLists }}
+ip prefix-list {{ .Name }} {{ .Spec }}
+ {{- end}}
+route-map {{ .RouteMap.Name }} {{ .RouteMap.Policy }} {{ .RouteMap.Order }}
+{{- range .RouteMap.Entries }}
+ {{ . }}
+{{- end }}
+route-map vrf{{ .ID }}-import-map deny 99
 !
+{{- end }}
 route-map only-self-out permit 10
  match as-path SELF
-!
 route-map only-self-out deny 99
 !
 route-map LOOPBACKS permit 10
  match interface lo
 !
-{{- range $i, $v := .VRFs }}
-{{- range $j, $ri := $v.RouteImports }}
-{{- range $k, $allowed := $ri.AllowedImportPrefixes }}
-ip prefix-list vrf{{ $v.ID }}-import-prefixes seq 1{{ $j }}{{ $k }} permit {{ $allowed }}
-{{- end }}
-{{- end }}
+bgp as-path access-list SELF permit ^$
 !
-route-map vrf{{ $v.ID }}-import-map permit 10
- match ip address prefix-list vrf{{ $v.ID }}-import-prefixes
-!
-route-map vrf{{ $v.ID }}-import-map deny 99
-!
-{{- end }}
 line vty
 !

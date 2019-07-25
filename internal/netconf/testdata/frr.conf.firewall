@@ -92,40 +92,33 @@ router bgp 4200003073 vrf vrf104010
   advertise ipv4 unicast
  exit-address-family
 !
-bgp as-path access-list SELF permit ^$
-!
-route-map only-self-out permit 10
- match as-path SELF
-!
-route-map only-self-out deny 99
-!
-route-map LOOPBACKS permit 10
- match interface lo
-!
 ip prefix-list vrf3981-import-prefixes seq 100 permit 0.0.0.0/0
-ip prefix-list vrf3981-import-prefixes seq 110 permit 100.127.1.0/24 le 32
-!
+ip prefix-list vrf3981-import-prefixes seq 101 permit 100.127.1.0/24 le 32
 route-map vrf3981-import-map permit 10
  match ip address prefix-list vrf3981-import-prefixes
-!
 route-map vrf3981-import-map deny 99
 !
 ip prefix-list vrf104009-import-prefixes seq 100 permit 10.0.16.0/22 le 32
 ip prefix-list vrf104009-import-prefixes seq 101 permit 185.1.2.0/24 le 32
 ip prefix-list vrf104009-import-prefixes seq 102 permit 185.27.0.0/22 le 32
-!
 route-map vrf104009-import-map permit 10
  match ip address prefix-list vrf104009-import-prefixes
-!
 route-map vrf104009-import-map deny 99
 !
 ip prefix-list vrf104010-import-prefixes seq 100 permit 10.0.16.0/22 le 32
 ip prefix-list vrf104010-import-prefixes seq 101 permit 100.127.129.0/24 le 32
-!
 route-map vrf104010-import-map permit 10
  match ip address prefix-list vrf104010-import-prefixes
-!
 route-map vrf104010-import-map deny 99
+!
+route-map only-self-out permit 10
+ match as-path SELF
+route-map only-self-out deny 99
+!
+route-map LOOPBACKS permit 10
+ match interface lo
+!
+bgp as-path access-list SELF permit ^$
 !
 line vty
 !
