@@ -2,6 +2,7 @@ package netconf
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
@@ -31,6 +32,7 @@ type (
 	// MachineFRRData contains attributes required to render frr.conf of bare metal servers that function as 'machine'.
 	MachineFRRData struct {
 		CommonFRRData
+		LocalBGPIP string
 	}
 
 	// FirewallFRRData contains attributes required to render frr.conf of bare metal servers that function as 'firewall'.
@@ -70,13 +72,21 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 	case Machine:
 		net := kb.getPrimaryNetwork()
 		common := newCommonFRRData(net, kb)
-		data = MachineFRRData{common}
+		localBGPIP := getLocalBGPIP(kb)
+		data = MachineFRRData{common, localBGPIP}
 	default:
 		log.Fatalf("unknown kind of bare metal: %v", kind)
 	}
 
 	validator := FRRValidator{tmpFile}
 	return network.NewNetworkApplier(data, validator, nil)
+}
+
+func getLocalBGPIP(kb KnowledgeBase) string {
+	primaryIPs := kb.getPrimaryNetwork().Ips
+	ip := net.ParseIP(primaryIPs[0])
+	ip[len(ip)-1] = 0
+	return ip.String()
 }
 
 func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {

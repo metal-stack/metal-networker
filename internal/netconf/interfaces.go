@@ -29,6 +29,13 @@ type (
 	// server that functions as 'machine'.
 	MachineIfacesData struct {
 		CommonIfacesData
+		LocalBGPIfaceData *LocalBGPIfaceData
+	}
+
+	// LocalBGPIfaceData contains attributes required to render network interfaces configuration for a
+	LocalBGPIfaceData struct {
+		Comment string
+		IP      string
 	}
 
 	// FirewallIfacesData contains attributes required to render network interfaces configuration of a bare metal
@@ -95,15 +102,25 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 				loIPs = append(loIPs, net.Ips...)
 			}
 		}
-		common.Loopback.IPs = loIPs
 
-		data = MachineIfacesData{common}
+		common.Loopback.IPs = loIPs
+		data = MachineIfacesData{
+			CommonIfacesData:  common,
+			LocalBGPIfaceData: getLocalBGPIfaceData(kb),
+		}
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
 
 	validator := IfacesValidator{path: tmpFile}
 	return network.NewNetworkApplier(data, validator, nil)
+}
+
+func getLocalBGPIfaceData(kb KnowledgeBase) *LocalBGPIfaceData {
+	var result LocalBGPIfaceData
+	result.Comment = fmt.Sprintf("local dummy interface to allow for peering locally with machine")
+	result.IP = getLocalBGPIP(kb)
+	return &result
 }
 
 // Validate network interfaces configuration. Assumes ifupdown2 is available.
