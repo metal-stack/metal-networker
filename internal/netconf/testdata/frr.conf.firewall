@@ -98,16 +98,22 @@ route-map vrf3981-import-map permit 10
  match ip address prefix-list vrf3981-import-prefixes
 route-map vrf3981-import-map deny 99
 !
-ip prefix-list vrf104009-import-prefixes seq 100 permit 10.0.16.0/22 le 32
+ip prefix-list vrf104009-import-prefixes-no-export seq 100 permit 10.0.16.0/22 le 32
 ip prefix-list vrf104009-import-prefixes seq 101 permit 185.1.2.0/24 le 32
 ip prefix-list vrf104009-import-prefixes seq 102 permit 185.27.0.0/22 le 32
 route-map vrf104009-import-map permit 10
+ match ip address prefix-list vrf104009-import-prefixes-no-export
+ set community additive no-export
+route-map vrf104009-import-map permit 20
  match ip address prefix-list vrf104009-import-prefixes
 route-map vrf104009-import-map deny 99
 !
-ip prefix-list vrf104010-import-prefixes seq 100 permit 10.0.16.0/22 le 32
+ip prefix-list vrf104010-import-prefixes-no-export seq 100 permit 10.0.16.0/22 le 32
 ip prefix-list vrf104010-import-prefixes seq 101 permit 100.127.129.0/24 le 32
 route-map vrf104010-import-map permit 10
+ match ip address prefix-list vrf104010-import-prefixes-no-export
+ set community additive no-export
+route-map vrf104010-import-map permit 20
  match ip address prefix-list vrf104010-import-prefixes
 route-map vrf104010-import-map deny 99
 !

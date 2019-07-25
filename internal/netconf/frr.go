@@ -20,6 +20,8 @@ const (
 	TplMachineFRR = "frr.machine.tpl"
 	// IPPrefixListSeqSeed specifies the initial value for prefix lists sequence number.
 	IPPrefixListSeqSeed = 100
+	// IPPrefixListNoExportSuffix defines the suffix to use for private IP ranges that must not be exported.
+	IPPrefixListNoExportSuffix = "-no-export"
 )
 
 type (
@@ -50,7 +52,7 @@ type (
 		VNI            int
 		ImportVRFNames []string
 		IPPrefixLists  []IPPrefixList
-		RouteMap       RouteMap
+		RouteMaps      []RouteMap
 	}
 
 	// RouteMap represents a route-map to permit or deny routes.
@@ -147,26 +149,49 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 			prefixes = getPrefixes(append(targets, network)...)
 		}
 		vrfName := "vrf" + strconv.Itoa(network.Vrf)
+		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb)
 		vrf := VRF{
 			ID:             network.Vrf,
 			VNI:            network.Vrf,
 			ImportVRFNames: vrfNamesOf(targets...),
-			IPPrefixLists:  assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed),
-			RouteMap:       assembleRouteMapFor(vrfName),
+			IPPrefixLists:  prefixLists,
+			RouteMaps:      assembleRouteMapsFor(vrfName, prefixLists),
 		}
 		result = append(result, vrf)
 	}
 	return result
 }
 
-func assembleRouteMapFor(vrfName string) RouteMap {
-	var result RouteMap
-	entries := []string{"match ip address prefix-list " + vrfName + "-import-prefixes"}
-	result = RouteMap{
-		Name:    vrfName + "-import-map",
-		Policy:  "permit",
-		Order:   10,
-		Entries: entries,
+func uniqueNames(prefixLists []IPPrefixList) []string {
+	var result []string
+	uniqueNames := make(map[string]struct{})
+	for _, prefixList := range prefixLists {
+		if _, isPresent := uniqueNames[prefixList.Name]; isPresent {
+			continue
+		}
+		uniqueNames[prefixList.Name] = struct{}{}
+		result = append(result, prefixList.Name)
+	}
+	return result
+}
+
+func assembleRouteMapsFor(vrfName string, prefixLists []IPPrefixList) []RouteMap {
+	var result []RouteMap
+	order := 10
+	prefListNames := uniqueNames(prefixLists)
+	for _, prefListName := range prefListNames {
+		entries := []string{"match ip address prefix-list " + prefListName}
+		if strings.HasSuffix(prefListName, IPPrefixListNoExportSuffix) {
+			entries = append(entries, "set community additive no-export")
+		}
+		routeMap := RouteMap{
+			Name:    vrfName + "-import-map",
+			Policy:  "permit",
+			Order:   order,
+			Entries: entries,
+		}
+		order += order
+		result = append(result, routeMap)
 	}
 	return result
 }
@@ -190,16 +215,18 @@ func buildIPPrefixListSpecs(seq int, prefix string) []string {
 	return result
 }
 
-func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int) []IPPrefixList {
+func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb KnowledgeBase) []IPPrefixList {
 	var result []IPPrefixList
+	primary := kb.getPrimaryNetwork()
 	for _, prefix := range prefixes {
 		if len(prefix) == 0 {
 			continue
 		}
 		specs := buildIPPrefixListSpecs(seed, prefix)
 		for _, spec := range specs {
+			name := namePrefixList(vrfName, primary, prefix)
 			prefixList := IPPrefixList{
-				Name: vrfName + "-import-prefixes",
+				Name: name,
 				Spec: spec,
 			}
 			result = append(result, prefixList)
@@ -207,4 +234,15 @@ func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int) []IPP
 		seed += len(specs)
 	}
 	return result
+}
+
+func namePrefixList(vrfName string, primary Network, prefix string) string {
+	name := vrfName + "-import-prefixes"
+	for _, primaryPrefix := range primary.Prefixes {
+		if primaryPrefix == prefix {
+			// tenant primary network ip addresses must not be visible in the external VRFs to avoid blown up routing tables
+			name += IPPrefixListNoExportSuffix
+		}
+	}
+	return name
 }
