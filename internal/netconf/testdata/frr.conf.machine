@@ -22,7 +22,7 @@ interface lan1
  no ipv6 nd suppress-ra
 !
 router bgp 4200003073
- bgp router-id 10.0.16.2
+ bgp router-id 10.0.17.2
  bgp bestpath as-path multipath-relax
  neighbor TOR peer-group
  neighbor TOR remote-as external

@@ -99,10 +99,21 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 }
 
 func getLocalBGPIP(kb KnowledgeBase) string {
-	primaryIPs := kb.getPrimaryNetwork().Ips
-	ip := net.ParseIP(primaryIPs[0])
-	ip[len(ip)-1] = 0
-	return ip.String()
+	var bgpip net.IP
+	n := kb.getPrimaryNetwork()
+	ip := net.ParseIP(n.Ips[0])
+	for _, p := range n.Prefixes {
+		pip, ipnet, err := net.ParseCIDR(p)
+		if err != nil {
+			continue
+		}
+		if ipnet.Contains(ip) {
+			// Set the last octet to "0" regardles of version
+			bgpip = pip
+			bgpip[len(bgpip)-1] = 0
+		}
+	}
+	return bgpip.String()
 }
 
 func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {

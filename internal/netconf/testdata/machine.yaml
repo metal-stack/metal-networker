@@ -8,7 +8,7 @@ networks:
     destinationprefixes: []
     # For Machine: Used to set the loopback ips.
     ips:
-      - 10.0.16.2
+      - 10.0.17.2
     # [IGNORED in case of primary network]
     nat: false
     # [IGNORED in case of primary network]
