@@ -69,10 +69,12 @@ router bgp {{ $ASN }} vrf vrf{{ .ID }}
  {{- range .IPPrefixLists }}
 ip prefix-list {{ .Name }} {{ .Spec }}
  {{- end}}
-route-map {{ .RouteMap.Name }} {{ .RouteMap.Policy }} {{ .RouteMap.Order }}
-{{- range .RouteMap.Entries }}
+ {{- range .RouteMaps }}
+route-map {{ .Name }} {{ .Policy }} {{ .Order }}
+  {{- range .Entries }}
  {{ . }}
-{{- end }}
+  {{- end }}
+ {{- end }}
 route-map vrf{{ .ID }}-import-map deny 99
 !
 {{- end }}
