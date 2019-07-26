@@ -106,9 +106,13 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 		}
 	case Machine:
 		net := kb.getPrimaryNetwork()
+		bgpIP, err := assembleLocalBGPIP(kb.getPrimaryNetwork())
+		if err != nil {
+			log.Fatalf("error finding bgp ip: %v", err)
+		}
 		data = MachineFRRData{
 			CommonFRRData: newCommonFRRData(net, kb),
-			LocalBGPIP:    getLocalBGPIP(kb.getPrimaryNetwork()),
+			LocalBGPIP:    bgpIP,
 		}
 	default:
 		log.Fatalf("unknown kind of bare metal: %v", kind)
