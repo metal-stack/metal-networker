@@ -8,10 +8,11 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
 )
 
-// TplFirewallIfaces defines the name of the template to render interfaces configuration.
 const (
+	// TplFirewallIfaces defines the name of the template to render interfaces configuration for firewalls.
 	TplFirewallIfaces = "interfaces.firewall.tpl"
-	TplMachineIfaces  = "interfaces.machine.tpl"
+	// TplMachineIfaces defines the name of the template to render interfaces configuration for machines.
+	TplMachineIfaces = "interfaces.machine.tpl"
 )
 
 type (
@@ -29,10 +30,10 @@ type (
 	// server that functions as 'machine'.
 	MachineIfacesData struct {
 		CommonIfacesData
-		LocalBGPIfaceData *LocalBGPIfaceData
+		LocalBGPIfaceData LocalBGPIfaceData
 	}
 
-	// LocalBGPIfaceData contains attributes required to render network interfaces configuration for a
+	// LocalBGPIfaceData contains attributes required to render network interfaces configuration for a local BGP peering.
 	LocalBGPIfaceData struct {
 		Comment string
 		IP      string
@@ -93,9 +94,10 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 
 		data = f
 	case Machine:
-		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getPrimaryNetwork().Networkid)
+		primary := kb.getPrimaryNetwork()
+		common.Loopback.Comment = fmt.Sprintf("networkid: %s", primary.Networkid)
 		// ensure that the ips of the primary network are the first ips at the loopback interface
-		loIPs := kb.getPrimaryNetwork().Ips
+		loIPs := primary.Ips
 		// append addresses of other networks as well
 		for _, net := range kb.Networks {
 			if !net.Primary {
@@ -106,7 +108,7 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		common.Loopback.IPs = loIPs
 		data = MachineIfacesData{
 			CommonIfacesData:  common,
-			LocalBGPIfaceData: getLocalBGPIfaceData(kb),
+			LocalBGPIfaceData: getLocalBGPIfaceData(primary),
 		}
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
@@ -116,11 +118,11 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
-func getLocalBGPIfaceData(kb KnowledgeBase) *LocalBGPIfaceData {
-	var result LocalBGPIfaceData
-	result.Comment = fmt.Sprintf("local dummy interface to allow for peering locally with machine")
-	result.IP = getLocalBGPIP(kb)
-	return &result
+func getLocalBGPIfaceData(primary Network) LocalBGPIfaceData {
+	return LocalBGPIfaceData{
+		Comment: fmt.Sprintf("local dummy interface to allow for peering locally with machine"),
+		IP:      getLocalBGPIP(primary),
+	}
 }
 
 // Validate network interfaces configuration. Assumes ifupdown2 is available.
