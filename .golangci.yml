@@ -6,6 +6,9 @@ run:
 linters-settings:
   golint:
     min-confidence: 0.8
+  gocritic:
+    disabled-checks:
+      - appendAssign
 
 linters:
   enable-all: true
