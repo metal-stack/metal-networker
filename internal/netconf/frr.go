@@ -203,7 +203,7 @@ func assembleRouteMapsFor(vrfName string, prefixLists []IPPrefixList) []RouteMap
 			Order:   order,
 			Entries: entries,
 		}
-		order += order
+		order += RouteMapOrderSeed
 		result = append(result, routeMap)
 	}
 	routeMap := RouteMap{

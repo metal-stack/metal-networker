@@ -79,7 +79,7 @@ route-map {{ .Name }} {{ .Policy }} {{ .Order }}
 {{- end }}
 route-map only-self-out permit 10
  match as-path SELF
-route-map only-self-out deny 99
+route-map only-self-out deny 20
 !
 route-map LOOPBACKS permit 10
  match interface lo
