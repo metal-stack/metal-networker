@@ -2,7 +2,6 @@ package netconf
 
 import (
 	"fmt"
-	"net"
 	"strconv"
 	"strings"
 
@@ -22,9 +21,18 @@ const (
 	IPPrefixListSeqSeed = 100
 	// IPPrefixListNoExportSuffix defines the suffix to use for private IP ranges that must not be exported.
 	IPPrefixListNoExportSuffix = "-no-export"
+	// RouteMapOrderSeed defines the initial value for route-map order.
+	RouteMapOrderSeed = 10
+	// Permit defines an access policy that allows access.
+	Permit AccessPolicy = iota
+	// Deny defines an access policy that forbids access.
+	Deny
 )
 
 type (
+	// AccessPolicy is a type that represents a policy to manage access roles.
+	AccessPolicy int
+
 	// CommonFRRData contains attributes that are common to FRR configuration of all kind of bare metal servers.
 	CommonFRRData struct {
 		ASN        int64
@@ -75,6 +83,16 @@ type (
 	}
 )
 
+func (p AccessPolicy) String() string {
+	switch p {
+	case Permit:
+		return "permit"
+	case Deny:
+		return "deny"
+	}
+	return "undefined"
+}
+
 // NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
 func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
 	var data interface{}
@@ -82,38 +100,22 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 	switch kind {
 	case Firewall:
 		net := kb.getUnderlayNetwork()
-		common := newCommonFRRData(net, kb)
-		vrfs := assembleVRFs(kb)
-		data = FirewallFRRData{CommonFRRData: common, VRFs: vrfs}
+		data = FirewallFRRData{
+			CommonFRRData: newCommonFRRData(net, kb),
+			VRFs:          assembleVRFs(kb),
+		}
 	case Machine:
 		net := kb.getPrimaryNetwork()
-		common := newCommonFRRData(net, kb)
-		localBGPIP := getLocalBGPIP(kb)
-		data = MachineFRRData{common, localBGPIP}
+		data = MachineFRRData{
+			CommonFRRData: newCommonFRRData(net, kb),
+			LocalBGPIP:    getLocalBGPIP(kb.getPrimaryNetwork()),
+		}
 	default:
 		log.Fatalf("unknown kind of bare metal: %v", kind)
 	}
 
 	validator := FRRValidator{tmpFile}
 	return network.NewNetworkApplier(data, validator, nil)
-}
-
-func getLocalBGPIP(kb KnowledgeBase) string {
-	var bgpip net.IP
-	n := kb.getPrimaryNetwork()
-	ip := net.ParseIP(n.Ips[0])
-	for _, p := range n.Prefixes {
-		pip, ipnet, err := net.ParseCIDR(p)
-		if err != nil {
-			continue
-		}
-		if ipnet.Contains(ip) {
-			// Set the last octet to "0" regardles of version
-			bgpip = pip
-			bgpip[len(bgpip)-1] = 0
-		}
-	}
-	return bgpip.String()
 }
 
 func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {
@@ -188,7 +190,7 @@ func uniqueNames(prefixLists []IPPrefixList) []string {
 
 func assembleRouteMapsFor(vrfName string, prefixLists []IPPrefixList) []RouteMap {
 	var result []RouteMap
-	order := 10
+	order := RouteMapOrderSeed
 	prefListNames := uniqueNames(prefixLists)
 	for _, prefListName := range prefListNames {
 		entries := []string{"match ip address prefix-list " + prefListName}
@@ -196,15 +198,25 @@ func assembleRouteMapsFor(vrfName string, prefixLists []IPPrefixList) []RouteMap
 			entries = append(entries, "set community additive no-export")
 		}
 		routeMap := RouteMap{
-			Name:    vrfName + "-import-map",
-			Policy:  "permit",
+			Name:    routeMapName(vrfName),
+			Policy:  Permit.String(),
 			Order:   order,
 			Entries: entries,
 		}
 		order += order
 		result = append(result, routeMap)
 	}
+	routeMap := RouteMap{
+		Name:   routeMapName(vrfName),
+		Policy: Deny.String(),
+		Order:  order,
+	}
+	result = append(result, routeMap)
 	return result
+}
+
+func routeMapName(vrfName string) string {
+	return vrfName + "-import-map"
 }
 
 func vrfNamesOf(networks ...Network) []string {
@@ -218,7 +230,7 @@ func vrfNamesOf(networks ...Network) []string {
 
 func buildIPPrefixListSpecs(seq int, prefix string) []string {
 	var result []string
-	spec := fmt.Sprintf("seq %d permit %s", seq, prefix)
+	spec := fmt.Sprintf("seq %d %s %s", seq, Permit, prefix)
 	if !strings.HasSuffix(prefix, "/0") {
 		spec += " le 32"
 	}
