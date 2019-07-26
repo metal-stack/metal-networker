@@ -15,7 +15,7 @@ test-data:
     INTERFACES_FILES: "interfaces.firewall interfaces.machine"
   script:
     - apt-get update --quiet --quiet
-    - apt-get install --yes --no-install-recommends --quiet frr ifupdown2
+    - apt-get install --yes --no-install-recommends --quiet --quiet frr ifupdown2
     - for input in ${FRR_FILES}; echo $input; do vtysh --dryrun --inputfile ${TESTDATA_DIR}/${input}; done
     - for input in ${INTERFACES_FILES}; echo $input do ifup --syntax-check --all -i ${TESTDATA_DIR}/${input}; done
 
