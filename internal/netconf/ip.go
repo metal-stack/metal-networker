@@ -10,7 +10,8 @@ func getLocalBGPIP(primary Network) string {
 			continue
 		}
 		if network.Contains(firstIP) {
-			// Set the last octet to "0" regardless of version
+			// Set the last octet to ".0" (sometimes referred to as "network identifier") to ensure a free IP within
+			// this network. It is absolutely fine to use that IP. Even Amazon EC2 is assigning it to machines.
 			ip[len(ip)-1] = 0
 			return ip.String()
 		}
