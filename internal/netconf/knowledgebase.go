@@ -92,7 +92,7 @@ func NewKnowledgeBase(path string) KnowledgeBase {
 }
 
 // Validate validates the containing information depending on the demands of the bare metal type.
-func (kb *KnowledgeBase) Validate(kind BareMetalType) error {
+func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 	if len(kb.Networks) == 0 {
 		return errors.New("expectation at least one network is present failed")
 	}
@@ -141,25 +141,25 @@ func (kb *KnowledgeBase) Validate(kind BareMetalType) error {
 	return nil
 }
 
-func (kb *KnowledgeBase) containsAnyExternalNetwork() bool {
+func (kb KnowledgeBase) containsAnyExternalNetwork() bool {
 	return len(kb.GetNetworks(External)) > 0
 }
 
-func (kb *KnowledgeBase) containsSinglePrimary() bool {
+func (kb KnowledgeBase) containsSinglePrimary() bool {
 	return kb.containsSingleNetworkOf(Primary)
 }
 
-func (kb *KnowledgeBase) containsSingleUnderlay() bool {
+func (kb KnowledgeBase) containsSingleUnderlay() bool {
 	return kb.containsSingleNetworkOf(Underlay)
 }
 
-func (kb *KnowledgeBase) containsSingleNetworkOf(networkType NetworkType) bool {
+func (kb KnowledgeBase) containsSingleNetworkOf(networkType NetworkType) bool {
 	possibleNetworks := kb.GetNetworks(networkType)
 	return len(possibleNetworks) == 1
 }
 
 // GetNetworks returns all networks present.
-func (kb *KnowledgeBase) GetNetworks(networkType ...NetworkType) []Network {
+func (kb KnowledgeBase) GetNetworks(networkType ...NetworkType) []Network {
 	var result []Network
 	for _, t := range networkType {
 		for _, n := range kb.Networks {
@@ -201,11 +201,6 @@ func (kb KnowledgeBase) getUnderlayNetwork() Network {
 	return kb.GetNetworks(Underlay)[0]
 }
 
-func versionHeader(uuid string) string {
-	return fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n# Do not edit.",
-		uuid, v.V.String())
-}
-
 func (kb KnowledgeBase) nicsContainValidMACs() bool {
 	for _, nic := range kb.Nics {
 		if nic.Mac == "" {
@@ -229,4 +224,9 @@ func (kb KnowledgeBase) allNonUnderlayNetworksHaveNonZeroVRF() bool {
 		}
 	}
 	return true
+}
+
+func versionHeader(uuid string) string {
+	return fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n# Do not edit.",
+		uuid, v.V.String())
 }
