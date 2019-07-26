@@ -75,7 +75,6 @@ route-map {{ .Name }} {{ .Policy }} {{ .Order }}
  {{ . }}
   {{- end }}
  {{- end }}
-route-map vrf{{ .ID }}-import-map deny 99
 !
 {{- end }}
 route-map only-self-out permit 10
