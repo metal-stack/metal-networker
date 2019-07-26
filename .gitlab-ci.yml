@@ -16,8 +16,8 @@ test-data:
   script:
     - apt-get update --quiet --quiet
     - apt-get install --yes --no-install-recommends --quiet --quiet frr ifupdown2
-    - for input in ${FRR_FILES}; echo $input; do vtysh --dryrun --inputfile ${TESTDATA_DIR}/${input}; done
-    - for input in ${INTERFACES_FILES}; echo $input do ifup --syntax-check --all -i ${TESTDATA_DIR}/${input}; done
+    - for input in ${FRR_FILES}; do /bin/echo ${input}; vtysh --dryrun --inputfile ${TESTDATA_DIR}/${input}; done
+    - for input in ${INTERFACES_FILES}; do /bin/echo ${input}; ifup --syntax-check --all -i ${TESTDATA_DIR}/${input}; done
 
 unit-tests:
   stage: test
