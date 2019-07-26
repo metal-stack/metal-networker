@@ -153,15 +153,25 @@ func (kb KnowledgeBase) containsSingleUnderlay() bool {
 	return kb.containsSingleNetworkOf(Underlay)
 }
 
-func (kb KnowledgeBase) containsSingleNetworkOf(networkType NetworkType) bool {
-	possibleNetworks := kb.GetNetworks(networkType)
+func (kb KnowledgeBase) containsSingleNetworkOf(types NetworkType) bool {
+	possibleNetworks := kb.GetNetworks(types)
 	return len(possibleNetworks) == 1
 }
 
+// CollectIPs collects IPs of the given networks.
+func (kb KnowledgeBase) CollectIPs(types ...NetworkType) []string {
+	var result []string
+	networks := kb.GetNetworks(types...)
+	for _, network := range networks {
+		result = append(result, network.Ips...)
+	}
+	return result
+}
+
 // GetNetworks returns all networks present.
-func (kb KnowledgeBase) GetNetworks(networkType ...NetworkType) []Network {
+func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
 	var result []Network
-	for _, t := range networkType {
+	for _, t := range types {
 		for _, n := range kb.Networks {
 			switch t {
 			case Primary:
