@@ -8,10 +8,11 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
 )
 
-// TplFirewallIfaces defines the name of the template to render interfaces configuration.
 const (
+	// TplFirewallIfaces defines the name of the template to render interfaces configuration for firewalls.
 	TplFirewallIfaces = "interfaces.firewall.tpl"
-	TplMachineIfaces  = "interfaces.machine.tpl"
+	// TplMachineIfaces defines the name of the template to render interfaces configuration for machines.
+	TplMachineIfaces = "interfaces.machine.tpl"
 )
 
 type (
@@ -29,10 +30,10 @@ type (
 	// server that functions as 'machine'.
 	MachineIfacesData struct {
 		CommonIfacesData
-		LocalBGPIfaceData *LocalBGPIfaceData
+		LocalBGPIfaceData LocalBGPIfaceData
 	}
 
-	// LocalBGPIfaceData contains attributes required to render network interfaces configuration for a
+	// LocalBGPIfaceData contains attributes required to render network interfaces configuration for a local BGP peering.
 	LocalBGPIfaceData struct {
 		Comment string
 		IP      string
@@ -84,29 +85,25 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 	case Firewall:
 		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getUnderlayNetwork().Networkid)
 		common.Loopback.IPs = kb.getUnderlayNetwork().Ips
-
 		f := FirewallIfacesData{}
 		f.CommonIfacesData = common
 		f.Bridge.Ports = getBridgePorts(kb)
 		f.Bridge.Vids = getBridgeVLANIDs(kb)
 		f.EVPNInterfaces = getEVPNInterfaces(kb)
-
 		data = f
 	case Machine:
-		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getPrimaryNetwork().Networkid)
-		// ensure that the ips of the primary network are the first ips at the loopback interface
-		loIPs := kb.getPrimaryNetwork().Ips
-		// append addresses of other networks as well
-		for _, net := range kb.Networks {
-			if !net.Primary {
-				loIPs = append(loIPs, net.Ips...)
-			}
+		primary := kb.getPrimaryNetwork()
+		common.Loopback.Comment = fmt.Sprintf("networkid: %s", primary.Networkid)
+		// Ensure that the ips of the primary network are the first ips at the loopback interface.
+		// The first lo IP is used within network communication and other systems depend on seeing the first primary ip.
+		common.Loopback.IPs = append(primary.Ips, kb.CollectIPs(External)...)
+		localBGP, err := getLocalBGPIfaceData(kb.getPrimaryNetwork())
+		if err != nil {
+			log.Fatalf("error finding bgp ip: %v", err)
 		}
-
-		common.Loopback.IPs = loIPs
 		data = MachineIfacesData{
 			CommonIfacesData:  common,
-			LocalBGPIfaceData: getLocalBGPIfaceData(kb),
+			LocalBGPIfaceData: localBGP,
 		}
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
@@ -116,11 +113,18 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
-func getLocalBGPIfaceData(kb KnowledgeBase) *LocalBGPIfaceData {
+func getLocalBGPIfaceData(primary Network) (LocalBGPIfaceData, error) {
 	var result LocalBGPIfaceData
-	result.Comment = fmt.Sprintf("local dummy interface to allow for peering locally with machine")
-	result.IP = getLocalBGPIP(kb)
-	return &result
+	bgpIP, err := assembleLocalBGPIP(primary)
+	if err != nil {
+		return result, err
+	}
+
+	result = LocalBGPIfaceData{
+		Comment: fmt.Sprintf("local dummy interface to allow for peering locally with machine"),
+		IP:      bgpIP,
+	}
+	return result, nil
 }
 
 // Validate network interfaces configuration. Assumes ifupdown2 is available.
@@ -135,19 +139,15 @@ func getEVPNInterfaces(kb KnowledgeBase) []EVPNIfaces {
 		if n.Underlay {
 			continue
 		}
-
 		e := EVPNIfaces{}
 		e.SVI.Comment = fmt.Sprintf("svi (networkid: %s)", n.Networkid)
 		e.SVI.VlanID = n.Vlan
 		e.SVI.Addresses = n.Ips
-
 		e.VXLAN.Comment = fmt.Sprintf("vxlan (networkid: %s)", n.Networkid)
 		e.VXLAN.ID = n.Vrf
 		e.VXLAN.TunnelIP = kb.getUnderlayNetwork().Ips[0]
-
 		e.VRF.Comment = fmt.Sprintf("vrf (networkid: %s)", n.Networkid)
 		e.VRF.ID = n.Vrf
-
 		result = append(result, e)
 	}
 	return result

@@ -38,12 +38,12 @@ type (
 
 	// MachineConfigurator is a configurator that configures a bare metal server as 'machine'.
 	MachineConfigurator struct {
-		*CommonConfigurator
+		CommonConfigurator
 	}
 
 	// FirewallConfigurator is a configurator that configures a bare metal server as 'firewall'.
 	FirewallConfigurator struct {
-		*CommonConfigurator
+		CommonConfigurator
 	}
 )
 
@@ -53,11 +53,11 @@ func NewConfigurator(kind BareMetalType, kb KnowledgeBase) Configurator {
 	switch kind {
 	case Firewall:
 		fw := FirewallConfigurator{}
-		fw.CommonConfigurator = &CommonConfigurator{kb}
+		fw.CommonConfigurator = CommonConfigurator{kb}
 		result = fw
 	case Machine:
 		m := MachineConfigurator{}
-		m.CommonConfigurator = &CommonConfigurator{kb}
+		m.CommonConfigurator = CommonConfigurator{kb}
 		result = m
 	default:
 		log.Fatalf("Unknown kind of configurator: %v", kind)
