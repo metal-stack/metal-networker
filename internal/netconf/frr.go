@@ -108,9 +108,9 @@ func getLocalBGPIP(kb KnowledgeBase) string {
 			continue
 		}
 		if ipnet.Contains(ip) {
-			// Set the last octet to "0" regardles of version
+			// Setting the last octet to "0" is not needed, because our network prefixes are considered to have proper "net"/CIDR-format
 			bgpip = pip
-			bgpip[len(bgpip)-1] = 0
+			break
 		}
 	}
 	return bgpip.String()
