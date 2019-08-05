@@ -11,7 +11,8 @@ lint:
   variables:
     VERSION_GOLANGCI_LINT: "1.16.0"
   script:
-    - curl --fail -location --remote-name --show-error https://github.com/golangci/golangci-lint/releases/download/v${VERSION_GOLANGCI_LINT}/golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386.tar.gz
+    - curl --fail --location --remote-name --show-error https://github
+    - .com/golangci/golangci-lint/releases/download/v${VERSION_GOLANGCI_LINT}/golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386.tar.gz
     - tar --extract --file golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386.tar.gz \
     - chmod +x golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386/golangci-lint \
     - golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386/golangci-lint run
