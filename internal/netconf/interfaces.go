@@ -115,7 +115,7 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 
 func getLocalBGPIfaceData(primary Network) (LocalBGPIfaceData, error) {
 	var result LocalBGPIfaceData
-	bgpIP, err := assembleLocalBGPIP(primary)
+	bgpIP, err := getLocalBGPIP(primary)
 	if err != nil {
 		return result, err
 	}
