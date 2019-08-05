@@ -2,11 +2,12 @@
 image: registry.fi-ts.io/cloud-native/go-builder:latest
 
 stages:
+  - lint
   - validate
   - test
   - deploy
 
-lint:
+sources:
   stage: validate
   variables:
     VERSION_GOLANGCI_LINT: "1.16.0"
