@@ -2,7 +2,6 @@
 image: registry.fi-ts.io/cloud-native/go-builder:latest
 
 stages:
-  - lint
   - validate
   - test
   - deploy
