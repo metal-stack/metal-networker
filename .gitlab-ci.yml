@@ -17,19 +17,21 @@ sources:
     - chmod +x golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386/golangci-lint
     - golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386/golangci-lint run
 
-# Fixme re-enable after https://git.f-i-ts.de/cloud-native/metal/metal-lab/issues/55 is solved.
-#test-data:
-#  stage: validate
-#  image: ubuntu:19.04
-#  variables:
-#    TESTDATA_DIR: "./internal/netconf/testdata/"
-#    FRR_FILES: "frr.conf.firewall frr.conf.machine"
-#    INTERFACES_FILES: "interfaces.firewall interfaces.machine"
-#  script:
-#    - apt-get update --quiet --quiet
-#    - apt-get install --yes --no-install-recommends --quiet --quiet frr ifupdown2
-#    - for input in ${FRR_FILES}; do /bin/echo ${input}; vtysh --dryrun --inputfile ${TESTDATA_DIR}/${input}; done
-#    - for input in ${INTERFACES_FILES}; do /bin/echo ${input}; ifup --syntax-check --all -i ${TESTDATA_DIR}/${input}; done
+test-data:
+  stage: validate
+  image: ubuntu:19.04
+  variables:
+    BLOBSTORE_URL: https://blobstore.fi-ts.io
+    FRR_FILES: "frr.conf.firewall frr.conf.machine"
+    FRR_TAG: ubuntu-19.04
+    INTERFACES_FILES: "interfaces.firewall interfaces.machine"
+    TESTDATA_DIR: "./internal/netconf/testdata/"
+  script:
+    - curl --fail --location --show-error --remote-name ${BLOBSTORE_URL}/metal/frr-${FRR_TAG}.tar.gz
+    - apt-get update --quiet --quiet
+    - apt-get install --yes --no-install-recommends --quiet --quiet ifupdown2 ./frr_*.deb ./frr-pythontools_*.deb ./libyang*.deb
+    - for input in ${FRR_FILES}; do /bin/echo ${input}; vtysh --dryrun --inputfile ${TESTDATA_DIR}/${input}; done
+    - for input in ${INTERFACES_FILES}; do /bin/echo ${input}; ifup --syntax-check --all -i ${TESTDATA_DIR}/${input}; done
 
 unit-tests:
   stage: test
