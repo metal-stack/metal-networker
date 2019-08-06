@@ -29,7 +29,7 @@ test-data:
   script:
     - apt-get update --quiet --quiet
     - apt-get install --yes --no-install-recommends curl
-    - curl --fail --location --show-error --remote-name ${BLOBSTORE_URL}/metal/frr-${FRR_TAG}.tar.gz
+    - curl --fail --location --show-error --remote-name --insecure ${BLOBSTORE_URL}/metal/frr-${FRR_TAG}.tar.gz
     - apt-get install --yes --no-install-recommends --quiet --quiet ifupdown2 ./frr_*.deb ./frr-pythontools_*.deb ./libyang*.deb
     - for input in ${FRR_FILES}; do /bin/echo ${input}; vtysh --dryrun --inputfile ${TESTDATA_DIR}/${input}; done
     - for input in ${INTERFACES_FILES}; do /bin/echo ${input}; ifup --syntax-check --all -i ${TESTDATA_DIR}/${input}; done
