@@ -26,10 +26,10 @@ func (c ChronyServiceEnabler) Enable() error {
 
 func getDefaultRouteVRFName(kb KnowledgeBase) (string, error) {
 	networks := kb.GetNetworks(External)
-	for _, n := range networks {
-		for _, d := range n.Destinationprefixes {
-			if d == "0.0.0.0/0" {
-				vrf := fmt.Sprintf("vrf%d", n.Vrf)
+	for _, network := range networks {
+		for _, prefix := range network.Destinationprefixes {
+			if prefix == AllZerosCIDR {
+				vrf := fmt.Sprintf("vrf%d", network.Vrf)
 				return vrf, nil
 			}
 		}

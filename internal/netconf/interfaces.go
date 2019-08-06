@@ -20,10 +20,7 @@ type (
 	// server.
 	CommonIfacesData struct {
 		Comment  string
-		Loopback struct {
-			Comment string
-			IPs     []string
-		}
+		Loopback Loopback
 	}
 
 	// MachineIfacesData contains attributes required to render network interfaces configuration of a bare metal
@@ -43,29 +40,8 @@ type (
 	// server that functions as 'firewall'.
 	FirewallIfacesData struct {
 		CommonIfacesData
-		Bridge struct {
-			Ports string
-			Vids  string
-		}
-		EVPNInterfaces []EVPNIfaces
-	}
-
-	// EVPNIfaces represents the information required to render EVPN interfaces configuration.
-	EVPNIfaces struct {
-		VRF struct {
-			ID      int
-			Comment string
-		}
-		SVI struct {
-			VlanID    int
-			Comment   string
-			Addresses []string
-		}
-		VXLAN struct {
-			Comment  string
-			ID       int
-			TunnelIP string
-		}
+		Bridge         Bridge
+		EVPNInterfaces []EVPNIface
 	}
 
 	// IfacesValidator defines the base type of an interfaces validator.
@@ -133,13 +109,13 @@ func (v IfacesValidator) Validate() error {
 	return exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }
 
-func getEVPNInterfaces(kb KnowledgeBase) []EVPNIfaces {
-	var result []EVPNIfaces
+func getEVPNInterfaces(kb KnowledgeBase) []EVPNIface {
+	var result []EVPNIface
 	for _, n := range kb.Networks {
 		if n.Underlay {
 			continue
 		}
-		e := EVPNIfaces{}
+		e := EVPNIface{}
 		e.SVI.Comment = fmt.Sprintf("svi (networkid: %s)", n.Networkid)
 		e.SVI.VlanID = n.Vlan
 		e.SVI.Addresses = n.Ips

@@ -23,16 +23,9 @@ const (
 	IPPrefixListNoExportSuffix = "-no-export"
 	// RouteMapOrderSeed defines the initial value for route-map order.
 	RouteMapOrderSeed = 10
-	// Permit defines an access policy that allows access.
-	Permit AccessPolicy = iota
-	// Deny defines an access policy that forbids access.
-	Deny
 )
 
 type (
-	// AccessPolicy is a type that represents a policy to manage access roles.
-	AccessPolicy int
-
 	// CommonFRRData contains attributes that are common to FRR configuration of all kind of bare metal servers.
 	CommonFRRData struct {
 		ASN        int64
@@ -54,44 +47,11 @@ type (
 		VRFs []VRF
 	}
 
-	// VRF represents data required to render VRF information into frr.conf.
-	VRF struct {
-		ID             int
-		VNI            int
-		ImportVRFNames []string
-		IPPrefixLists  []IPPrefixList
-		RouteMaps      []RouteMap
-	}
-
-	// RouteMap represents a route-map to permit or deny routes.
-	RouteMap struct {
-		Name    string
-		Entries []string
-		Policy  string
-		Order   int
-	}
-
-	// IPPrefixList represents 'ip prefix-list' filtering mechanism to be used in combination with route-maps.
-	IPPrefixList struct {
-		Name string
-		Spec string
-	}
-
 	// FRRValidator validates the frr.conf to apply.
 	FRRValidator struct {
 		path string
 	}
 )
-
-func (p AccessPolicy) String() string {
-	switch p {
-	case Permit:
-		return "permit"
-	case Deny:
-		return "deny"
-	}
-	return "undefined"
-}
 
 // NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
 func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
@@ -168,7 +128,9 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 		vrfName := "vrf" + strconv.Itoa(network.Vrf)
 		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb)
 		vrf := VRF{
-			ID:             network.Vrf,
+			Identity: Identity{
+				ID: network.Vrf,
+			},
 			VNI:            network.Vrf,
 			ImportVRFNames: vrfNamesOf(targets...),
 			IPPrefixLists:  prefixLists,
