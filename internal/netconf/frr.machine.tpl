@@ -34,6 +34,7 @@ router bgp {{ .ASN }}
  neighbor LOCAL peer-group
  neighbor LOCAL remote-as internal
  neighbor LOCAL timers 1 3
+ neighbor LOCAL route-map local-in in
  bgp listen range 10.244.0.0/16 peer-group LOCAL
  !
  address-family ipv4 unicast
@@ -42,6 +43,9 @@ router bgp {{ .ASN }}
  exit-address-family
 !
 bgp as-path access-list SELF permit ^$
+!
+route-map local-in permit 10
+  set weight 32768
 !
 route-map only-self-out permit 10
  match as-path SELF
