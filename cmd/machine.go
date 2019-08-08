@@ -20,7 +20,7 @@ var (
 		Long: `"metal-networker machine configure" configures network related aspects of a bare metal server
 to function as a 'machine'`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return configure(netconf.Machine, cmd, args)
+			return configure(netconf.Machine, cmd)
 		},
 	}
 )

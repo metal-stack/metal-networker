@@ -69,7 +69,7 @@ func initConfig() {
 }
 
 // configure configures bare metal server depending on kind.
-func configure(kind netconf.BareMetalType, cmd *cobra.Command, args []string) error {
+func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
 	log.Infof("running app version: %s", v.V.String())
 	input, err := cmd.Flags().GetString(flagInputName)
 	if err != nil {

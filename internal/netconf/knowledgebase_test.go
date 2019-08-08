@@ -36,7 +36,7 @@ func TestNewKnowledgeBase(t *testing.T) {
 	// external network
 	n = d.Networks[1]
 	assert.Equal(1, len(n.Destinationprefixes))
-	assert.Equal("0.0.0.0/0", n.Destinationprefixes[0])
+	assert.Equal(AllZerosCIDR, n.Destinationprefixes[0])
 	assert.Equal(1, len(n.Ips))
 	assert.Equal("185.1.2.3", n.Ips[0])
 	assert.Equal(2, len(n.Prefixes))

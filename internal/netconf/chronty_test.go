@@ -9,7 +9,7 @@ import (
 func TestChronyServiceEnabler_Enable(t *testing.T) {
 	assert := assert.New(t)
 
-	network := Network{Primary: false, Underlay: false, Destinationprefixes: []string{"0.0.0.0/0"}, Vrf: 104009}
+	network := Network{Primary: false, Underlay: false, Destinationprefixes: []string{AllZerosCIDR}, Vrf: 104009}
 	tests := []struct {
 		kb              KnowledgeBase
 		vrf             string
