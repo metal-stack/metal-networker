@@ -34,7 +34,7 @@ router bgp {{ .ASN }}
  neighbor LOCAL peer-group
  neighbor LOCAL remote-as internal
  neighbor LOCAL timers 1 3
- bgp listen range {{ .LocalBGPIP }}/32 peer-group LOCAL
+ bgp listen range 10.244.0.0/16 peer-group LOCAL
  !
  address-family ipv4 unicast
   redistribute connected

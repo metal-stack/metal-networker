@@ -2,7 +2,6 @@ package netconf
 
 import (
 	"fmt"
-	"net"
 	"strconv"
 	"strings"
 
@@ -46,7 +45,6 @@ type (
 	// MachineFRRData contains attributes required to render frr.conf of bare metal servers that function as 'machine'.
 	MachineFRRData struct {
 		CommonFRRData
-		LocalBGPIP string
 	}
 
 	// FirewallFRRData contains attributes required to render frr.conf of bare metal servers that function as 'firewall'.
@@ -107,13 +105,8 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 		}
 	case Machine:
 		net := kb.getPrimaryNetwork()
-		bgpIP, err := assembleLocalBGPIP(kb.getPrimaryNetwork())
-		if err != nil {
-			log.Fatalf("error finding bgp ip: %v", err)
-		}
 		data = MachineFRRData{
 			CommonFRRData: newCommonFRRData(net, kb),
-			LocalBGPIP:    bgpIP,
 		}
 	default:
 		log.Fatalf("unknown kind of bare metal: %v", kind)
@@ -121,24 +114,6 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 
 	validator := FRRValidator{tmpFile}
 	return network.NewNetworkApplier(data, validator, nil)
-}
-
-func getLocalBGPIP(kb KnowledgeBase) string {
-	var bgpip net.IP
-	n := kb.getPrimaryNetwork()
-	ip := net.ParseIP(n.Ips[0])
-	for _, p := range n.Prefixes {
-		pip, ipnet, err := net.ParseCIDR(p)
-		if err != nil {
-			continue
-		}
-		if ipnet.Contains(ip) {
-			// Setting the last octet to "0" is not needed, because our network prefixes are considered to have proper "net"/CIDR-format
-			bgpip = pip
-			break
-		}
-	}
-	return bgpip.String()
 }
 
 func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {

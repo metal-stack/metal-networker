@@ -30,13 +30,6 @@ type (
 	// server that functions as 'machine'.
 	MachineIfacesData struct {
 		CommonIfacesData
-		LocalBGPIfaceData LocalBGPIfaceData
-	}
-
-	// LocalBGPIfaceData contains attributes required to render network interfaces configuration for a local BGP peering.
-	LocalBGPIfaceData struct {
-		Comment string
-		IP      string
 	}
 
 	// FirewallIfacesData contains attributes required to render network interfaces configuration of a bare metal
@@ -97,13 +90,8 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		// Ensure that the ips of the primary network are the first ips at the loopback interface.
 		// The first lo IP is used within network communication and other systems depend on seeing the first primary ip.
 		common.Loopback.IPs = append(primary.Ips, kb.CollectIPs(External)...)
-		localBGP, err := getLocalBGPIfaceData(kb.getPrimaryNetwork())
-		if err != nil {
-			log.Fatalf("error finding bgp ip: %v", err)
-		}
 		data = MachineIfacesData{
-			CommonIfacesData:  common,
-			LocalBGPIfaceData: localBGP,
+			CommonIfacesData: common,
 		}
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
@@ -111,20 +99,6 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 
 	validator := IfacesValidator{path: tmpFile}
 	return network.NewNetworkApplier(data, validator, nil)
-}
-
-func getLocalBGPIfaceData(primary Network) (LocalBGPIfaceData, error) {
-	var result LocalBGPIfaceData
-	bgpIP, err := assembleLocalBGPIP(primary)
-	if err != nil {
-		return result, err
-	}
-
-	result = LocalBGPIfaceData{
-		Comment: fmt.Sprintf("local dummy interface to allow for peering locally with machine"),
-		IP:      bgpIP,
-	}
-	return result, nil
 }
 
 // Validate network interfaces configuration. Assumes ifupdown2 is available.
