@@ -5,7 +5,7 @@ go 1.12
 require (
 	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190701111916-6ee4d6ba0799
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
-	github.com/magiconair/properties v1.8.1 // indirect
+	github.com/magiconair/properties v1.8.1
 	github.com/metal-pod/v v0.0.2
 	github.com/pelletier/go-toml v1.4.0 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
