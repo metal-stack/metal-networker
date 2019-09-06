@@ -24,16 +24,16 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.NotEmpty(d.Networks)
 	assert.Equal(4, len(d.Networks))
 
-	// primary network
+	// private network
 	n := d.Networks[0]
 	assert.Equal(1, len(n.Ips))
 	assert.Equal("10.0.16.2", n.Ips[0])
 	assert.Equal(1, len(n.Prefixes))
 	assert.Equal("10.0.16.0/22", n.Prefixes[0])
-	assert.True(n.Primary)
+	assert.True(n.Private)
 	assert.Equal(3981, n.Vrf)
 
-	// external network
+	// public networks
 	n = d.Networks[1]
 	assert.Equal(1, len(n.Destinationprefixes))
 	assert.Equal(AllZerosCIDR, n.Destinationprefixes[0])
@@ -43,7 +43,7 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal("185.1.2.0/24", n.Prefixes[0])
 	assert.Equal("185.27.0.0/22", n.Prefixes[1])
 	assert.False(n.Underlay)
-	assert.False(n.Primary)
+	assert.False(n.Private)
 	assert.True(n.Nat)
 	assert.Equal(104009, n.Vrf)
 
@@ -56,7 +56,7 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal("10.0.12.0/22", n.Prefixes[0])
 	assert.True(n.Underlay)
 
-	// external network mpls
+	// public network mpls
 	n = d.Networks[3]
 	assert.Equal(1, len(n.Destinationprefixes))
 	assert.Equal("100.127.1.0/24", n.Destinationprefixes[0])
@@ -65,16 +65,16 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal(1, len(n.Prefixes))
 	assert.Equal("100.127.129.0/24", n.Prefixes[0])
 	assert.False(n.Underlay)
-	assert.False(n.Primary)
+	assert.False(n.Private)
 	assert.True(n.Nat)
 	assert.Equal(104010, n.Vrf)
 }
 
 func stubKnowledgeBase() KnowledgeBase {
 	return KnowledgeBase{Networks: []Network{
-		{Primary: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 1011209},
+		{Private: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 1011209},
 		{Underlay: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 0},
-		{Primary: false, Underlay: false, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: 1011209, Vrf: 1011209},
+		{Private: false, Underlay: false, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: 1011209, Vrf: 1011209},
 	}, Nics: []NIC{{Mac: "00:00:00:00:00:00"}}}
 }
 
@@ -97,20 +97,20 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 		},
 		{
 			expectedErrMsg: "at least one IP must be present to be considered as LOOPBACK IP (" +
-				"'primary: true' network IP for machine, 'underlay: true' network IP for firewall",
+				"'private: true' network IP for machine, 'underlay: true' network IP for firewall",
 			kb:    stripIPs(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine},
 		},
 		{expectedErrMsg: "expectation exactly one underlay network is present failed",
 			kb:    maskUnderlayNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
-		{expectedErrMsg: "expectation exactly one 'primary: true' network is present failed",
-			kb:    maskPrimaryNetworks(stubKnowledgeBase()),
+		{expectedErrMsg: "expectation exactly one 'private: true' network is present failed",
+			kb:    maskPrivateNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine}},
-		{expectedErrMsg: "'asn' of primary (machine) resp. underlay (firewall) network must not be missing",
-			kb:    stripPrimaryNetworkASN(stubKnowledgeBase()),
+		{expectedErrMsg: "'asn' of private (machine) resp. underlay (firewall) network must not be missing",
+			kb:    stripPrivateNetworkASN(stubKnowledgeBase()),
 			kinds: []BareMetalType{Machine}},
-		{expectedErrMsg: "'asn' of primary (machine) resp. underlay (firewall) network must not be missing",
+		{expectedErrMsg: "'asn' of private (machine) resp. underlay (firewall) network must not be missing",
 			kb:    stripUnderlayNetworkASN(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "at least one 'nics/nic' definition must be present",
@@ -119,11 +119,11 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 		{expectedErrMsg: "each 'nic' definition must contain a valid 'mac'",
 			kb:    stripMACs(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine}},
-		{expectedErrMsg: "primary network must not lack prefixes since nat is required",
+		{expectedErrMsg: "private network must not lack prefixes since nat is required",
 			kb:    setupIllegalNat(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
-		{expectedErrMsg: "non-primary, non-underlay networks must contain destination prefix(es) to make any sense of it",
-			kb:    stripDestinationPrefixesFromExternalNetworks(stubKnowledgeBase()),
+		{expectedErrMsg: "non-private, non-underlay networks must contain destination prefix(es) to make any sense of it",
+			kb:    stripDestinationPrefixesFromPublicNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "networks with 'underlay: false' must contain a value vor 'vrf' as it is used for BGP",
 			kb:    stripVRFValueOfNonUnderlayNetworks(stubKnowledgeBase()),
@@ -156,13 +156,13 @@ func stripVRFValueOfNonUnderlayNetworks(kb KnowledgeBase) KnowledgeBase {
 	return kb
 }
 
-// It makes no sense to have an external network without destination prefixes.
-// Destination prefixes are used to import routes from the external network.
-// Without route import there is no communication into that external network.
-func stripDestinationPrefixesFromExternalNetworks(kb KnowledgeBase) KnowledgeBase {
+// It makes no sense to have an public network without destination prefixes.
+// Destination prefixes are used to import routes from the public network.
+// Without route import there is no communication into that public network.
+func stripDestinationPrefixesFromPublicNetworks(kb KnowledgeBase) KnowledgeBase {
 	kb.Networks[0].Nat = true
 	for i := 0; i < len(kb.Networks); i++ {
-		if !kb.Networks[i].Underlay && !kb.Networks[i].Primary {
+		if !kb.Networks[i].Underlay && !kb.Networks[i].Private {
 			kb.Networks[i].Destinationprefixes = []string{}
 		}
 	}
@@ -172,7 +172,7 @@ func stripDestinationPrefixesFromExternalNetworks(kb KnowledgeBase) KnowledgeBas
 func setupIllegalNat(kb KnowledgeBase) KnowledgeBase {
 	kb.Networks[0].Nat = true
 	for i := 0; i < len(kb.Networks); i++ {
-		if kb.Networks[i].Primary {
+		if kb.Networks[i].Private {
 			kb.Networks[i].Prefixes = []string{}
 		}
 	}
@@ -207,9 +207,9 @@ func stripUnderlayNetworkASN(kb KnowledgeBase) KnowledgeBase {
 	return kb
 }
 
-func stripPrimaryNetworkASN(kb KnowledgeBase) KnowledgeBase {
+func stripPrivateNetworkASN(kb KnowledgeBase) KnowledgeBase {
 	for i := 0; i < len(kb.Networks); i++ {
-		if kb.Networks[i].Primary {
+		if kb.Networks[i].Private {
 			kb.Networks[i].Asn = 0
 		}
 	}
@@ -237,9 +237,9 @@ func maskUnderlayNetworks(kb KnowledgeBase) KnowledgeBase {
 	return kb
 }
 
-func maskPrimaryNetworks(kb KnowledgeBase) KnowledgeBase {
+func maskPrivateNetworks(kb KnowledgeBase) KnowledgeBase {
 	for i := 0; i < len(kb.Networks); i++ {
-		kb.Networks[i].Primary = false
+		kb.Networks[i].Private = false
 	}
 	return kb
 }
