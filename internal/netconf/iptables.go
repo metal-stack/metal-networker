@@ -58,16 +58,16 @@ func NewIptablesConfigApplier(kb KnowledgeBase, validator network.Validator) net
 
 func getSNAT(kb KnowledgeBase) []SNAT {
 	var result []SNAT
-	primary := kb.getPrimaryNetwork()
+	private := kb.getPrivateNetwork()
 
-	networks := kb.GetNetworks(Primary, External)
+	networks := kb.GetNetworks(Private, Public)
 	for _, n := range networks {
 		if !n.Nat {
 			continue
 		}
 
 		var sources []string
-		sources = append(sources, primary.Prefixes...)
+		sources = append(sources, private.Prefixes...)
 		cmt := fmt.Sprintf("snat (networkid: %s)", n.Networkid)
 		svi := fmt.Sprintf("vlan%d", n.Vrf)
 

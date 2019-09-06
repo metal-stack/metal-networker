@@ -18,12 +18,12 @@ var log = zapup.MustRootLogger().Sugar()
 const (
 	// VLANOffset defines a number to start with when creating new VLAN IDs.
 	VLANOffset = 1000
-	// Underlay represents the Underlay network.
+	// Underlay represents the fabric network where infrastructure switches and routers are placed in.
 	Underlay NetworkType = iota
-	// Primary represents the primary network.
-	Primary
-	// External represents an external network.
-	External
+	// Private represents the local machine network where all machines of a project are placed in.
+	Private
+	// Public represents an external network a machine has access to.
+	Public
 )
 
 type (
@@ -64,7 +64,7 @@ type (
 		Nat                 bool     `yaml:"nat"`
 		Networkid           string   `yaml:"networkid"`
 		Prefixes            []string `yaml:"prefixes"`
-		Primary             bool     `yaml:"primary"`
+		Private             bool     `yaml:"private"`
 		Underlay            bool     `yaml:"underlay"`
 		Vrf                 int      `yaml:"vrf"`
 		Vlan                int      `yaml:"vlan,omitempty"`
@@ -96,8 +96,8 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 	if len(kb.Networks) == 0 {
 		return errors.New("expectation at least one network is present failed")
 	}
-	if !kb.containsSinglePrimary() {
-		return errors.New("expectation exactly one 'primary: true' network is present failed")
+	if !kb.containsSinglePrivate() {
+		return errors.New("expectation exactly one 'private: true' network is present failed")
 	}
 	if kind == Firewall {
 		if !kb.allNonUnderlayNetworksHaveNonZeroVRF() {
@@ -106,30 +106,30 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 		if !kb.containsSingleUnderlay() {
 			return errors.New("expectation exactly one underlay network is present failed")
 		}
-		if !kb.containsAnyExternalNetwork() {
-			return errors.New("expectation at least one external network (primary: false, " +
+		if !kb.containsAnyPublicNetwork() {
+			return errors.New("expectation at least one public network (private: false, " +
 				"underlay: false) is present failed")
 		}
-		for _, net := range kb.GetNetworks(External) {
+		for _, net := range kb.GetNetworks(Public) {
 			if len(net.Destinationprefixes) == 0 {
-				return errors.New("non-primary, non-underlay networks must contain destination prefix(es) to make " +
+				return errors.New("non-private, non-underlay networks must contain destination prefix(es) to make " +
 					"any sense of it")
 			}
 		}
-		if kb.isAnyNAT() && len(kb.getPrimaryNetwork().Prefixes) == 0 {
-			return errors.New("primary network must not lack prefixes since nat is required")
+		if kb.isAnyNAT() && len(kb.getPrivateNetwork().Prefixes) == 0 {
+			return errors.New("private network must not lack prefixes since nat is required")
 		}
 	}
-	net := kb.getPrimaryNetwork()
+	net := kb.getPrivateNetwork()
 	if kind == Firewall {
 		net = kb.getUnderlayNetwork()
 	}
 	if len(net.Ips) == 0 {
 		return errors.New("at least one IP must be present to be considered as LOOPBACK IP (" +
-			"'primary: true' network IP for machine, 'underlay: true' network IP for firewall")
+			"'private: true' network IP for machine, 'underlay: true' network IP for firewall")
 	}
 	if net.Asn <= 0 {
-		return errors.New("'asn' of primary (machine) resp. underlay (firewall) network must not be missing")
+		return errors.New("'asn' of private (machine) resp. underlay (firewall) network must not be missing")
 	}
 	if len(kb.Nics) == 0 {
 		return errors.New("at least one 'nics/nic' definition must be present")
@@ -141,12 +141,12 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 	return nil
 }
 
-func (kb KnowledgeBase) containsAnyExternalNetwork() bool {
-	return len(kb.GetNetworks(External)) > 0
+func (kb KnowledgeBase) containsAnyPublicNetwork() bool {
+	return len(kb.GetNetworks(Public)) > 0
 }
 
-func (kb KnowledgeBase) containsSinglePrimary() bool {
-	return kb.containsSingleNetworkOf(Primary)
+func (kb KnowledgeBase) containsSinglePrivate() bool {
+	return kb.containsSingleNetworkOf(Private)
 }
 
 func (kb KnowledgeBase) containsSingleUnderlay() bool {
@@ -174,16 +174,16 @@ func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
 	for _, t := range types {
 		for _, n := range kb.Networks {
 			switch t {
-			case Primary:
-				if n.Primary {
+			case Private:
+				if n.Private {
 					result = append(result, n)
 				}
 			case Underlay:
 				if n.Underlay {
 					result = append(result, n)
 				}
-			case External:
-				if !n.Underlay && !n.Primary {
+			case Public:
+				if !n.Underlay && !n.Private {
 					result = append(result, n)
 				}
 			}
@@ -201,9 +201,9 @@ func (kb KnowledgeBase) isAnyNAT() bool {
 	return false
 }
 
-func (kb KnowledgeBase) getPrimaryNetwork() Network {
+func (kb KnowledgeBase) getPrivateNetwork() Network {
 	// Safe access since a priory validation ensures there is exactly one.
-	return kb.GetNetworks(Primary)[0]
+	return kb.GetNetworks(Private)[0]
 }
 
 func (kb KnowledgeBase) getUnderlayNetwork() Network {
