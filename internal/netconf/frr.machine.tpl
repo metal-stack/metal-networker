@@ -39,6 +39,7 @@ router bgp {{ .ASN }}
  !
  address-family ipv4 unicast
   redistribute connected
+  redistribute kernel
   neighbor TOR route-map only-self-out out
  exit-address-family
 !
