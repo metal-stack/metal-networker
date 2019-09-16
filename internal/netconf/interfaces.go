@@ -61,11 +61,11 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		f.EVPNInterfaces = getEVPNInterfaces(kb)
 		data = f
 	case Machine:
-		primary := kb.getPrimaryNetwork()
-		common.Loopback.Comment = fmt.Sprintf("networkid: %s", primary.Networkid)
-		// Ensure that the ips of the primary network are the first ips at the loopback interface.
-		// The first lo IP is used within network communication and other systems depend on seeing the first primary ip.
-		common.Loopback.IPs = append(primary.Ips, kb.CollectIPs(External)...)
+		private := kb.getPrivateNetwork()
+		common.Loopback.Comment = fmt.Sprintf("networkid: %s", private.Networkid)
+		// Ensure that the ips of the private network are the first ips at the loopback interface.
+		// The first lo IP is used within network communication and other systems depend on seeing the first private ip.
+		common.Loopback.IPs = append(private.Ips, kb.CollectIPs(Public)...)
 		data = MachineIfacesData{
 			CommonIfacesData: common,
 		}
@@ -105,7 +105,7 @@ func getEVPNInterfaces(kb KnowledgeBase) []EVPNIface {
 
 func getBridgeVLANIDs(kb KnowledgeBase) string {
 	result := ""
-	networks := kb.GetNetworks(Primary, External)
+	networks := kb.GetNetworks(Private, Public)
 	for _, n := range networks {
 		if result == "" {
 			result = fmt.Sprintf("%d", n.Vlan)
@@ -118,7 +118,7 @@ func getBridgeVLANIDs(kb KnowledgeBase) string {
 
 func getBridgePorts(kb KnowledgeBase) string {
 	result := ""
-	networks := kb.GetNetworks(Primary, External)
+	networks := kb.GetNetworks(Private, Public)
 	for _, n := range networks {
 		if n.Underlay {
 			continue

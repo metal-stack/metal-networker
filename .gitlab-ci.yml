@@ -8,19 +8,13 @@ stages:
 
 sources:
   stage: validate
-  variables:
-    VERSION_GOLANGCI_LINT: "1.16.0"
   script:
-    - curl --fail --location --remote-name --show-error https://github.com/golangci/golangci-lint/releases/download/v${VERSION_GOLANGCI_LINT}/golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386.tar.gz
-    - tar --extract --file golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386.tar.gz
-    - chmod +x golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386/golangci-lint
-    - golangci-lint-${VERSION_GOLANGCI_LINT}-linux-386/golangci-lint run
+    - make golangci
 
 test-data:
   stage: validate
   image: ubuntu:19.04
   variables:
-    BLOBSTORE_URL: https://blobstore.fi-ts.io
     FRR_FILES: "frr.conf.firewall frr.conf.machine"
     FRR_TAG: ubuntu-19.04
     INTERFACES_FILES: "interfaces.firewall interfaces.machine"
@@ -28,7 +22,7 @@ test-data:
   script:
     - apt-get update --quiet --quiet
     - apt-get install --yes --no-install-recommends curl
-    - curl --fail --location --show-error --remote-name --insecure ${BLOBSTORE_URL}/metal/frr-${FRR_TAG}.tar.gz
+    - curl --fail --location --show-error --remote-name --insecure ${BLOB_URL}/metal/frr-${FRR_TAG}.tar.gz
     - tar --extract --file frr-${FRR_TAG}.tar.gz
     - apt-get install --yes --no-install-recommends --quiet --quiet ifupdown2 ./frr_*.deb ./frr-pythontools_*.deb ./libyang*.deb
     - for input in ${FRR_FILES}; do /bin/echo ${input}; vtysh --dryrun --inputfile ${TESTDATA_DIR}/${input}; done
@@ -47,7 +41,7 @@ unit-tests:
     - tar -czvf metal-networker.tar.gz -C ./bin metal-networker -C ../internal/netconf/ interfaces.firewall.tpl interfaces.machine.tpl frr.machine.tpl frr.firewall.tpl rules.v4.tpl rules.v6.tpl systemd.link.tpl systemd.network.tpl hosts.tpl hostname.tpl
     - curl -fLS https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
     - chmod +x /usr/local/bin/mc
-    - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
+    - mc config host add fits https://blobstore.fi-ts.io $BLOB_ACCESS_KEY "${BLOB_SECRET_KEY}"
     - mc cp metal-networker.tar.gz fits/cloud-native/metal-networker-${suffix}.tar.gz
 
 # This job is triggered only for a "stable" tagged branch to always have a version that is known to work properly.
@@ -65,3 +59,11 @@ latest:
     suffix: latest
   only:
     - master
+
+# This job is triggered for every merge request.
+mergerequest:
+  <<: *blobstore
+  variables:
+    suffix: ${CI_COMMIT_REF_SLUG}
+  only:
+    - merge_requests
