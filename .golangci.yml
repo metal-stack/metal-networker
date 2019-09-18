@@ -21,6 +21,9 @@ linters:
 issues:
   exclude-use-default: false
   exclude-rules:
+    - path: _test\.go
+      linters:
+        - funlen
     - linters:
         - gosec
       text: "G304: Potential file inclusion via variable"
