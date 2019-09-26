@@ -1,67 +1,51 @@
 {{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf.IptablesData*/ -}}
 {{ .Comment }}
-
-########################################################################################################################
-# Default table definitions to handle:
-# - packets destined to local sockets
-# - packets routed through the box
-# - locally-generated packets
-#
-*filter
-# Allow any traffic by default.
-:INPUT DROP [0:0]
-:FORWARD ACCEPT [0:0]
-:OUTPUT DROP [0:0]
-:refuse - [0:0]
-
-# Control behavior for incoming packets.
-## Accept
---append INPUT --match conntrack --ctstate RELATED,ESTABLISHED --match comment --comment "stateful input" --jump ACCEPT
---append INPUT --in-interface lo --match comment --comment "BGP unnumbered" --jump ACCEPT
---append INPUT --in-interface lan0 --source 10.0.0.0/8 --protocol udp --match udp --destination-port 4789 --match comment --comment "incoming VXLAN lan0" --jump ACCEPT
---append INPUT --in-interface lan1 --source 10.0.0.0/8 --protocol udp --match udp --destination-port 4789 --match comment --comment "incoming VXLAN lan1" --jump ACCEPT
---append INPUT --protocol tcp --match tcp --destination-port 22 --match conntrack --ctstate NEW --jump ACCEPT --match comment --comment "SSH incoming connections"
-## Drop
---append INPUT --match conntrack --ctstate INVALID --match comment --comment "drop invalid packets to prevent malicious activity" --jump DROP
---append INPUT --jump refuse
-
-# Control behavior for forwarded packets.
-## Drop
---append FORWARD --match conntrack --ctstate INVALID --match comment --comment "drop invalid packets from forwarding to prevent malicious activity" --jump DROP
---append FORWARD --protocol tcp --match tcp --destination-port 179 --match conntrack --ctstate NEW --match comment --comment "block bgp forward to machines" --jump refuse
-## Accept
-
-# Control behavior for outgoing packets.
---append OUTPUT --out-interface lo --match comment --comment "lo output required e.g. for chrony" --jump ACCEPT
---append OUTPUT --match conntrack --ctstate RELATED,ESTABLISHED --match comment --comment "stateful output"  --jump ACCEPT
---append OUTPUT --destination 10.0.0.0/8 --protocol udp --match udp --destination-port 4789 --match comment --comment "outgoing VXLAN" --jump ACCEPT
-# Drop
---append OUTPUT --match conntrack --ctstate INVALID --match comment --comment "drop invalid packets" --jump DROP
---append OUTPUT --jump refuse
-
-# Control behavior to handle unwanted traffic.
-# The refuse chain logs the package with a delay to avoid flooding.
---append refuse --match limit --limit 2/min --jump LOG --log-prefix "iptables-dropped: "
-# Drop the package after having it logged to refuse it.
---append refuse --jump DROP
-
-COMMIT
-# END OF *filter #######################################################################################################
-
-########################################################################################################################
-# Consulted when a packet that creates a new connection is encountered.
-*nat
-:PREROUTING ACCEPT [0:0]
-:INPUT ACCEPT [0:0]
-:OUTPUT ACCEPT [0:0]
-:POSTROUTING ACCEPT [0:0]
-{{- range .SNAT }}
-    {{- $cmt:=.Comment }}
-    {{- $out:=.OutInterface }}
-    {{- range .SourceSpecs }}
---append POSTROUTING --source {{ . }} --out-interface {{ $out }} --match comment --comment "{{ $cmt }}" --jump MASQUERADE
-    {{- end }}
-{{- end }}
-
-COMMIT
-# END OF *nat ##########################################################################################################
+table ip metal {
+    chain input {
+        type filter hook input priority 0; policy drop;
+        ct state established,related counter accept comment "stateful input"
+        iifname "lo" counter accept comment "BGP unnumbered"
+        iifname "lan0" ip saddr 10.0.0.0/8 udp dport 4789 counter accept comment "incoming VXLAN lan0"
+        iifname "lan1" ip saddr 10.0.0.0/8 udp dport 4789 counter accept comment "incoming VXLAN lan1"
+        tcp dport ssh ct state new counter accept comment "SSH incoming connections"
+        ct state invalid counter drop comment "drop invalid packets to prevent malicious activity"
+        counter jump refuse
+    }
+    chain forward {
+        type filter hook forward priority 0; policy accept;
+        ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
+        tcp dport bgp ct state new counter jump refuse comment "block bgp forward to machines"
+    }
+    chain output {
+        type filter hook output priority 0; policy accept;
+        oifname "lo" counter accept comment "lo output required e.g. for chrony"
+        ct state established,related counter accept comment "stateful output"
+        ip daddr 10.0.0.0/8 udp dport 4789 counter accept comment "outgoing VXLAN"
+        ct state invalid counter drop comment "drop invalid packets"
+    }
+    chain refuse {
+        limit rate 2/minute counter log prefix "nftables-metal-dropped: "
+        counter drop
+    }
+}
+table ip nat {
+    chain prerouting {
+        type nat hook prerouting priority 0; policy accept;
+    }
+    chain input {
+        type nat hook input priority 0; policy accept;
+    }
+    chain output {
+        type nat hook output priority 0; policy accept;
+    }
+    chain postrouting {
+        type nat hook postrouting priority 0; policy accept;
+        {{- range .SNAT }}
+        {{- $cmt:=.Comment }}
+        {{- $out:=.OutInterface }}
+        {{- range .SourceSpecs }}
+        oifname "{{ $out }}" ip saddr {{ . }} counter masquerade comment "{{ $cmt }}"
+        {{- end }}
+        {{- end }}
+    }
+}

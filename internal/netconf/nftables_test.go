@@ -27,7 +27,7 @@ func TestCompileNftRules(t *testing.T) {
 		kb := NewKnowledgeBase("testdata/firewall.yaml")
 		assert.NoError(err)
 
-		a := NewIptablesConfigApplier(kb, nil)
+		a := NewNftablesConfigApplier(kb, nil)
 		b := bytes.Buffer{}
 
 		f := test.template

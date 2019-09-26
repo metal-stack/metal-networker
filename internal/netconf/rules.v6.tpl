@@ -1,50 +1,31 @@
 {{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf.IptablesData*/ -}}
 {{ .Comment }}
-
-########################################################################################################################
-# Default table definitions to handle:
-# - packets destined to local sockets
-# - packets routed through the box
-# - locally-generated packets
-#
-*filter
-# Allow any traffic by default.
-:INPUT DROP [0:0]
-:FORWARD DROP [0:0]
-:OUTPUT DROP [0:0]
-:refuse - [0:0]
-
-# Control behavior for incoming packets.
-## Accept
---append INPUT --protocol icmpv6 --match comment --comment "icmpv6 input required for neighbor discovery" --jump ACCEPT
---append INPUT --in-interface lo --match comment --comment "BGP unnumbered" --jump ACCEPT
---append INPUT --match conntrack --ctstate RELATED,ESTABLISHED --match comment --comment "stateful input" --jump ACCEPT
---append INPUT --in-interface lan0 --source fe80::/64 --protocol tcp --match tcp --destination-port 179 --match comment --comment "bgp unnumbered input from lan0" --jump ACCEPT
---append INPUT --in-interface lan1 --source fe80::/64 --protocol tcp --match tcp --destination-port 179 --match comment --comment "bgp unnumbered input from lan1" --jump ACCEPT
-
-## Drop
---append INPUT --match conntrack --ctstate INVALID --match comment --comment "drop invalid packets to prevent malicious activity" --jump DROP
---append INPUT --jump refuse
-
-# Control behavior for forwarded packets.
-## Accept
-## Drop
---append FORWARD --match conntrack --ctstate INVALID --match comment --comment "drop invalid packets from forwarding to prevent malicious activity" --jump DROP
---append FORWARD --jump refuse
-
-# Control behavior for outgoing packets.
-# Accept
---append OUTPUT --match conntrack --ctstate RELATED,ESTABLISHED --match comment --comment "stateful output"  --jump ACCEPT
---append OUTPUT --out-interface lo --match comment --comment "BGP unnumbered" --jump ACCEPT
---append OUTPUT --protocol icmpv6 --match comment --comment "icmpv6 output required for neighbor discovery" --jump ACCEPT
---append OUTPUT --out-interface lan0 --source fe80::/64 --protocol tcp --match tcp --destination-port 179 --match comment --comment "bgp unnumbered output at lan0" --jump ACCEPT
---append OUTPUT --out-interface lan1 --source fe80::/64 --protocol tcp --match tcp --destination-port 179 --match comment --comment "bgp unnumbered output at lan1" --jump ACCEPT
-
-# Control behavior to handle unwanted traffic.
-# The refuse chain logs the package with a delay to avoid flooding.
---append refuse --match limit --limit 2/min --jump LOG --log-prefix "iptables-dropped: "
-# Drop the package after having it logged to refuse it.
---append refuse --jump DROP
-
-COMMIT
-# END OF *filter #######################################################################################################
+table ip6 metal {
+    chain input {
+        type filter hook input priority 0; policy drop;
+        meta l4proto ipv6-icmp counter accept comment "icmpv6 input required for neighbor discovery"
+        iifname "lo" counter accept comment "BGP unnumbered"
+        ct state established,related counter accept comment "stateful input"
+        iifname "lan0" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered input from lan0"
+        iifname "lan1" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered input from lan1"
+        ct state invalid counter drop comment "drop invalid packets to prevent malicious activity"
+        counter jump refuse
+    }
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+        ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
+        counter jump refuse
+    }
+    chain output {
+        type filter hook output priority 0; policy drop;
+        ct state established,related counter accept comment "stateful output"
+        oifname "lo" counter accept comment "BGP unnumbered"
+        meta l4proto ipv6-icmp counter accept comment "icmpv6 output required for neighbor discovery"
+        oifname "lan0" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered output at lan0"
+        oifname "lan1" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered output at lan1"
+    }
+    chain refuse {
+        limit rate 2/minute counter log prefix "nftables-metal-dropped: "
+        counter drop
+    }
+}
