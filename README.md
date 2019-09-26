@@ -1,6 +1,6 @@
 # metal-networker
 
-Configures networking related resources such as interfaces, frr, iptables.
+Configures networking related resources such as interfaces, frr, nftables.
 
 ## Preconditions
 
@@ -8,8 +8,7 @@ Ubuntu operating system in place with the following packages installed:
 
 - ifupdown2
 - frr > 7.0
-- iptables
-- iptables-persistence
+- nftables
 
 ## Download
 
