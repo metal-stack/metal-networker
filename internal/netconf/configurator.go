@@ -75,14 +75,14 @@ func (configurator FirewallConfigurator) Configure() {
 	applyCommonConfiguration(Firewall, configurator.Kb)
 
 	src := mustTmpFile("rules.v4_")
-	validatorIPv4 := IptablesV4Validator{IptablesValidator{src}}
-	applier := NewIptablesConfigApplier(configurator.Kb, validatorIPv4)
-	applyAndCleanUp(applier, TplIptablesV4, src, "/etc/iptables/rules.v4", FileModeDefault)
+	validatorIPv4 := NftablesV4Validator{NftablesValidator{src}}
+	applier := NewNftablesConfigApplier(configurator.Kb, validatorIPv4)
+	applyAndCleanUp(applier, TplNftablesV4, src, "/etc/nftables/rules.v4", FileModeDefault)
 
 	src = mustTmpFile("rules.v6_")
-	validatorIPv6 := IptablesV6Validator{IptablesValidator{src}}
-	applier = NewIptablesConfigApplier(configurator.Kb, validatorIPv6)
-	applyAndCleanUp(applier, TplIptablesV6, src, "/etc/iptables/rules.v6", FileModeDefault)
+	validatorIPv6 := NftablesV6Validator{NftablesValidator{src}}
+	applier = NewNftablesConfigApplier(configurator.Kb, validatorIPv6)
+	applyAndCleanUp(applier, TplNftablesV6, src, "/etc/nftables/rules.v6", FileModeDefault)
 
 	chrony, err := NewChronyServiceEnabler(configurator.Kb)
 	if err != nil {

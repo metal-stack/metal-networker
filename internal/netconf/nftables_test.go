@@ -9,15 +9,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCompileRules(t *testing.T) {
+func TestCompileNftRules(t *testing.T) {
 	assert := assert.New(t)
 
 	tests := []struct {
 		expected string
 		template string
 	}{
-		{expected: "testdata/rules.v4", template: TplIptablesV4},
-		{expected: "testdata/rules.v6", template: TplIptablesV6},
+		{expected: "testdata/nftrules.v4", template: TplNftablesV4},
+		{expected: "testdata/nftrules.v6", template: TplNftablesV6},
 	}
 
 	for _, test := range tests {
@@ -27,7 +27,7 @@ func TestCompileRules(t *testing.T) {
 		kb := NewKnowledgeBase("testdata/firewall.yaml")
 		assert.NoError(err)
 
-		a := NewIptablesConfigApplier(kb, nil)
+		a := NewNftablesConfigApplier(kb, nil)
 		b := bytes.Buffer{}
 
 		f := test.template

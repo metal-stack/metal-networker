@@ -10,15 +10,15 @@ import (
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
-// TplIptablesV4 defines the name of the template to render iptables configuration.
+// TplNftablesV4 defines the name of the template to render nftables configuration.
 const (
-	TplIptablesV4 = "rules.v4.tpl"
-	TplIptablesV6 = "rules.v6.tpl"
+	TplNftablesV4 = "rules.v4.tpl"
+	TplNftablesV6 = "rules.v6.tpl"
 )
 
 type (
-	// IptablesData represents the information required to render iptables configuration.
-	IptablesData struct {
+	// NftablesData represents the information required to render nftables configuration.
+	NftablesData struct {
 		Comment string
 		SNAT    []SNAT
 	}
@@ -30,25 +30,25 @@ type (
 		SourceSpecs  []string
 	}
 
-	// IptablesValidator can validate configuration for iptables rules.
-	IptablesValidator struct {
+	// NftablesValidator can validate configuration for nftables rules.
+	NftablesValidator struct {
 		path string
 	}
 
-	// IptablesV4Validator can validate configuration for ipv4 iptables rules.
-	IptablesV4Validator struct {
-		IptablesValidator
+	// NftablesV4Validator can validate configuration for ipv4 nftables rules.
+	NftablesV4Validator struct {
+		NftablesValidator
 	}
 
-	// IptablesV6Validator can validate configuration for ipv6 iptables rules.
-	IptablesV6Validator struct {
-		IptablesValidator
+	// NftablesV6Validator can validate configuration for ipv6 nftables rules.
+	NftablesV6Validator struct {
+		NftablesValidator
 	}
 )
 
-// NewIptablesConfigApplier constructs a new instance of this type.
-func NewIptablesConfigApplier(kb KnowledgeBase, validator network.Validator) network.Applier {
-	data := IptablesData{
+// NewNftablesConfigApplier constructs a new instance of this type.
+func NewNftablesConfigApplier(kb KnowledgeBase, validator network.Validator) network.Applier {
+	data := NftablesData{
 		Comment: fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n"+
 			"# Do not edit.", kb.Machineuuid, v.V.String()),
 		SNAT: getSNAT(kb),
@@ -82,13 +82,13 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 }
 
 // Validate validates network interfaces configuration.
-func (v IptablesV4Validator) Validate() error {
-	log.Infof("running 'iptables-restore --test --verbose %s' to validate changes.", v.path)
-	return exec.NewVerboseCmd("iptables-restore", "--test", "--verbose", v.path).Run()
+func (v NftablesV4Validator) Validate() error {
+	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
+	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
 }
 
 // Validate validates network interfaces configuration.
-func (v IptablesV6Validator) Validate() error {
-	log.Infof("running 'ip6tables-restore --test --verbose %s' to validate changes.", v.path)
-	return exec.NewVerboseCmd("ip6tables-restore", "--test", "--verbose", v.path).Run()
+func (v NftablesV6Validator) Validate() error {
+	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
+	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
 }
