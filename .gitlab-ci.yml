@@ -11,29 +11,41 @@ sources:
   script:
     - make golangci
 
-test-data:
+.testdata-tpl: &testdata-tpl
   stage: validate
-  image: ubuntu:19.04
+  image: ubuntu:${VERSION_UBUNTU}
   variables:
     FRR_FILES: "frr.conf.firewall frr.conf.machine"
-    FRR_TAG: ubuntu-19.04
     INTERFACES_FILES: "interfaces.firewall interfaces.machine"
-    TESTDATA_DIR: "./internal/netconf/testdata/"
-  script:
+    TESTDATA_DIR: "./internal/netconf/testdata"
+  before_script:
     - apt-get update --quiet --quiet
-    - apt-get install --yes --no-install-recommends curl
-    - curl --fail --location --show-error --remote-name --insecure ${BLOB_URL}/metal/frr-${FRR_TAG}.tar.gz
-    - tar --extract --file frr-${FRR_TAG}.tar.gz
-    - apt-get install --yes --no-install-recommends --quiet --quiet ifupdown2 ./frr_*.deb ./frr-pythontools_*.deb ./libyang*.deb
-    - for input in ${FRR_FILES}; do /bin/echo ${input}; vtysh --dryrun --inputfile ${TESTDATA_DIR}/${input}; done
-    - for input in ${INTERFACES_FILES}; do /bin/echo ${input}; ifup --syntax-check --all -i ${TESTDATA_DIR}/${input}; done
+    - apt-get install --yes docker.io
+    - id=$(docker create registry.fi-ts.io/metal/frr:ubuntu-${VERSION_UBUNTU} --entrypoint top)
+    - docker cp $id:artifacts .
+    - docker rm -v $id
+    - apt-get install --yes --no-install-recommends --quiet --quiet ifupdown2 ./artifacts/frr_*.deb ./artifacts/frr-pythontools_*.deb ./artifacts/libyang*.deb
+  script:
+    - ls -la ${TESTDATA_DIR}
+    - for input in ${FRR_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; vtysh --dryrun --inputfile "${TESTDATA_DIR}/${input}"; done
+    - for input in ${INTERFACES_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; ifup --syntax-check --all -i "${TESTDATA_DIR}/${input}" |grepv -v syslog; done
+
+testdata-19.04:
+  <<: *testdata-tpl
+  variables:
+    VERSION_UBUNTU: "19.04"
+
+testdata-19.10:
+  <<: *testdata-tpl
+  variables:
+    VERSION_UBUNTU: "19.10"
 
 unit-tests:
   stage: test
   script:
     - make test
 
-.blobstore_tpl: &blobstore
+.blobstore-tpl: &blobstore-tpl
   stage: deploy
   script:
     - make
@@ -46,7 +58,7 @@ unit-tests:
 
 # This job is triggered only for a "stable" tagged branch to always have a version that is known to work properly.
 stable:
-  <<: *blobstore
+  <<: *blobstore-tpl
   variables:
     suffix: stable
   only:
@@ -54,7 +66,7 @@ stable:
 
 # This job is triggered for every pipeline that runs in master branch to have bleeding edge version.
 latest:
-  <<: *blobstore
+  <<: *blobstore-tpl
   variables:
     suffix: latest
   only:
@@ -62,7 +74,7 @@ latest:
 
 # This job is triggered for every merge request.
 mergerequest:
-  <<: *blobstore
+  <<: *blobstore-tpl
   variables:
     suffix: ${CI_COMMIT_REF_SLUG}
   only:
