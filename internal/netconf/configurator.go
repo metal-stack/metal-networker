@@ -93,6 +93,22 @@ func (configurator FirewallConfigurator) Configure() {
 			log.Errorf("enabling Chrony failed: %v", err)
 		}
 	}
+
+	src = mustTmpFile("firewall-policy-controller.service")
+	validatorService := ServiceValidator{src}
+	fpc, err := NewFirewallPolicyControllerServiceApplier(configurator.Kb, validatorService)
+	if err != nil {
+		log.Warnf("failed to deploy kubernetes firewall services : %v", err)
+	}
+	applyAndCleanUp(fpc, TplFirewallPolicyControllerService, src, "/usr/lib/systemd/system/firewall-policy-controller.service", FileModeSystemd)
+
+	src = mustTmpFile("droptailer.service")
+	validatorService = ServiceValidator{src}
+	d, err := NewDroptailerServiceApplier(configurator.Kb, validatorService)
+	if err != nil {
+		log.Warnf("failed to deploy kubernetes firewall services : %v", err)
+	}
+	applyAndCleanUp(d, TplDroptailerService, src, "/usr/lib/systemd/system/droptailer.service", FileModeSystemd)
 }
 
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
