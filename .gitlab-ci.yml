@@ -50,7 +50,7 @@ unit-tests:
   script:
     - make
     - strip bin/metal-networker
-    - tar -czvf metal-networker.tar.gz -C ./bin metal-networker -C ../internal/netconf/ interfaces.firewall.tpl interfaces.machine.tpl frr.machine.tpl frr.firewall.tpl rules.v4.tpl rules.v6.tpl systemd.link.tpl systemd.network.tpl hosts.tpl hostname.tpl
+    - tar -czvf metal-networker.tar.gz -C ./bin metal-networker -C ../internal/netconf/ interfaces.firewall.tpl interfaces.machine.tpl frr.machine.tpl frr.firewall.tpl rules.v4.tpl rules.v6.tpl systemd.link.tpl systemd.network.tpl hosts.tpl hostname.tpl droptailer.service.tpl firewall_policy_controller.service.tpl
     - curl -fLS https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
     - chmod +x /usr/local/bin/mc
     - mc config host add fits https://blobstore.fi-ts.io $BLOB_ACCESS_KEY "${BLOB_SECRET_KEY}"
