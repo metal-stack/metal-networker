@@ -32,5 +32,4 @@ func TestChronyServiceEnabler_Enable(t *testing.T) {
 		}
 		assert.Equal(t.vrf, e.VRF)
 	}
-
 }

@@ -17,6 +17,9 @@ linters:
     - maligned
     - gochecknoglobals
     - gosec
+    - godox
+    - wsl
+    - stylecheck
 
 issues:
   exclude-use-default: false
