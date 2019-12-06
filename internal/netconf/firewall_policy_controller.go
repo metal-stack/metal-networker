@@ -1,7 +1,6 @@
 package netconf
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
@@ -31,6 +30,6 @@ type ServiceValidator struct {
 
 // Validate validates the service file.
 func (v ServiceValidator) Validate() error {
-	log.Infof("running 'systemd-analyze verify %s to validate changes.'", v.path)
-	return exec.NewVerboseCmd("systemd-analyze", "verify", v.path).Run()
+	// Currently not implemented as systemd-analyze fails in the metal-hammer with the error: Cannot determine cgroup we are running in: No medium found
+	return nil
 }
