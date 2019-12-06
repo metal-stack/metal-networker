@@ -16,7 +16,7 @@ type DroptailerData struct {
 }
 
 // NewDroptailerServiceApplier constructs a new instance of this type.
-func NewDroptailerServiceApplier(kb KnowledgeBase, v ServiceValidator) (network.Applier, error) {
+func NewDroptailerServiceApplier(kb KnowledgeBase, v network.Validator) (network.Applier, error) {
 	tenantVrf, err := getTenantVRFName(kb)
 	if err != nil {
 		return nil, err
