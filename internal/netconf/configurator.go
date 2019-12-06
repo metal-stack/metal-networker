@@ -70,6 +70,11 @@ func (configurator MachineConfigurator) Configure() {
 	applyCommonConfiguration(Machine, configurator.Kb)
 }
 
+const (
+	firewallPolicyControllerUnit = "/usr/lib/systemd/system/firewall-policy-controller.service"
+	droptailerUnit               = "/usr/lib/systemd/system/droptailer.service"
+)
+
 // Configure applies configuration to a bare metal server to function as 'firewall'.
 func (configurator FirewallConfigurator) Configure() {
 	applyCommonConfiguration(Firewall, configurator.Kb)
@@ -78,7 +83,6 @@ func (configurator FirewallConfigurator) Configure() {
 	validatorIPv4 := NftablesV4Validator{NftablesValidator{src}}
 	applier := NewNftablesConfigApplier(configurator.Kb, validatorIPv4)
 	applyAndCleanUp(applier, TplNftablesV4, src, "/etc/nftables/rules.v4", FileModeDefault)
-
 	src = mustTmpFile("rules.v6_")
 	validatorIPv6 := NftablesV6Validator{NftablesValidator{src}}
 	applier = NewNftablesConfigApplier(configurator.Kb, validatorIPv6)
@@ -100,7 +104,7 @@ func (configurator FirewallConfigurator) Configure() {
 	if err != nil {
 		log.Warnf("failed to deploy kubernetes firewall services : %v", err)
 	}
-	applyAndCleanUp(fpc, TplFirewallPolicyControllerService, src, "/usr/lib/systemd/system/firewall-policy-controller.service", FileModeSystemd)
+	applyAndCleanUp(fpc, TplFirewallPolicyControllerService, src, firewallPolicyControllerUnit, FileModeSystemd)
 
 	src = mustTmpFile("droptailer.service")
 	validatorService = ServiceValidator{src}
@@ -108,7 +112,7 @@ func (configurator FirewallConfigurator) Configure() {
 	if err != nil {
 		log.Warnf("failed to deploy kubernetes firewall services : %v", err)
 	}
-	applyAndCleanUp(d, TplDroptailerService, src, "/usr/lib/systemd/system/droptailer.service", FileModeSystemd)
+	applyAndCleanUp(d, TplDroptailerService, src, droptailerUnit, FileModeSystemd)
 }
 
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {

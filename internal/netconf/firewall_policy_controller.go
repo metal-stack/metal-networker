@@ -14,7 +14,7 @@ type FirewallPolicyControllerData struct {
 }
 
 // NewFirewallPolicyControllerServiceApplier constructs a new instance of this type.
-func NewFirewallPolicyControllerServiceApplier(kb KnowledgeBase, v ServiceValidator) (network.Applier, error) {
+func NewFirewallPolicyControllerServiceApplier(kb KnowledgeBase, v network.Validator) (network.Applier, error) {
 	defaultRouteVrf, err := getDefaultRouteVRFName(kb)
 	if err != nil {
 		return nil, err
@@ -30,6 +30,7 @@ type ServiceValidator struct {
 
 // Validate validates the service file.
 func (v ServiceValidator) Validate() error {
-	// Currently not implemented as systemd-analyze fails in the metal-hammer with the error: Cannot determine cgroup we are running in: No medium found
+	// Currently not implemented as systemd-analyze fails in the metal-hammer.
+	// Error: Cannot determine cgroup we are running in: No medium found
 	return nil
 }
