@@ -82,5 +82,6 @@ func (p AccessPolicy) String() string {
 	case Deny:
 		return "deny"
 	}
+
 	return "undefined"
 }

@@ -46,6 +46,7 @@ type (
 // NewIfacesConfigApplier constructs a new instance of this type.
 func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
 	var data interface{}
+
 	common := CommonIfacesData{
 		Comment: versionHeader(kb.Machineuuid),
 	}
@@ -74,6 +75,7 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 	}
 
 	validator := IfacesValidator{path: tmpFile}
+
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
@@ -85,10 +87,12 @@ func (v IfacesValidator) Validate() error {
 
 func getEVPNInterfaces(kb KnowledgeBase) []EVPNIface {
 	var result []EVPNIface
+
 	for _, n := range kb.Networks {
 		if n.Underlay {
 			continue
 		}
+
 		e := EVPNIface{}
 		e.SVI.Comment = fmt.Sprintf("svi (networkid: %s)", n.Networkid)
 		e.SVI.VlanID = n.Vlan
@@ -100,12 +104,14 @@ func getEVPNInterfaces(kb KnowledgeBase) []EVPNIface {
 		e.VRF.ID = n.Vrf
 		result = append(result, e)
 	}
+
 	return result
 }
 
 func getBridgeVLANIDs(kb KnowledgeBase) string {
 	result := ""
 	networks := kb.GetNetworks(Private, Public)
+
 	for _, n := range networks {
 		if result == "" {
 			result = fmt.Sprintf("%d", n.Vlan)
@@ -113,12 +119,14 @@ func getBridgeVLANIDs(kb KnowledgeBase) string {
 			result = fmt.Sprintf("%s %d", result, n.Vlan)
 		}
 	}
+
 	return result
 }
 
 func getBridgePorts(kb KnowledgeBase) string {
 	result := ""
 	networks := kb.GetNetworks(Private, Public)
+
 	for _, n := range networks {
 		if n.Underlay {
 			continue
@@ -130,5 +138,6 @@ func getBridgePorts(kb KnowledgeBase) string {
 			result = fmt.Sprintf("%s vni%d", result, n.Vrf)
 		}
 	}
+
 	return result
 }

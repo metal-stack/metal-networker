@@ -21,6 +21,7 @@ func NewChronyServiceEnabler(kb KnowledgeBase) (ChronyServiceEnabler, error) {
 func (c ChronyServiceEnabler) Enable() error {
 	cmd := fmt.Sprintf("systemctl enable chrony@%s", c.VRF)
 	log.Infof("running '%s' to enable chrony.'", cmd)
+
 	return exec.NewVerboseCmd("bash", "-c", cmd).Run()
 }
 
@@ -34,5 +35,6 @@ func getDefaultRouteVRFName(kb KnowledgeBase) (string, error) {
 			}
 		}
 	}
+
 	return "", fmt.Errorf("there is no network providing a default (0.0.0.0/0) route")
 }

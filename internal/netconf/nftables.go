@@ -53,14 +53,16 @@ func NewNftablesConfigApplier(kb KnowledgeBase, validator network.Validator) net
 			"# Do not edit.", kb.Machineuuid, v.V.String()),
 		SNAT: getSNAT(kb),
 	}
+
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
 func getSNAT(kb KnowledgeBase) []SNAT {
 	var result []SNAT
-	private := kb.getPrivateNetwork()
 
+	private := kb.getPrivateNetwork()
 	networks := kb.GetNetworks(Private, Public)
+
 	for _, n := range networks {
 		if !n.Nat {
 			continue
@@ -78,6 +80,7 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 		}
 		result = append(result, s)
 	}
+
 	return result
 }
 

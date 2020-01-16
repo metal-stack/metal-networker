@@ -23,11 +23,13 @@ type (
 func NewHostsApplier(kb KnowledgeBase, tmpFile string) network.Applier {
 	data := HostsData{Hostname: kb.Hostname, Comment: versionHeader(kb.Machineuuid), IP: kb.getPrivateNetwork().Ips[0]}
 	validator := HostsValidator{tmpFile}
+
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
 // Validate validates hosts file.
 func (v HostsValidator) Validate() error {
+	//nolint:godox
 	// FIXME: How do we validate a hosts file?
 	return nil
 }

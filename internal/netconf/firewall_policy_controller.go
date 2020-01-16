@@ -19,7 +19,9 @@ func NewFirewallPolicyControllerServiceApplier(kb KnowledgeBase, v network.Valid
 	if err != nil {
 		return nil, err
 	}
+
 	data := FirewallPolicyControllerData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf}
+
 	return network.NewNetworkApplier(data, v, nil), nil
 }
 

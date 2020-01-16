@@ -44,6 +44,7 @@ type (
 func NewSystemdNetworkApplier(machineUUID string, nicIndex int, tmpFile string) network.Applier {
 	data := SystemdNetworkData{SystemdCommonData{Comment: versionHeader(machineUUID), Index: nicIndex}}
 	validator := SystemdValidator{tmpFile}
+
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
@@ -70,12 +71,14 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 		MAC: nic.Mac,
 	}
 	validator := SystemdValidator{tmpFile}
+
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
 // Validate validates systemd.network and systemd.link files.
 func (v SystemdValidator) Validate() error {
-	// FIXME: We need to add a ways to validate those files.
+	//nolint:godox
+	// FIXME: We need to add a way to validate those files.
 	// https://github.com/systemd/systemd/issues/11651
 	log.Infof("Skipping validation since there is no known way to validate (.network|.link) files in advance.")
 	return nil

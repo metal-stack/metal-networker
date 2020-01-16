@@ -21,6 +21,7 @@ type (
 func NewHostnameApplier(kb KnowledgeBase, tmpFile string) network.Applier {
 	data := HostnameData{Comment: versionHeader(kb.Machineuuid), Hostname: kb.Hostname}
 	validator := HostnameValidator{tmpFile}
+
 	return network.NewNetworkApplier(data, validator, nil)
 }
 

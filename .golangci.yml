@@ -1,7 +1,7 @@
 # https://github.com/golangci/golangci-lint#config-file
 run:
   deadline: 30s
-  tests: true
+  tests: false
 
 linters-settings:
   golint:
@@ -17,9 +17,6 @@ linters:
     - maligned
     - gochecknoglobals
     - gosec
-    - godox
-    - wsl
-    - stylecheck
 
 issues:
   exclude-use-default: false

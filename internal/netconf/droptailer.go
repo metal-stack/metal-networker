@@ -21,7 +21,9 @@ func NewDroptailerServiceApplier(kb KnowledgeBase, v network.Validator) (network
 	if err != nil {
 		return nil, err
 	}
+
 	data := DroptailerData{Comment: versionHeader(kb.Machineuuid), TenantVrf: tenantVrf}
+
 	return network.NewNetworkApplier(data, v, nil), nil
 }
 
@@ -33,5 +35,6 @@ func getTenantVRFName(kb KnowledgeBase) (string, error) {
 			return vrf, nil
 		}
 	}
+
 	return "", fmt.Errorf("there is no private tenant network")
 }
