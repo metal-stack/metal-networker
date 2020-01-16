@@ -50,6 +50,7 @@ type (
 // NewConfigurator creates a new configurator.
 func NewConfigurator(kind BareMetalType, kb KnowledgeBase) Configurator {
 	var result Configurator
+
 	switch kind {
 	case Firewall:
 		fw := FirewallConfigurator{}
@@ -62,6 +63,7 @@ func NewConfigurator(kind BareMetalType, kb KnowledgeBase) Configurator {
 	default:
 		log.Fatalf("Unknown kind of configurator: %v", kind)
 	}
+
 	return result
 }
 
@@ -101,17 +103,21 @@ func (configurator FirewallConfigurator) Configure() {
 	src = mustTmpFile("firewall-policy-controller.service")
 	validatorService := ServiceValidator{src}
 	fpc, err := NewFirewallPolicyControllerServiceApplier(configurator.Kb, validatorService)
+
 	if err != nil {
 		log.Warnf("failed to deploy kubernetes firewall services : %v", err)
 	}
+
 	applyAndCleanUp(fpc, TplFirewallPolicyControllerService, src, firewallPolicyControllerUnit, FileModeSystemd)
 
 	src = mustTmpFile("droptailer.service")
 	validatorService = ServiceValidator{src}
 	d, err := NewDroptailerServiceApplier(configurator.Kb, validatorService)
+
 	if err != nil {
 		log.Warnf("failed to deploy kubernetes firewall services : %v", err)
 	}
+
 	applyAndCleanUp(d, TplDroptailerService, src, droptailerUnit, FileModeSystemd)
 }
 
@@ -119,9 +125,11 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 	src := mustTmpFile("interfaces_")
 	applier := NewIfacesConfigApplier(kind, kb, src)
 	tpl := TplFirewallIfaces
+
 	if kind == Machine {
 		tpl = TplMachineIfaces
 	}
+
 	applyAndCleanUp(applier, tpl, src, "/etc/network/interfaces", FileModeDefault)
 
 	src = mustTmpFile("hosts_")
@@ -135,22 +143,26 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 	src = mustTmpFile("frr_")
 	applier = NewFrrConfigApplier(kind, kb, src)
 	tpl = TplFirewallFRR
+
 	if kind == Machine {
 		tpl = TplMachineFRR
 	}
+
 	applyAndCleanUp(applier, tpl, src, "/etc/frr/frr.conf", FileModeDefault)
+
+	offset := 1
 
 	for i, nic := range kb.Nics {
 		prefix := fmt.Sprintf("lan%d_link_", i)
 		src = mustTmpFile(prefix)
 		applier = NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src)
-		dest := fmt.Sprintf("/etc/systemd/network/%d0-lan%d.link", i+1, i)
+		dest := fmt.Sprintf("/etc/systemd/network/%d0-lan%d.link", i+offset, i)
 		applyAndCleanUp(applier, TplSystemdLink, src, dest, FileModeSystemd)
 
 		prefix = fmt.Sprintf("lan%d_network_", i)
 		src = mustTmpFile(prefix)
 		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src)
-		dest = fmt.Sprintf("/etc/systemd/network/%d0-lan%d.network", i+1, i)
+		dest = fmt.Sprintf("/etc/systemd/network/%d0-lan%d.network", i+offset, i)
 		applyAndCleanUp(applier, TplSystemdNetwork, src, dest, FileModeSystemd)
 	}
 }
@@ -159,16 +171,19 @@ func applyAndCleanUp(applier network.Applier, tpl, src, dest string, mode os.Fil
 	log.Infof("rendering %s to %s (mode: %ui)", tpl, dest, mode)
 	file := mustRead(tpl)
 	mustApply(applier, file, src, dest)
+
 	err := os.Chmod(dest, mode)
 	if err != nil {
 		log.Errorf("error to chmod %s to %ui", dest, mode)
 	}
+
 	_ = os.Remove(src)
 }
 
 func mustApply(applier network.Applier, tpl, src, dest string) {
 	t := template.Must(template.New(TplFirewallIfaces).Parse(tpl))
 	err := applier.Apply(*t, src, dest, false)
+
 	if err != nil {
 		log.Panic(err)
 	}
@@ -179,6 +194,7 @@ func mustRead(name string) string {
 	if err != nil {
 		log.Panic(err)
 	}
+
 	return string(c)
 }
 
@@ -187,9 +203,11 @@ func mustTmpFile(prefix string) string {
 	if err != nil {
 		log.Panic(err)
 	}
+
 	err = f.Close()
 	if err != nil {
 		log.Panic(err)
 	}
+
 	return f.Name()
 }

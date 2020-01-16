@@ -73,6 +73,7 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 	}
 
 	validator := FRRValidator{tmpFile}
+
 	return network.NewNetworkApplier(data, validator, nil)
 }
 
@@ -85,6 +86,7 @@ func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {
 func (v FRRValidator) Validate() error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
 	log.Infof("running '%s' to validate changes.'", vtysh)
+
 	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }
 
@@ -93,6 +95,7 @@ func getDestinationPrefixes(networks []Network) []string {
 	for _, network := range networks {
 		result = append(result, network.Destinationprefixes...)
 	}
+
 	return result
 }
 
@@ -101,15 +104,20 @@ func getPrefixes(networks ...Network) []string {
 	for _, network := range networks {
 		result = append(result, network.Prefixes...)
 	}
+
 	return result
 }
 
 func assembleVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
+
 	networks := kb.GetNetworks(Private, Public)
+
 	for _, network := range networks {
 		var targets []Network
+
 		var prefixes []string
+
 		if network.Private {
 			// reach out from private into to public networks
 			targets = kb.GetNetworks(Public)
@@ -119,6 +127,7 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 			targets = kb.GetNetworks(Private)
 			prefixes = getPrefixes(append(targets, network)...)
 		}
+
 		vrfName := "vrf" + strconv.Itoa(network.Vrf)
 		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb)
 		vrf := VRF{
@@ -132,31 +141,40 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 		}
 		result = append(result, vrf)
 	}
+
 	return result
 }
 
 func uniqueNames(prefixLists []IPPrefixList) []string {
 	var result []string
+
 	uniqueNames := make(map[string]struct{})
+
 	for _, prefixList := range prefixLists {
 		if _, isPresent := uniqueNames[prefixList.Name]; isPresent {
 			continue
 		}
+
 		uniqueNames[prefixList.Name] = struct{}{}
+
 		result = append(result, prefixList.Name)
 	}
+
 	return result
 }
 
 func assembleRouteMapsFor(vrfName string, prefixLists []IPPrefixList) []RouteMap {
 	var result []RouteMap
+
 	order := RouteMapOrderSeed
 	prefListNames := uniqueNames(prefixLists)
+
 	for _, prefListName := range prefListNames {
 		entries := []string{"match ip address prefix-list " + prefListName}
 		if strings.HasSuffix(prefListName, IPPrefixListNoExportSuffix) {
 			entries = append(entries, "set community additive no-export")
 		}
+
 		routeMap := RouteMap{
 			Name:    routeMapName(vrfName),
 			Policy:  Permit.String(),
@@ -164,14 +182,18 @@ func assembleRouteMapsFor(vrfName string, prefixLists []IPPrefixList) []RouteMap
 			Entries: entries,
 		}
 		order += RouteMapOrderSeed
+
 		result = append(result, routeMap)
 	}
+
 	routeMap := RouteMap{
 		Name:   routeMapName(vrfName),
 		Policy: Deny.String(),
 		Order:  order,
 	}
+
 	result = append(result, routeMap)
+
 	return result
 }
 
@@ -181,31 +203,40 @@ func routeMapName(vrfName string) string {
 
 func vrfNamesOf(networks ...Network) []string {
 	var result []string
+
 	for _, n := range networks {
 		vrf := fmt.Sprintf("vrf%d", n.Vrf)
 		result = append(result, vrf)
 	}
+
 	return result
 }
 
 func buildIPPrefixListSpecs(seq int, prefix string) []string {
 	var result []string
+
 	spec := fmt.Sprintf("seq %d %s %s", seq, Permit, prefix)
 	if !strings.HasSuffix(prefix, "/0") {
 		spec += " le 32"
 	}
+
 	result = append(result, spec)
+
 	return result
 }
 
 func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb KnowledgeBase) []IPPrefixList {
 	var result []IPPrefixList
+
 	private := kb.getPrivateNetwork()
+
 	for _, prefix := range prefixes {
 		if len(prefix) == 0 {
 			continue
 		}
+
 		specs := buildIPPrefixListSpecs(seed, prefix)
+
 		for _, spec := range specs {
 			name := namePrefixList(vrfName, private, prefix)
 			prefixList := IPPrefixList{
@@ -214,18 +245,22 @@ func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb Kn
 			}
 			result = append(result, prefixList)
 		}
+
 		seed += len(specs)
 	}
+
 	return result
 }
 
 func namePrefixList(vrfName string, private Network, prefix string) string {
 	name := vrfName + "-import-prefixes"
+
 	for _, privatePrefix := range private.Prefixes {
 		if privatePrefix == prefix {
 			// tenant private network ip addresses must not be visible in the public VRFs to avoid blown up routing tables
 			name += IPPrefixListNoExportSuffix
 		}
 	}
+
 	return name
 }

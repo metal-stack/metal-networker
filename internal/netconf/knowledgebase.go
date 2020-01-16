@@ -74,6 +74,7 @@ type (
 // NewKnowledgeBase creates a new instance of this type.
 func NewKnowledgeBase(path string) KnowledgeBase {
 	log.Infof("loading: %s", path)
+
 	f, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Panic(err)
@@ -81,9 +82,11 @@ func NewKnowledgeBase(path string) KnowledgeBase {
 
 	kb := &KnowledgeBase{}
 	err = yaml.Unmarshal(f, &kb)
+
 	if err != nil {
 		log.Panic(err)
 	}
+
 	for i := 0; i < len(kb.Networks); i++ {
 		kb.Networks[i].Vlan = VLANOffset + i
 	}
@@ -96,44 +99,56 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 	if len(kb.Networks) == 0 {
 		return errors.New("expectation at least one network is present failed")
 	}
+
 	if !kb.containsSinglePrivate() {
 		return errors.New("expectation exactly one 'private: true' network is present failed")
 	}
+
 	if kind == Firewall {
 		if !kb.allNonUnderlayNetworksHaveNonZeroVRF() {
 			return errors.New("networks with 'underlay: false' must contain a value vor 'vrf' as it is used for BGP")
 		}
+
 		if !kb.containsSingleUnderlay() {
 			return errors.New("expectation exactly one underlay network is present failed")
 		}
+
 		if !kb.containsAnyPublicNetwork() {
 			return errors.New("expectation at least one public network (private: false, " +
 				"underlay: false) is present failed")
 		}
+
 		for _, net := range kb.GetNetworks(Public) {
 			if len(net.Destinationprefixes) == 0 {
 				return errors.New("non-private, non-underlay networks must contain destination prefix(es) to make " +
 					"any sense of it")
 			}
 		}
+
 		if kb.isAnyNAT() && len(kb.getPrivateNetwork().Prefixes) == 0 {
 			return errors.New("private network must not lack prefixes since nat is required")
 		}
 	}
+
 	net := kb.getPrivateNetwork()
+
 	if kind == Firewall {
 		net = kb.getUnderlayNetwork()
 	}
+
 	if len(net.Ips) == 0 {
 		return errors.New("at least one IP must be present to be considered as LOOPBACK IP (" +
 			"'private: true' network IP for machine, 'underlay: true' network IP for firewall")
 	}
+
 	if net.Asn <= 0 {
 		return errors.New("'asn' of private (machine) resp. underlay (firewall) network must not be missing")
 	}
+
 	if len(kb.Nics) == 0 {
 		return errors.New("at least one 'nics/nic' definition must be present")
 	}
+
 	if !kb.nicsContainValidMACs() {
 		return errors.New("each 'nic' definition must contain a valid 'mac'")
 	}
@@ -161,16 +176,20 @@ func (kb KnowledgeBase) containsSingleNetworkOf(types NetworkType) bool {
 // CollectIPs collects IPs of the given networks.
 func (kb KnowledgeBase) CollectIPs(types ...NetworkType) []string {
 	var result []string
+
 	networks := kb.GetNetworks(types...)
+
 	for _, network := range networks {
 		result = append(result, network.Ips...)
 	}
+
 	return result
 }
 
 // GetNetworks returns all networks present.
 func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
 	var result []Network
+
 	for _, t := range types {
 		for _, n := range kb.Networks {
 			switch t {
@@ -189,6 +208,7 @@ func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
 			}
 		}
 	}
+
 	return result
 }
 
@@ -198,6 +218,7 @@ func (kb KnowledgeBase) isAnyNAT() bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -216,11 +237,13 @@ func (kb KnowledgeBase) nicsContainValidMACs() bool {
 		if nic.Mac == "" {
 			return false
 		}
+
 		if _, err := net.ParseMAC(nic.Mac); err != nil {
 			log.Errorf("invalid mac: %s", nic.Mac)
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -229,10 +252,12 @@ func (kb KnowledgeBase) allNonUnderlayNetworksHaveNonZeroVRF() bool {
 		if net.Underlay {
 			continue
 		}
+
 		if net.Vrf <= 0 {
 			return false
 		}
 	}
+
 	return true
 }
 

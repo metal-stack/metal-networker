@@ -22,9 +22,11 @@ func NewVerboseCmd(name string, args ...string) VerboseCmd {
 func (v VerboseCmd) Run() error {
 	var stderr bytes.Buffer
 	v.Cmd.Stderr = &stderr
+
 	err := v.Cmd.Run()
 	if err != nil {
 		return fmt.Errorf("%v: %s", err, stderr.String())
 	}
+
 	return nil
 }

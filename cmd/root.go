@@ -55,6 +55,7 @@ func initializeCmds() struct{} {
 
 	// Here you will define your flags and configuration settings.
 	rootCmd.PersistentFlags().StringP(flagInputName, "i", "", "Path to a YAML file containing network configuration")
+
 	err := rootCmd.MarkPersistentFlagRequired(flagInputName)
 	if err != nil {
 		log.Warnf("error setting up cobra: %v", err)
@@ -71,16 +72,19 @@ func initConfig() {
 // configure configures bare metal server depending on kind.
 func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
 	log.Infof("running app version: %s", v.V.String())
+
 	input, err := cmd.Flags().GetString(flagInputName)
 	if err != nil {
 		return err
 	}
 
 	kb := netconf.NewKnowledgeBase(input)
+
 	err = kb.Validate(kind)
 	if err != nil {
 		log.Panic(err)
 	}
+
 	netconf.NewConfigurator(kind, kb).Configure()
 	log.Info("completed. Exiting..")
 
