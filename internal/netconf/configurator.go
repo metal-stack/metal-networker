@@ -25,8 +25,8 @@ const (
 	Firewall BareMetalType = iota
 	// Machine defines the bare metal server to function as machine.
 	Machine
-	// SystemdUnitPath is the path where systemd units will be generated.
-	SystemdUnitPath = "/usr/lib/systemd/system/"
+	// SystemdUnitPath is the path where systemd units will be generated,
+	SystemdUnitPath = "/etc/systemd/system/"
 )
 
 type (
