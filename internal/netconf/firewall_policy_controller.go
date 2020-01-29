@@ -4,8 +4,11 @@ import (
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
-// TplFirewallPolicyControllerService is the name of the template for the firewall-policy-controller service.
-const TplFirewallPolicyControllerService = "firewall_policy_controller.service.tpl"
+// TplFirewallPolicyController is the name of the template for the firewall-policy-controller service.
+const TplFirewallPolicyController = "firewall_policy_controller.service.tpl"
+
+// SystemdUnitFirewallPolicyController is the name of the systemd unit for the firewall policy controller,
+const SystemdUnitFirewallPolicyController = "firewall-policy-controller.service"
 
 // FirewallPolicyControllerData contains the data to render the firewall-policy-controller service template.
 type FirewallPolicyControllerData struct {

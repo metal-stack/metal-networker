@@ -19,6 +19,10 @@ func TestServices(t *testing.T) {
 	assert.NoError(err)
 	fpcApplier, err := NewFirewallPolicyControllerServiceApplier(kb, v)
 	assert.NoError(err)
+	nodeExporterApplier, err := NewNodeExporterServiceApplier(kb, v)
+	assert.NoError(err)
+	nftablesExporterApplier, err := NewNftablesExporterServiceApplier(kb, v)
+	assert.NoError(err)
 
 	tests := []struct {
 		applier  network.Applier
@@ -28,12 +32,22 @@ func TestServices(t *testing.T) {
 		{
 			applier:  dsApplier,
 			expected: "testdata/droptailer.service",
-			template: TplDroptailerService,
+			template: TplDroptailer,
 		},
 		{
 			applier:  fpcApplier,
 			expected: "testdata/firewall-policy-controller.service",
-			template: TplFirewallPolicyControllerService,
+			template: TplFirewallPolicyController,
+		},
+		{
+			applier:  nodeExporterApplier,
+			expected: "testdata/node-exporter.service",
+			template: TplNodeExporter,
+		},
+		{
+			applier:  nftablesExporterApplier,
+			expected: "testdata/nftables-exporter.service",
+			template: TplNftablesExporter,
 		},
 	}
 

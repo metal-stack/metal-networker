@@ -6,8 +6,11 @@ import (
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
-// TplDroptailerService is the name of the template for the droptailer service.
-const TplDroptailerService = "droptailer.service.tpl"
+// TplDroptailer is the name of the template for the droptailer service.
+const TplDroptailer = "droptailer.service.tpl"
+
+// SystemdUnitDroptailer is the name of the systemd unit for the droptailer.
+const SystemdUnitDroptailer = "droptailer.service"
 
 // DroptailerData contains the data to render the droptailer service template.
 type DroptailerData struct {
