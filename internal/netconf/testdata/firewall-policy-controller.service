@@ -6,7 +6,7 @@ After=network.target
 
 [Service]
 Environment=FIREWALL_KUBECFG=/etc/firewall-policy-controller/.kubeconfig
-ExecStart=/usr/sbin/ip vrf exec vrf104009 /usr/local/bin/firewall-policy-controller
+ExecStart=/bin/ip vrf exec vrf104009 /usr/local/bin/firewall-policy-controller
 Restart=always
 RestartSec=10
 
