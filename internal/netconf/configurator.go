@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"text/template"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
 	"git.f-i-ts.de/cloud-native/metallib/network"
 )
 
@@ -23,6 +25,8 @@ const (
 	Firewall BareMetalType = iota
 	// Machine defines the bare metal server to function as machine.
 	Machine
+	// SystemdUnitPath is the path where systemd units will be generated.
+	SystemdUnitPath = "/usr/lib/systemd/system/"
 )
 
 type (
@@ -46,6 +50,13 @@ type (
 		CommonConfigurator
 	}
 )
+
+type unitConfiguration struct {
+	unit             string
+	templateFile     string
+	constructApplier func(kb KnowledgeBase, v ServiceValidator) (network.Applier, error)
+	enabled          bool
+}
 
 // NewConfigurator creates a new configurator.
 func NewConfigurator(kind BareMetalType, kb KnowledgeBase) Configurator {
@@ -72,11 +83,6 @@ func (configurator MachineConfigurator) Configure() {
 	applyCommonConfiguration(Machine, configurator.Kb)
 }
 
-const (
-	firewallPolicyControllerUnit = "/usr/lib/systemd/system/firewall-policy-controller.service"
-	droptailerUnit               = "/usr/lib/systemd/system/droptailer.service"
-)
-
 // Configure applies configuration to a bare metal server to function as 'firewall'.
 func (configurator FirewallConfigurator) Configure() {
 	applyCommonConfiguration(Firewall, configurator.Kb)
@@ -100,25 +106,58 @@ func (configurator FirewallConfigurator) Configure() {
 		}
 	}
 
-	src = mustTmpFile("firewall-policy-controller.service")
-	validatorService := ServiceValidator{src}
-	fpc, err := NewFirewallPolicyControllerServiceApplier(configurator.Kb, validatorService)
+	for _, u := range configurator.getUnits() {
+		src = mustTmpFile(u.unit)
+		validatorService := ServiceValidator{src}
+		nfe, err := u.constructApplier(configurator.Kb, validatorService)
 
-	if err != nil {
-		log.Warnf("failed to deploy kubernetes firewall services : %v", err)
+		if err != nil {
+			log.Warnf("failed to deploy %s service : %v", u.unit, err)
+		}
+
+		applyAndCleanUp(nfe, u.templateFile, src, path.Join(SystemdUnitPath, u.unit), FileModeSystemd)
+
+		if u.enabled {
+			mustEnableUnit(u.unit)
+		}
 	}
+}
 
-	applyAndCleanUp(fpc, TplFirewallPolicyControllerService, src, firewallPolicyControllerUnit, FileModeSystemd)
-
-	src = mustTmpFile("droptailer.service")
-	validatorService = ServiceValidator{src}
-	d, err := NewDroptailerServiceApplier(configurator.Kb, validatorService)
-
-	if err != nil {
-		log.Warnf("failed to deploy kubernetes firewall services : %v", err)
+func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
+	return []unitConfiguration{
+		{
+			unit:         SystemdUnitDroptailer,
+			templateFile: TplDroptailer,
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (network.Applier, error) {
+				return NewDroptailerServiceApplier(kb, v)
+			},
+			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
+		},
+		{
+			unit:         SystemdUnitFirewallPolicyController,
+			templateFile: TplFirewallPolicyController,
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (network.Applier, error) {
+				return NewFirewallPolicyControllerServiceApplier(kb, v)
+			},
+			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
+		},
+		{
+			unit:         SystemdUnitNftablesExporter,
+			templateFile: TplNftablesExporter,
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (network.Applier, error) {
+				return NewNftablesExporterServiceApplier(kb, v)
+			},
+			enabled: true,
+		},
+		{
+			unit:         SystemdUnitNodeExporter,
+			templateFile: TplNodeExporter,
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (network.Applier, error) {
+				return NewNodeExporterServiceApplier(kb, v)
+			},
+			enabled: true,
+		},
 	}
-
-	applyAndCleanUp(d, TplDroptailerService, src, droptailerUnit, FileModeSystemd)
 }
 
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
@@ -178,6 +217,17 @@ func applyAndCleanUp(applier network.Applier, tpl, src, dest string, mode os.Fil
 	}
 
 	_ = os.Remove(src)
+}
+
+func mustEnableUnit(unit string) {
+	cmd := fmt.Sprintf("systemctl enable %s", unit)
+	log.Infof("running '%s' to enable unit.'", cmd)
+
+	err := exec.NewVerboseCmd("bash", "-c", cmd).Run()
+
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func mustApply(applier network.Applier, tpl, src, dest string) {
