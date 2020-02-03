@@ -1,4 +1,4 @@
-{{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf.FirewallPolicyControllerData*/ -}}
+{{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.FirewallPolicyControllerData*/ -}}
 {{ .Comment }}
 [Unit]
 Description=Firewall policy controller - generates nftable rules based on k8s resources

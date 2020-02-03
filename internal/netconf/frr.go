@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
-
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/exec"
+	"github.com/metal-stack/metal-networker/pkg/net"
+	"go.uber.org/zap"
 )
 
 const (
@@ -49,11 +49,12 @@ type (
 	// FRRValidator validates the frr.conf to apply.
 	FRRValidator struct {
 		path string
+		log  *zap.SugaredLogger
 	}
 )
 
 // NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
-func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
+func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) net.Applier {
 	var data interface{}
 
 	switch kind {
@@ -69,12 +70,12 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 			CommonFRRData: newCommonFRRData(net, kb),
 		}
 	default:
-		log.Fatalf("unknown kind of bare metal: %v", kind)
+		kb.log.Fatalf("unknown kind of bare metal: %v", kind)
 	}
 
-	validator := FRRValidator{tmpFile}
+	validator := FRRValidator{tmpFile, kb.log}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {
@@ -85,7 +86,7 @@ func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {
 // Validate can be used to run validation on FRR configuration using vtysh.
 func (v FRRValidator) Validate() error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
-	log.Infof("running '%s' to validate changes.'", vtysh)
+	v.log.Infof("running '%s' to validate changes.'", vtysh)
 
 	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }

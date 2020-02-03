@@ -3,7 +3,7 @@ package netconf
 import (
 	"fmt"
 
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
 // TplDroptailer is the name of the template for the droptailer service.
@@ -19,7 +19,7 @@ type DroptailerData struct {
 }
 
 // NewDroptailerServiceApplier constructs a new instance of this type.
-func NewDroptailerServiceApplier(kb KnowledgeBase, v network.Validator) (network.Applier, error) {
+func NewDroptailerServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
 	tenantVrf, err := getTenantVRFName(kb)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func NewDroptailerServiceApplier(kb KnowledgeBase, v network.Validator) (network
 
 	data := DroptailerData{Comment: versionHeader(kb.Machineuuid), TenantVrf: tenantVrf}
 
-	return network.NewNetworkApplier(data, v, nil), nil
+	return net.NewNetworkApplier(data, v, nil), nil
 }
 
 func getTenantVRFName(kb KnowledgeBase) (string, error) {

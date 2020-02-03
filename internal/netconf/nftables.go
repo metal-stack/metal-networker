@@ -3,11 +3,13 @@ package netconf
 import (
 	"fmt"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
+	"github.com/metal-stack/metal-networker/pkg/exec"
 
 	"github.com/metal-pod/v"
 
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"go.uber.org/zap"
+
+	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
 // TplNftablesV4 defines the name of the template to render nftables configuration.
@@ -33,6 +35,7 @@ type (
 	// NftablesValidator can validate configuration for nftables rules.
 	NftablesValidator struct {
 		path string
+		log  *zap.SugaredLogger
 	}
 
 	// NftablesV4Validator can validate configuration for ipv4 nftables rules.
@@ -47,14 +50,14 @@ type (
 )
 
 // NewNftablesConfigApplier constructs a new instance of this type.
-func NewNftablesConfigApplier(kb KnowledgeBase, validator network.Validator) network.Applier {
+func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator) net.Applier {
 	data := NftablesData{
 		Comment: fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n"+
 			"# Do not edit.", kb.Machineuuid, v.V.String()),
 		SNAT: getSNAT(kb),
 	}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 func getSNAT(kb KnowledgeBase) []SNAT {
@@ -86,12 +89,12 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 
 // Validate validates network interfaces configuration.
 func (v NftablesV4Validator) Validate() error {
-	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
+	v.log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
 	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
 }
 
 // Validate validates network interfaces configuration.
 func (v NftablesV6Validator) Validate() error {
-	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
+	v.log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
 	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
 }

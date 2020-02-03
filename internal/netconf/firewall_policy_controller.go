@@ -1,7 +1,7 @@
 package netconf
 
 import (
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
 // TplFirewallPolicyController is the name of the template for the firewall-policy-controller service.
@@ -17,7 +17,7 @@ type FirewallPolicyControllerData struct {
 }
 
 // NewFirewallPolicyControllerServiceApplier constructs a new instance of this type.
-func NewFirewallPolicyControllerServiceApplier(kb KnowledgeBase, v network.Validator) (network.Applier, error) {
+func NewFirewallPolicyControllerServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
 	defaultRouteVrf, err := getDefaultRouteVRFName(kb)
 	if err != nil {
 		return nil, err
@@ -25,7 +25,7 @@ func NewFirewallPolicyControllerServiceApplier(kb KnowledgeBase, v network.Valid
 
 	data := FirewallPolicyControllerData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf}
 
-	return network.NewNetworkApplier(data, v, nil), nil
+	return net.NewNetworkApplier(data, v, nil), nil
 }
 
 // ServiceValidator holds information for systemd service validation.

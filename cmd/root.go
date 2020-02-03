@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf"
+	"github.com/metal-stack/metal-networker/internal/netconf"
 
-	"git.f-i-ts.de/cloud-native/metallib/zapup"
+	"go.uber.org/zap"
 
 	"github.com/metal-pod/v"
 
@@ -14,11 +14,6 @@ import (
 
 const (
 	flagInputName = "input"
-)
-
-var (
-	log = zapup.MustRootLogger().Sugar()
-	_   = initializeCmds()
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -32,16 +27,11 @@ A bare metal server can be treated either as 'machine' or 'firewall'.`,
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
+func Execute(log *zap.SugaredLogger) {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
-}
 
-// One must not use init() functions in go.
-// As a workaround initializeCmds function is used.
-// See https://medium.com/random-go-tips/init-without-init-ebf2f62e7c4a
-func initializeCmds() struct{} {
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
@@ -60,8 +50,6 @@ func initializeCmds() struct{} {
 	if err != nil {
 		log.Warnf("error setting up cobra: %v", err)
 	}
-
-	return struct{}{}
 }
 
 // initConfig reads in ENV variables if set.
@@ -71,22 +59,29 @@ func initConfig() {
 
 // configure configures bare metal server depending on kind.
 func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
-	log.Infof("running app version: %s", v.V.String())
-
-	input, err := cmd.Flags().GetString(flagInputName)
+	z, err := zap.NewProduction()
 	if err != nil {
 		return err
 	}
 
-	kb := netconf.NewKnowledgeBase(input)
+	logger := z.Sugar()
+	logger.Infof("running app version: %s", v.V.String())
+
+	input, err := cmd.Flags().GetString(flagInputName)
+
+	if err != nil {
+		return err
+	}
+
+	kb := netconf.NewKnowledgeBase(input, logger)
 
 	err = kb.Validate(kind)
 	if err != nil {
-		log.Panic(err)
+		logger.Panic(err)
 	}
 
 	netconf.NewConfigurator(kind, kb).Configure()
-	log.Info("completed. Exiting..")
+	logger.Info("completed. Exiting..")
 
 	return nil
 }

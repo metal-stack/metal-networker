@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestCompileNftRules(t *testing.T) {
@@ -24,7 +25,7 @@ func TestCompileNftRules(t *testing.T) {
 		expected, err := ioutil.ReadFile(test.expected)
 		assert.NoError(err)
 
-		kb := NewKnowledgeBase("testdata/firewall.yaml")
+		kb := NewKnowledgeBase("testdata/firewall.yaml", zap.NewNop().Sugar())
 		assert.NoError(err)
 
 		a := NewNftablesConfigApplier(kb, nil)

@@ -1,7 +1,9 @@
 package netconf
 
 import (
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/net"
+	"github.com/prometheus/common/log"
+	"go.uber.org/zap"
 )
 
 const (
@@ -37,20 +39,21 @@ type (
 	// SystemdValidator validates systemd.network and system.link files.
 	SystemdValidator struct {
 		path string
+		log  *zap.SugaredLogger
 	}
 )
 
 // NewSystemdNetworkApplier creates a new Applier to configure systemd.network.
-func NewSystemdNetworkApplier(machineUUID string, nicIndex int, tmpFile string) network.Applier {
-	data := SystemdNetworkData{SystemdCommonData{Comment: versionHeader(machineUUID), Index: nicIndex}}
-	validator := SystemdValidator{tmpFile}
+func NewSystemdNetworkApplier(uuid string, nicIndex int, tmpFile string, log *zap.SugaredLogger) net.Applier {
+	data := SystemdNetworkData{SystemdCommonData{Comment: versionHeader(uuid), Index: nicIndex}}
+	validator := SystemdValidator{tmpFile, log}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 // NewSystemdLinkApplier creates a new Applier to configure systemd.link.
 func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic NIC,
-	tmpFile string) network.Applier {
+	tmpFile string, log *zap.SugaredLogger) net.Applier {
 	var mtu int
 
 	switch kind {
@@ -70,9 +73,9 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 		MTU: mtu,
 		MAC: nic.Mac,
 	}
-	validator := SystemdValidator{tmpFile}
+	validator := SystemdValidator{tmpFile, log}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 // Validate validates systemd.network and systemd.link files.

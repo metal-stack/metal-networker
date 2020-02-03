@@ -3,9 +3,11 @@ package netconf
 import (
 	"fmt"
 
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/net"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
+	"github.com/metal-stack/metal-networker/pkg/exec"
+
+	"go.uber.org/zap"
 )
 
 const (
@@ -40,11 +42,12 @@ type (
 	// IfacesValidator defines the base type of an interfaces validator.
 	IfacesValidator struct {
 		path string
+		log  *zap.SugaredLogger
 	}
 )
 
 // NewIfacesConfigApplier constructs a new instance of this type.
-func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
+func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) net.Applier {
 	var data interface{}
 
 	common := CommonIfacesData{
@@ -71,17 +74,17 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 			CommonIfacesData: common,
 		}
 	default:
-		log.Fatalf("unknown configuratorType of configurator: %v", kind)
+		kb.log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
 
-	validator := IfacesValidator{path: tmpFile}
+	validator := IfacesValidator{path: tmpFile, log: kb.log}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 // Validate network interfaces configuration. Assumes ifupdown2 is available.
 func (v IfacesValidator) Validate() error {
-	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
+	v.log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
 	return exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }
 

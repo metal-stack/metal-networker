@@ -1,7 +1,7 @@
 package netconf
 
 import (
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
 // TplNftablesExporter is the name of the template for the nftables_exporter service.
@@ -17,7 +17,7 @@ type NftablesExporterData struct {
 }
 
 // NewNftablesExporterServiceApplier constructs a new instance of this type.
-func NewNftablesExporterServiceApplier(kb KnowledgeBase, v network.Validator) (network.Applier, error) {
+func NewNftablesExporterServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
 	tenantVrf, err := getTenantVRFName(kb)
 	if err != nil {
 		return nil, err
@@ -25,5 +25,5 @@ func NewNftablesExporterServiceApplier(kb KnowledgeBase, v network.Validator) (n
 
 	data := NftablesExporterData{Comment: versionHeader(kb.Machineuuid), TenantVrf: tenantVrf}
 
-	return network.NewNetworkApplier(data, v, nil), nil
+	return net.NewNetworkApplier(data, v, nil), nil
 }

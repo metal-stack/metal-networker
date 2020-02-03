@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestCompileFrrConf(t *testing.T) {
@@ -29,7 +30,7 @@ func TestCompileFrrConf(t *testing.T) {
 func TestFRRValidator_Validate(t *testing.T) {
 	assert := assert.New(t)
 
-	validator := FRRValidator{}
+	validator := FRRValidator{log: zap.NewNop().Sugar()}
 	actual := validator.Validate()
 	assert.NotNil(actual)
 	assert.NotNil(actual.Error())

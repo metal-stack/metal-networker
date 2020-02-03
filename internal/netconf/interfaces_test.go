@@ -6,9 +6,9 @@ import (
 	"testing"
 	"text/template"
 
-	"git.f-i-ts.de/cloud-native/metallib/network"
-
+	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 type FileRenderInfo struct {
@@ -16,7 +16,7 @@ type FileRenderInfo struct {
 	expectedOutput   string
 	configuratorType BareMetalType
 	tpl              string
-	newApplierFunc   func(BareMetalType, KnowledgeBase, string) network.Applier
+	newApplierFunc   func(BareMetalType, KnowledgeBase, string) net.Applier
 }
 
 func renderFilesAndVerifyExpectations(t *testing.T, tests []FileRenderInfo) {
@@ -26,7 +26,7 @@ func renderFilesAndVerifyExpectations(t *testing.T, tests []FileRenderInfo) {
 		expected, err := ioutil.ReadFile(t.expectedOutput)
 		assert.NoError(err)
 
-		kb := NewKnowledgeBase(t.input)
+		kb := NewKnowledgeBase(t.input, zap.NewNop().Sugar())
 		assert.NoError(err)
 		a := t.newApplierFunc(t.configuratorType, kb, "")
 		b := bytes.Buffer{}

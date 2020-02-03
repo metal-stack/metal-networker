@@ -1,6 +1,8 @@
 package netconf
 
-import "git.f-i-ts.de/cloud-native/metallib/network"
+import (
+	"github.com/metal-stack/metal-networker/pkg/net"
+)
 
 // TplHostname defines the name of the template to render /etc/hostname.
 const TplHostname = "hostname.tpl"
@@ -18,11 +20,11 @@ type (
 )
 
 // NewHostnameApplier creates a new Applier to render hostname.
-func NewHostnameApplier(kb KnowledgeBase, tmpFile string) network.Applier {
+func NewHostnameApplier(kb KnowledgeBase, tmpFile string) net.Applier {
 	data := HostnameData{Comment: versionHeader(kb.Machineuuid), Hostname: kb.Hostname}
 	validator := HostnameValidator{tmpFile}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 // Validate validates hostname rendering.

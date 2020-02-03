@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func mustNewKnowledgeBase(t *testing.T) KnowledgeBase {
 	assert := assert.New(t)
 
-	d := NewKnowledgeBase("testdata/firewall.yaml")
+	d := NewKnowledgeBase("testdata/firewall.yaml", zap.NewNop().Sugar())
 	assert.NotNil(d)
 
 	return d
@@ -75,7 +76,7 @@ func stubKnowledgeBase() KnowledgeBase {
 		{Private: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 1011209},
 		{Underlay: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 0},
 		{Private: false, Underlay: false, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: 1011209, Vrf: 1011209},
-	}, Nics: []NIC{{Mac: "00:00:00:00:00:00"}}}
+	}, Nics: []NIC{{Mac: "00:00:00:00:00:00"}}, log: zap.NewNop().Sugar()}
 }
 
 func TestKnowledgeBase_Validate(t *testing.T) {

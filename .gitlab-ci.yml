@@ -11,7 +11,7 @@ sources:
   script:
     - make golangci
 
-.testdata-tpl: &testdata-tpl
+.testdata-tpl:
   stage: validate
   image: ubuntu:${VERSION_UBUNTU}
   variables:
@@ -30,22 +30,22 @@ sources:
     - for input in ${FRR_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; vtysh --dryrun --inputfile "${TESTDATA_DIR}/${input}"; done
     - for input in ${INTERFACES_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; ifup --syntax-check --all -i "${TESTDATA_DIR}/${input}" |grepv -v syslog; done
 
-testdata-19.04:
-  <<: *testdata-tpl
-  variables:
-    VERSION_UBUNTU: "19.04"
-
 testdata-19.10:
-  <<: *testdata-tpl
+  extends: .testdata-tpl
   variables:
     VERSION_UBUNTU: "19.10"
+
+testdata-20.04:
+  extends: .testdata-tpl
+  variables:
+    VERSION_UBUNTU: "20.04"
 
 unit-tests:
   stage: test
   script:
     - make test
 
-.blobstore-tpl: &blobstore-tpl
+.blobstore-tpl:
   stage: deploy
   script:
     - make
@@ -58,7 +58,7 @@ unit-tests:
 
 # This job is triggered only for a "stable" tagged branch to always have a version that is known to work properly.
 stable:
-  <<: *blobstore-tpl
+  extends: .blobstore-tpl
   variables:
     suffix: stable
   only:
@@ -66,7 +66,7 @@ stable:
 
 # This job is triggered for every pipeline that runs in master branch to have bleeding edge version.
 latest:
-  <<: *blobstore-tpl
+  extends: .blobstore-tpl
   variables:
     suffix: latest
   only:
@@ -74,7 +74,7 @@ latest:
 
 # This job is triggered for every merge request.
 mergerequest:
-  <<: *blobstore-tpl
+  extends: .blobstore-tpl
   variables:
     suffix: ${CI_COMMIT_REF_SLUG}
   only:

@@ -6,14 +6,15 @@ import (
 	"testing"
 	"text/template"
 
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestServices(t *testing.T) {
 	assert := assert.New(t)
 
-	kb := NewKnowledgeBase("testdata/firewall.yaml")
+	kb := NewKnowledgeBase("testdata/firewall.yaml", zap.NewNop().Sugar())
 	v := ServiceValidator{}
 	dsApplier, err := NewDroptailerServiceApplier(kb, v)
 	assert.NoError(err)
@@ -25,7 +26,7 @@ func TestServices(t *testing.T) {
 	assert.NoError(err)
 
 	tests := []struct {
-		applier  network.Applier
+		applier  net.Applier
 		expected string
 		template string
 	}{

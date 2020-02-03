@@ -1,9 +1,16 @@
 package main
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/cmd"
+	"github.com/metal-stack/metal-networker/cmd"
+	"go.uber.org/zap"
 )
 
 func main() {
-	cmd.Execute()
+	z, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+
+	logger := z.Sugar()
+	cmd.Execute(logger)
 }
