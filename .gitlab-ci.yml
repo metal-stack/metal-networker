@@ -28,7 +28,7 @@ sources:
   script:
     - ls -la ${TESTDATA_DIR}
     - for input in ${FRR_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; vtysh --dryrun --inputfile "${TESTDATA_DIR}/${input}"; done
-    - for input in ${INTERFACES_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; ifup --syntax-check --all -i "${TESTDATA_DIR}/${input}" |grepv -v syslog; done
+    - for input in ${INTERFACES_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; ifup --syntax-check --all -i "${TESTDATA_DIR}/${input}" |grep -v syslog; done
 
 testdata-ubuntu-19.10:
   extends: .testdata-tpl
