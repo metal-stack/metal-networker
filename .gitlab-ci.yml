@@ -21,7 +21,7 @@ sources:
   before_script:
     - apt-get update --quiet --quiet
     - apt-get install --yes docker.io
-    - id=$(docker create metalstack/frr:ubuntu-${VERSION_UBUNTU} --entrypoint top)
+    - id=$(docker create metalstack/frr:${OS_NAME}-${OS_VERSION} --entrypoint top)
     - docker cp $id:artifacts .
     - docker rm -v $id
     - apt-get install --yes --no-install-recommends --quiet --quiet ifupdown2 ./artifacts/frr_*.deb ./artifacts/frr-pythontools_*.deb ./artifacts/libyang*.deb
