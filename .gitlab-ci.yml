@@ -13,7 +13,7 @@ sources:
 
 .testdata-tpl:
   stage: validate
-  image: ubuntu:${VERSION_UBUNTU}
+  image: ${OS_NAME}:${OS_VERSION}
   variables:
     FRR_FILES: "frr.conf.firewall frr.conf.machine"
     INTERFACES_FILES: "interfaces.firewall interfaces.machine"
@@ -21,7 +21,7 @@ sources:
   before_script:
     - apt-get update --quiet --quiet
     - apt-get install --yes docker.io
-    - id=$(docker create registry.fi-ts.io/metal/frr:ubuntu-${VERSION_UBUNTU} --entrypoint top)
+    - id=$(docker create metalstack/frr:ubuntu-${VERSION_UBUNTU} --entrypoint top)
     - docker cp $id:artifacts .
     - docker rm -v $id
     - apt-get install --yes --no-install-recommends --quiet --quiet ifupdown2 ./artifacts/frr_*.deb ./artifacts/frr-pythontools_*.deb ./artifacts/libyang*.deb
@@ -30,15 +30,23 @@ sources:
     - for input in ${FRR_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; vtysh --dryrun --inputfile "${TESTDATA_DIR}/${input}"; done
     - for input in ${INTERFACES_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; ifup --syntax-check --all -i "${TESTDATA_DIR}/${input}" |grepv -v syslog; done
 
-testdata-19.10:
+testdata-ubuntu-19.10:
   extends: .testdata-tpl
   variables:
-    VERSION_UBUNTU: "19.10"
+    OS_NAME: ubuntu
+    OS_VERSION: "19.10"
 
-testdata-20.04:
+testdata-ubuntu-20.04:
   extends: .testdata-tpl
   variables:
-    VERSION_UBUNTU: "20.04"
+    OS_NAME: ubuntu
+    OS_VERSION: "19.10"
+
+testdata-debian-10:
+  extends: .testdata-tpl
+  variables:
+    OS_NAME: debian
+    OS_VERSION: "10"
 
 unit-tests:
   stage: test
