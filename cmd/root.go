@@ -16,7 +16,10 @@ const (
 	flagInputName = "input"
 )
 
-var log *zap.SugaredLogger
+var (
+	log *zap.SugaredLogger
+	_   = initializeCmds()
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -40,7 +43,12 @@ func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
+}
 
+// One must not use init() functions in go.
+// As a workaround initializeCmds function is used.
+// See https://medium.com/random-go-tips/init-without-init-ebf2f62e7c4a
+func initializeCmds() struct{} {
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
@@ -55,10 +63,12 @@ func Execute() {
 	// Here you will define your flags and configuration settings.
 	rootCmd.PersistentFlags().StringP(flagInputName, "i", "", "Path to a YAML file containing network configuration")
 
-	err = rootCmd.MarkPersistentFlagRequired(flagInputName)
+	err := rootCmd.MarkPersistentFlagRequired(flagInputName)
 	if err != nil {
 		log.Warnf("error setting up cobra: %v", err)
 	}
+
+	return struct{}{}
 }
 
 // initConfig reads in ENV variables if set.
