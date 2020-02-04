@@ -3,9 +3,7 @@ module github.com/metal-stack/metal-networker
 go 1.13
 
 require (
-	git.f-i-ts.de/cloud-native/metallib v0.2.6
 	github.com/coreos/go-systemd/v22 v22.0.0
-	github.com/godbus/dbus/v5 v5.0.3
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/metal-pod/v v0.0.2
 	github.com/pelletier/go-toml v1.4.0 // indirect
