@@ -7,8 +7,6 @@ import (
 
 	"github.com/metal-pod/v"
 
-	"go.uber.org/zap"
-
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
@@ -35,7 +33,6 @@ type (
 	// NftablesValidator can validate configuration for nftables rules.
 	NftablesValidator struct {
 		path string
-		log  *zap.SugaredLogger
 	}
 
 	// NftablesV4Validator can validate configuration for ipv4 nftables rules.
@@ -89,12 +86,12 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 
 // Validate validates network interfaces configuration.
 func (v NftablesV4Validator) Validate() error {
-	v.log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
+	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
 	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
 }
 
 // Validate validates network interfaces configuration.
 func (v NftablesV6Validator) Validate() error {
-	v.log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
+	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
 	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
 }

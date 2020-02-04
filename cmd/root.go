@@ -16,6 +16,8 @@ const (
 	flagInputName = "input"
 )
 
+var log *zap.SugaredLogger
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "metal-networker",
@@ -27,7 +29,14 @@ A bare metal server can be treated either as 'machine' or 'firewall'.`,
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute(log *zap.SugaredLogger) {
+func Execute() {
+	z, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+
+	log = z.Sugar()
+
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
@@ -46,7 +55,7 @@ func Execute(log *zap.SugaredLogger) {
 	// Here you will define your flags and configuration settings.
 	rootCmd.PersistentFlags().StringP(flagInputName, "i", "", "Path to a YAML file containing network configuration")
 
-	err := rootCmd.MarkPersistentFlagRequired(flagInputName)
+	err = rootCmd.MarkPersistentFlagRequired(flagInputName)
 	if err != nil {
 		log.Warnf("error setting up cobra: %v", err)
 	}
@@ -59,13 +68,7 @@ func initConfig() {
 
 // configure configures bare metal server depending on kind.
 func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
-	z, err := zap.NewProduction()
-	if err != nil {
-		return err
-	}
-
-	logger := z.Sugar()
-	logger.Infof("running app version: %s", v.V.String())
+	log.Infof("running app version: %s", v.V.String())
 
 	input, err := cmd.Flags().GetString(flagInputName)
 
@@ -73,15 +76,15 @@ func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
 		return err
 	}
 
-	kb := netconf.NewKnowledgeBase(input, logger)
+	kb := netconf.NewKnowledgeBase(input)
 
 	err = kb.Validate(kind)
 	if err != nil {
-		logger.Panic(err)
+		log.Panic(err)
 	}
 
 	netconf.NewConfigurator(kind, kb).Configure()
-	logger.Info("completed. Exiting..")
+	log.Info("completed. Exiting..")
 
 	return nil
 }

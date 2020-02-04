@@ -8,7 +8,6 @@ import (
 
 	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestNewSystemdLinkConfig(t *testing.T) {
@@ -47,9 +46,9 @@ func TestNewSystemdLinkConfig(t *testing.T) {
 		expected, err := ioutil.ReadFile(t.expectedOutput)
 		assert.NoError(err)
 
-		nic := NewKnowledgeBase("testdata/firewall.yaml", zap.NewNop().Sugar()).Nics[t.nicIndex]
+		nic := NewKnowledgeBase("testdata/firewall.yaml").Nics[t.nicIndex]
 		assert.NoError(err)
-		a := NewSystemdLinkApplier(t.configuratorType, t.machineUUID, t.nicIndex, nic, "", zap.NewNop().Sugar())
+		a := NewSystemdLinkApplier(t.configuratorType, t.machineUUID, t.nicIndex, nic, "")
 		b := bytes.Buffer{}
 
 		s, err := ioutil.ReadFile(t.tpl)
@@ -70,7 +69,7 @@ func TestNewSystemdNetworkConfig(t *testing.T) {
 		tpl              string
 		nicIndex         int
 		machineUUID      string
-		configFunc       func(machineUUID string, nicIndex int, tmpFile string, log *zap.SugaredLogger) net.Applier
+		configFunc       func(machineUUID string, nicIndex int, tmpFile string) net.Applier
 	}{
 		{expectedOutput: "testdata/lan0.network",
 			configuratorType: Machine,
@@ -91,7 +90,7 @@ func TestNewSystemdNetworkConfig(t *testing.T) {
 		assert.NoError(err)
 
 		assert.NoError(err)
-		a := t.configFunc(t.machineUUID, t.nicIndex, "", zap.NewNop().Sugar())
+		a := t.configFunc(t.machineUUID, t.nicIndex, "")
 		b := bytes.Buffer{}
 
 		s, err := ioutil.ReadFile(t.tpl)

@@ -69,15 +69,15 @@ func NewConfigurator(kind BareMetalType, kb KnowledgeBase) Configurator {
 	case Firewall:
 		fw := FirewallConfigurator{}
 		fw.CommonConfigurator = CommonConfigurator{kb}
-		fw.log = kb.log
+		fw.log = log
 		result = fw
 	case Machine:
 		m := MachineConfigurator{}
 		m.CommonConfigurator = CommonConfigurator{kb}
-		m.log = kb.log
+		m.log = log
 		result = m
 	default:
-		kb.log.Fatalf("Unknown kind of configurator: %v", kind)
+		log.Fatalf("Unknown kind of configurator: %v", kind)
 	}
 
 	return result
@@ -93,38 +93,38 @@ func (configurator FirewallConfigurator) Configure() {
 	kb := configurator.Kb
 	applyCommonConfiguration(Firewall, kb)
 
-	src := mustTmpFile("rules.v4_", kb.log)
-	validatorIPv4 := NftablesV4Validator{NftablesValidator{src, kb.log}}
+	src := mustTmpFile("rules.v4_")
+	validatorIPv4 := NftablesV4Validator{NftablesValidator{src}}
 	applier := NewNftablesConfigApplier(configurator.Kb, validatorIPv4)
 	kb.applyAndCleanUp(applier, TplNftablesV4, src, "/etc/nftables/rules.v4", FileModeDefault)
-	src = mustTmpFile("rules.v6_", kb.log)
-	validatorIPv6 := NftablesV6Validator{NftablesValidator{src, kb.log}}
+	src = mustTmpFile("rules.v6_")
+	validatorIPv6 := NftablesV6Validator{NftablesValidator{src}}
 	applier = NewNftablesConfigApplier(configurator.Kb, validatorIPv6)
 	kb.applyAndCleanUp(applier, TplNftablesV6, src, "/etc/nftables/rules.v6", FileModeDefault)
 
 	chrony, err := NewChronyServiceEnabler(configurator.Kb)
 	if err != nil {
-		kb.log.Warnf("failed to configure Chrony: %v", err)
+		log.Warnf("failed to configure Chrony: %v", err)
 	} else {
 		err := chrony.Enable()
 		if err != nil {
-			kb.log.Errorf("enabling Chrony failed: %v", err)
+			log.Errorf("enabling Chrony failed: %v", err)
 		}
 	}
 
 	for _, u := range configurator.getUnits() {
-		src = mustTmpFile(u.unit, kb.log)
+		src = mustTmpFile(u.unit)
 		validatorService := ServiceValidator{src}
 		nfe, err := u.constructApplier(configurator.Kb, validatorService)
 
 		if err != nil {
-			kb.log.Warnf("failed to deploy %s service : %v", u.unit, err)
+			log.Warnf("failed to deploy %s service : %v", u.unit, err)
 		}
 
 		kb.applyAndCleanUp(nfe, u.templateFile, src, path.Join(SystemdUnitPath, u.unit), FileModeSystemd)
 
 		if u.enabled {
-			mustEnableUnit(u.unit, kb.log)
+			mustEnableUnit(u.unit)
 		}
 	}
 }
@@ -167,7 +167,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 }
 
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
-	src := mustTmpFile("interfaces_", kb.log)
+	src := mustTmpFile("interfaces_")
 	applier := NewIfacesConfigApplier(kind, kb, src)
 	tpl := TplFirewallIfaces
 
@@ -177,15 +177,15 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 
 	kb.applyAndCleanUp(applier, tpl, src, "/etc/network/interfaces", FileModeDefault)
 
-	src = mustTmpFile("hosts_", kb.log)
+	src = mustTmpFile("hosts_")
 	applier = NewHostsApplier(kb, src)
 	kb.applyAndCleanUp(applier, TplHosts, src, "/etc/hosts", FileModeDefault)
 
-	src = mustTmpFile("hostname_", kb.log)
+	src = mustTmpFile("hostname_")
 	applier = NewHostnameApplier(kb, src)
 	kb.applyAndCleanUp(applier, TplHostname, src, "/etc/hostname", FileModeSixFourFour)
 
-	src = mustTmpFile("frr_", kb.log)
+	src = mustTmpFile("frr_")
 	applier = NewFrrConfigApplier(kind, kb, src)
 	tpl = TplFirewallFRR
 
@@ -199,33 +199,33 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 
 	for i, nic := range kb.Nics {
 		prefix := fmt.Sprintf("lan%d_link_", i)
-		src = mustTmpFile(prefix, kb.log)
-		applier = NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src, kb.log)
+		src = mustTmpFile(prefix)
+		applier = NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src)
 		dest := fmt.Sprintf("/etc/systemd/network/%d0-lan%d.link", i+offset, i)
 		kb.applyAndCleanUp(applier, TplSystemdLink, src, dest, FileModeSystemd)
 
 		prefix = fmt.Sprintf("lan%d_network_", i)
-		src = mustTmpFile(prefix, kb.log)
-		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src, kb.log)
+		src = mustTmpFile(prefix)
+		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src)
 		dest = fmt.Sprintf("/etc/systemd/network/%d0-lan%d.network", i+offset, i)
 		kb.applyAndCleanUp(applier, TplSystemdNetwork, src, dest, FileModeSystemd)
 	}
 }
 
 func (kb KnowledgeBase) applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMode) {
-	kb.log.Infof("rendering %s to %s (mode: %ui)", tpl, dest, mode)
-	file := mustRead(tpl, kb.log)
-	mustApply(applier, file, src, dest, kb.log)
+	log.Infof("rendering %s to %s (mode: %ui)", tpl, dest, mode)
+	file := mustRead(tpl)
+	mustApply(applier, file, src, dest)
 
 	err := os.Chmod(dest, mode)
 	if err != nil {
-		kb.log.Errorf("error to chmod %s to %ui", dest, mode)
+		log.Errorf("error to chmod %s to %ui", dest, mode)
 	}
 
 	_ = os.Remove(src)
 }
 
-func mustEnableUnit(unit string, log *zap.SugaredLogger) {
+func mustEnableUnit(unit string) {
 	cmd := fmt.Sprintf("systemctl enable %s", unit)
 	log.Infof("running '%s' to enable unit.'", cmd)
 
@@ -236,7 +236,7 @@ func mustEnableUnit(unit string, log *zap.SugaredLogger) {
 	}
 }
 
-func mustApply(applier net.Applier, tpl, src, dest string, log *zap.SugaredLogger) {
+func mustApply(applier net.Applier, tpl, src, dest string) {
 	t := template.Must(template.New(TplFirewallIfaces).Parse(tpl))
 	err := applier.Apply(*t, src, dest, false)
 
@@ -245,7 +245,7 @@ func mustApply(applier net.Applier, tpl, src, dest string, log *zap.SugaredLogge
 	}
 }
 
-func mustRead(name string, log *zap.SugaredLogger) string {
+func mustRead(name string) string {
 	c, err := ioutil.ReadFile(name)
 	if err != nil {
 		log.Panic(err)
@@ -254,7 +254,7 @@ func mustRead(name string, log *zap.SugaredLogger) string {
 	return string(c)
 }
 
-func mustTmpFile(prefix string, log *zap.SugaredLogger) string {
+func mustTmpFile(prefix string) string {
 	f, err := ioutil.TempFile("/etc/metal/networker/", prefix)
 	if err != nil {
 		log.Panic(err)

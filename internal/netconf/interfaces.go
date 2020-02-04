@@ -74,10 +74,10 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 			CommonIfacesData: common,
 		}
 	default:
-		kb.log.Fatalf("unknown configuratorType of configurator: %v", kind)
+		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
 
-	validator := IfacesValidator{path: tmpFile, log: kb.log}
+	validator := IfacesValidator{path: tmpFile, log: log}
 
 	return net.NewNetworkApplier(data, validator, nil)
 }

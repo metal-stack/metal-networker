@@ -8,13 +8,12 @@ import (
 
 	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestServices(t *testing.T) {
 	assert := assert.New(t)
 
-	kb := NewKnowledgeBase("testdata/firewall.yaml", zap.NewNop().Sugar())
+	kb := NewKnowledgeBase("testdata/firewall.yaml")
 	v := ServiceValidator{}
 	dsApplier, err := NewDroptailerServiceApplier(kb, v)
 	assert.NoError(err)

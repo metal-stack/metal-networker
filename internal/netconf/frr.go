@@ -70,10 +70,10 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 			CommonFRRData: newCommonFRRData(net, kb),
 		}
 	default:
-		kb.log.Fatalf("unknown kind of bare metal: %v", kind)
+		log.Fatalf("unknown kind of bare metal: %v", kind)
 	}
 
-	validator := FRRValidator{tmpFile, kb.log}
+	validator := FRRValidator{tmpFile, log}
 
 	return net.NewNetworkApplier(data, validator, nil)
 }

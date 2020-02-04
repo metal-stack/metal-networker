@@ -7,7 +7,6 @@ import (
 	"text/template"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestNewHostsApplier(t *testing.T) {
@@ -16,7 +15,7 @@ func TestNewHostsApplier(t *testing.T) {
 	expected, err := ioutil.ReadFile("testdata/hosts")
 	assert.NoError(err)
 
-	kb := NewKnowledgeBase("testdata/firewall.yaml", zap.NewNop().Sugar())
+	kb := NewKnowledgeBase("testdata/firewall.yaml")
 	assert.NoError(err)
 	a := NewHostsApplier(kb, "")
 	b := bytes.Buffer{}

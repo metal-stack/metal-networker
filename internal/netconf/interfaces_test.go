@@ -8,7 +8,6 @@ import (
 
 	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 type FileRenderInfo struct {
@@ -26,7 +25,7 @@ func renderFilesAndVerifyExpectations(t *testing.T, tests []FileRenderInfo) {
 		expected, err := ioutil.ReadFile(t.expectedOutput)
 		assert.NoError(err)
 
-		kb := NewKnowledgeBase(t.input, zap.NewNop().Sugar())
+		kb := NewKnowledgeBase(t.input)
 		assert.NoError(err)
 		a := t.newApplierFunc(t.configuratorType, kb, "")
 		b := bytes.Buffer{}

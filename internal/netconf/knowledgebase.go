@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net"
 
-	"go.uber.org/zap"
-
 	"github.com/metal-pod/v"
 
 	"gopkg.in/yaml.v3"
@@ -31,7 +29,6 @@ type (
 	// KnowledgeBase was generated with: https://mengzhuo.github.io/yaml-to-go/.
 	// It represents the input yaml that is needed to render network configuration files.
 	KnowledgeBase struct {
-		log          *zap.SugaredLogger
 		Hostname     string    `yaml:"hostname"`
 		Ipaddress    string    `yaml:"ipaddress"`
 		Asn          string    `yaml:"asn"`
@@ -71,7 +68,7 @@ type (
 )
 
 // NewKnowledgeBase creates a new instance of this type.
-func NewKnowledgeBase(path string, log *zap.SugaredLogger) KnowledgeBase {
+func NewKnowledgeBase(path string) KnowledgeBase {
 	log.Infof("loading: %s", path)
 
 	f, err := ioutil.ReadFile(path)
@@ -79,9 +76,7 @@ func NewKnowledgeBase(path string, log *zap.SugaredLogger) KnowledgeBase {
 		log.Panic(err)
 	}
 
-	kb := &KnowledgeBase{
-		log: log,
-	}
+	kb := &KnowledgeBase{}
 	err = yaml.Unmarshal(f, &kb)
 
 	if err != nil {
@@ -240,7 +235,7 @@ func (kb KnowledgeBase) nicsContainValidMACs() bool {
 		}
 
 		if _, err := net.ParseMAC(nic.Mac); err != nil {
-			kb.log.Errorf("invalid mac: %s", nic.Mac)
+			log.Errorf("invalid mac: %s", nic.Mac)
 			return false
 		}
 	}

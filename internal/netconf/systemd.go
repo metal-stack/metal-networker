@@ -2,8 +2,6 @@ package netconf
 
 import (
 	"github.com/metal-stack/metal-networker/pkg/net"
-	"github.com/prometheus/common/log"
-	"go.uber.org/zap"
 )
 
 const (
@@ -39,21 +37,20 @@ type (
 	// SystemdValidator validates systemd.network and system.link files.
 	SystemdValidator struct {
 		path string
-		log  *zap.SugaredLogger
 	}
 )
 
 // NewSystemdNetworkApplier creates a new Applier to configure systemd.network.
-func NewSystemdNetworkApplier(uuid string, nicIndex int, tmpFile string, log *zap.SugaredLogger) net.Applier {
+func NewSystemdNetworkApplier(uuid string, nicIndex int, tmpFile string) net.Applier {
 	data := SystemdNetworkData{SystemdCommonData{Comment: versionHeader(uuid), Index: nicIndex}}
-	validator := SystemdValidator{tmpFile, log}
+	validator := SystemdValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)
 }
 
 // NewSystemdLinkApplier creates a new Applier to configure systemd.link.
 func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic NIC,
-	tmpFile string, log *zap.SugaredLogger) net.Applier {
+	tmpFile string) net.Applier {
 	var mtu int
 
 	switch kind {
@@ -73,7 +70,7 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 		MTU: mtu,
 		MAC: nic.Mac,
 	}
-	validator := SystemdValidator{tmpFile, log}
+	validator := SystemdValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)
 }

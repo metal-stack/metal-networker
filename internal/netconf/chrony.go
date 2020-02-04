@@ -16,7 +16,7 @@ type ChronyServiceEnabler struct {
 // NewChronyServiceEnabler constructs a new instance of this type.
 func NewChronyServiceEnabler(kb KnowledgeBase) (ChronyServiceEnabler, error) {
 	vrf, err := getDefaultRouteVRFName(kb)
-	return ChronyServiceEnabler{VRF: vrf, log: kb.log}, err
+	return ChronyServiceEnabler{VRF: vrf, log: log}, err
 }
 
 // Enable enables chrony systemd service for the given VRF to be started after boot.
