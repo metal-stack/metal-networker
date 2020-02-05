@@ -13,22 +13,15 @@ sources:
 
 .testdata-tpl:
   stage: validate
-  image: ${OS_NAME}:${OS_VERSION}
-  variables:
-    FRR_FILES: "frr.conf.firewall frr.conf.machine"
-    INTERFACES_FILES: "interfaces.firewall interfaces.machine"
-    TESTDATA_DIR: "./internal/netconf/testdata"
-  before_script:
-    - apt-get update --quiet --quiet
-    - apt-get install --yes docker.io
-    - id=$(docker create metalstack/frr:7-${OS_NAME}-${OS_VERSION} --entrypoint top)
-    - docker cp $id:artifacts .
-    - docker rm -v $id
-    - apt-get install --yes --no-install-recommends --quiet --quiet ifupdown2 ./artifacts/frr_*.deb ./artifacts/frr-pythontools_*.deb ./artifacts/libyang*.deb
+  image: ubuntu
   script:
-    - ls -la ${TESTDATA_DIR}
-    - for input in ${FRR_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; vtysh --dryrun --inputfile "${TESTDATA_DIR}/${input}"; done
-    - for input in ${INTERFACES_FILES}; do /bin/echo "${TESTDATA_DIR}/${input}"; ifup --syntax-check --all -i "${TESTDATA_DIR}/${input}" |grep -v syslog; done
+  - apt-get --quiet --quiet update
+  - apt-get install --yes docker.io
+  - >
+      docker build \
+      --build-arg OS_NAME=${OS_NAME} \
+      --build-arg OS_VERSION=${OS_VERSION} \
+      . -t metal-networker
 
 testdata-ubuntu-19.10:
   extends: .testdata-tpl
