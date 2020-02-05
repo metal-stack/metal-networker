@@ -18,9 +18,9 @@ sources:
   - apt-get --quiet --quiet update
   - apt-get install --yes docker.io
   - >
-      docker build \
-      --build-arg OS_NAME=${OS_NAME} \
-      --build-arg OS_VERSION=${OS_VERSION} \
+      docker build 
+      --build-arg OS_NAME=${OS_NAME} 
+      --build-arg OS_VERSION=${OS_VERSION} 
       . -t metal-networker
 
 testdata-ubuntu-19.10:
