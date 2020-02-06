@@ -1,0 +1,19 @@
+name: master
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@master
+    - name: Lint
+      uses: actions-contrib/golangci-lint@master
+      with:
+        args: run
+    - name: Build project
+      run: make

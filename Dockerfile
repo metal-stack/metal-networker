@@ -24,5 +24,5 @@ RUN apt-get update --quiet --quiet \
     ./libyang*.deb
 
 COPY ${TESTDATA_DIR} /testdata
-COPY test.sh /
-RUN "/test.sh"
+COPY validate_os.sh /
+RUN "/validate_os.sh"
