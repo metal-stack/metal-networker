@@ -9,7 +9,6 @@ import (
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
-	"go.uber.org/zap"
 )
 
 // BareMetalType defines the type of configuration to apply.
@@ -44,13 +43,11 @@ type (
 	// MachineConfigurator is a configurator that configures a bare metal server as 'machine'.
 	MachineConfigurator struct {
 		CommonConfigurator
-		log *zap.SugaredLogger
 	}
 
 	// FirewallConfigurator is a configurator that configures a bare metal server as 'firewall'.
 	FirewallConfigurator struct {
 		CommonConfigurator
-		log *zap.SugaredLogger
 	}
 )
 
@@ -69,12 +66,10 @@ func NewConfigurator(kind BareMetalType, kb KnowledgeBase) Configurator {
 	case Firewall:
 		fw := FirewallConfigurator{}
 		fw.CommonConfigurator = CommonConfigurator{kb}
-		fw.log = log
 		result = fw
 	case Machine:
 		m := MachineConfigurator{}
 		m.CommonConfigurator = CommonConfigurator{kb}
-		m.log = log
 		result = m
 	default:
 		log.Fatalf("Unknown kind of configurator: %v", kind)
