@@ -96,11 +96,11 @@ func (configurator FirewallConfigurator) Configure() {
 	src := mustTmpFile("rules.v4_")
 	validatorIPv4 := NftablesV4Validator{NftablesValidator{src}}
 	applier := NewNftablesConfigApplier(configurator.Kb, validatorIPv4)
-	kb.applyAndCleanUp(applier, TplNftablesV4, src, "/etc/nftables/rules.v4", FileModeDefault)
+	applyAndCleanUp(applier, TplNftablesV4, src, "/etc/nftables/rules.v4", FileModeDefault)
 	src = mustTmpFile("rules.v6_")
 	validatorIPv6 := NftablesV6Validator{NftablesValidator{src}}
 	applier = NewNftablesConfigApplier(configurator.Kb, validatorIPv6)
-	kb.applyAndCleanUp(applier, TplNftablesV6, src, "/etc/nftables/rules.v6", FileModeDefault)
+	applyAndCleanUp(applier, TplNftablesV6, src, "/etc/nftables/rules.v6", FileModeDefault)
 
 	chrony, err := NewChronyServiceEnabler(configurator.Kb)
 	if err != nil {
@@ -121,7 +121,7 @@ func (configurator FirewallConfigurator) Configure() {
 			log.Warnf("failed to deploy %s service : %v", u.unit, err)
 		}
 
-		kb.applyAndCleanUp(nfe, u.templateFile, src, path.Join(SystemdUnitPath, u.unit), FileModeSystemd)
+		applyAndCleanUp(nfe, u.templateFile, src, path.Join(SystemdUnitPath, u.unit), FileModeSystemd)
 
 		if u.enabled {
 			mustEnableUnit(u.unit)
@@ -175,15 +175,15 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 		tpl = TplMachineIfaces
 	}
 
-	kb.applyAndCleanUp(applier, tpl, src, "/etc/network/interfaces", FileModeDefault)
+	applyAndCleanUp(applier, tpl, src, "/etc/network/interfaces", FileModeDefault)
 
 	src = mustTmpFile("hosts_")
 	applier = NewHostsApplier(kb, src)
-	kb.applyAndCleanUp(applier, TplHosts, src, "/etc/hosts", FileModeDefault)
+	applyAndCleanUp(applier, TplHosts, src, "/etc/hosts", FileModeDefault)
 
 	src = mustTmpFile("hostname_")
 	applier = NewHostnameApplier(kb, src)
-	kb.applyAndCleanUp(applier, TplHostname, src, "/etc/hostname", FileModeSixFourFour)
+	applyAndCleanUp(applier, TplHostname, src, "/etc/hostname", FileModeSixFourFour)
 
 	src = mustTmpFile("frr_")
 	applier = NewFrrConfigApplier(kind, kb, src)
@@ -193,7 +193,7 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 		tpl = TplMachineFRR
 	}
 
-	kb.applyAndCleanUp(applier, tpl, src, "/etc/frr/frr.conf", FileModeDefault)
+	applyAndCleanUp(applier, tpl, src, "/etc/frr/frr.conf", FileModeDefault)
 
 	offset := 1
 
@@ -202,17 +202,17 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 		src = mustTmpFile(prefix)
 		applier = NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src)
 		dest := fmt.Sprintf("/etc/systemd/network/%d0-lan%d.link", i+offset, i)
-		kb.applyAndCleanUp(applier, TplSystemdLink, src, dest, FileModeSystemd)
+		applyAndCleanUp(applier, TplSystemdLink, src, dest, FileModeSystemd)
 
 		prefix = fmt.Sprintf("lan%d_network_", i)
 		src = mustTmpFile(prefix)
 		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src)
 		dest = fmt.Sprintf("/etc/systemd/network/%d0-lan%d.network", i+offset, i)
-		kb.applyAndCleanUp(applier, TplSystemdNetwork, src, dest, FileModeSystemd)
+		applyAndCleanUp(applier, TplSystemdNetwork, src, dest, FileModeSystemd)
 	}
 }
 
-func (kb KnowledgeBase) applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMode) {
+func applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMode) {
 	log.Infof("rendering %s to %s (mode: %ui)", tpl, dest, mode)
 	file := mustRead(tpl)
 	mustApply(applier, file, src, dest)

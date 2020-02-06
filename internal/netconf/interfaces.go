@@ -6,8 +6,6 @@ import (
 	"github.com/metal-stack/metal-networker/pkg/net"
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
-
-	"go.uber.org/zap"
 )
 
 const (
@@ -42,7 +40,6 @@ type (
 	// IfacesValidator defines the base type of an interfaces validator.
 	IfacesValidator struct {
 		path string
-		log  *zap.SugaredLogger
 	}
 )
 
@@ -77,14 +74,14 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
 
-	validator := IfacesValidator{path: tmpFile, log: log}
+	validator := IfacesValidator{path: tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)
 }
 
 // Validate network interfaces configuration. Assumes ifupdown2 is available.
 func (v IfacesValidator) Validate() error {
-	v.log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
+	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
 	return exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }
 

@@ -7,7 +7,6 @@ import (
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
-	"go.uber.org/zap"
 )
 
 const (
@@ -49,7 +48,6 @@ type (
 	// FRRValidator validates the frr.conf to apply.
 	FRRValidator struct {
 		path string
-		log  *zap.SugaredLogger
 	}
 )
 
@@ -73,7 +71,7 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 		log.Fatalf("unknown kind of bare metal: %v", kind)
 	}
 
-	validator := FRRValidator{tmpFile, log}
+	validator := FRRValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)
 }
@@ -86,7 +84,7 @@ func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {
 // Validate can be used to run validation on FRR configuration using vtysh.
 func (v FRRValidator) Validate() error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
-	v.log.Infof("running '%s' to validate changes.'", vtysh)
+	log.Infof("running '%s' to validate changes.'", vtysh)
 
 	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }
