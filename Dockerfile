@@ -1,6 +1,6 @@
 ARG OS_NAME
 ARG OS_VERSION
-FROM metalstack/frr:7-${OS_NAME}-${OS_VERSION} AS frr-artifacts
+FROM metalstack/frr:7.2-${OS_NAME}-${OS_VERSION} AS frr-artifacts
 
 FROM ${OS_NAME}:${OS_VERSION}
 
