@@ -10,12 +10,6 @@ Ubuntu operating system in place with the following packages installed:
 - frr > 7.0
 - nftables
 
-## Download
-
-metal-networker is available from the blobstore:
- 
- - [latest](https://blobstore.fi-ts.io/cloud-native/metal-networker-latest.tar.gz): Bleeding edge. Contains bugs and issues.
- - [stable](https://blobstore.fi-ts.io/cloud-native/metal-networker-stable.tar.gz): Contains no known issues. Considered ready for use in production.
 
 ## Usage
 
