@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf"
+	"github.com/metal-stack/metal-networker/internal/netconf"
 
-	"git.f-i-ts.de/cloud-native/metallib/zapup"
+	"go.uber.org/zap"
 
 	"github.com/metal-pod/v"
 
@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	log = zapup.MustRootLogger().Sugar()
+	log *zap.SugaredLogger
 	_   = initializeCmds()
 )
 
@@ -33,6 +33,13 @@ A bare metal server can be treated either as 'machine' or 'firewall'.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	z, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+
+	log = z.Sugar()
+
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
@@ -74,6 +81,7 @@ func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
 	log.Infof("running app version: %s", v.V.String())
 
 	input, err := cmd.Flags().GetString(flagInputName)
+
 	if err != nil {
 		return err
 	}

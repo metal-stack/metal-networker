@@ -6,8 +6,7 @@ import (
 	"testing"
 	"text/template"
 
-	"git.f-i-ts.de/cloud-native/metallib/network"
-
+	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,7 +69,7 @@ func TestNewSystemdNetworkConfig(t *testing.T) {
 		tpl              string
 		nicIndex         int
 		machineUUID      string
-		configFunc       func(machineUUID string, nicIndex int, tmpFile string) network.Applier
+		configFunc       func(machineUUID string, nicIndex int, tmpFile string) net.Applier
 	}{
 		{expectedOutput: "testdata/lan0.network",
 			configuratorType: Machine,

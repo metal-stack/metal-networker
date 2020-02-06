@@ -5,9 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
-
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/exec"
+	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
 const (
@@ -53,7 +52,7 @@ type (
 )
 
 // NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
-func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
+func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) net.Applier {
 	var data interface{}
 
 	switch kind {
@@ -74,7 +73,7 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 
 	validator := FRRValidator{tmpFile}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {

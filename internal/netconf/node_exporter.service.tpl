@@ -1,4 +1,4 @@
-{{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf.NodeExporterData*/ -}}
+{{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.NodeExporterData*/ -}}
 {{ .Comment }}
 [Unit]
 Description=Node exporter - provides prometheus metrics about the node

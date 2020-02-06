@@ -1,6 +1,8 @@
 package netconf
 
-import "git.f-i-ts.de/cloud-native/metallib/network"
+import (
+	"github.com/metal-stack/metal-networker/pkg/net"
+)
 
 // TplHosts defines the name of the template to render hosts file.
 const TplHosts = "hosts.tpl"
@@ -20,11 +22,11 @@ type (
 )
 
 // NewHostsApplier creates a new hosts applier.
-func NewHostsApplier(kb KnowledgeBase, tmpFile string) network.Applier {
+func NewHostsApplier(kb KnowledgeBase, tmpFile string) net.Applier {
 	data := HostsData{Hostname: kb.Hostname, Comment: versionHeader(kb.Machineuuid), IP: kb.getPrivateNetwork().Ips[0]}
 	validator := HostsValidator{tmpFile}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 // Validate validates hosts file.

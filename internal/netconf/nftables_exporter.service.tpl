@@ -1,4 +1,4 @@
-{{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf.NftablesExporterData*/ -}}
+{{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.NftablesExporterData*/ -}}
 {{ .Comment }}
 [Unit]
 Description=Nftables exporter - provides prometheus metrics for nftables

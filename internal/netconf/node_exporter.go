@@ -1,7 +1,7 @@
 package netconf
 
 import (
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
 // TplNodeExporter is the name of the template for the node_exporter service.
@@ -17,7 +17,7 @@ type NodeExporterData struct {
 }
 
 // NewNodeExporterServiceApplier constructs a new instance of this type.
-func NewNodeExporterServiceApplier(kb KnowledgeBase, v network.Validator) (network.Applier, error) {
+func NewNodeExporterServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
 	tenantVrf, err := getTenantVRFName(kb)
 	if err != nil {
 		return nil, err
@@ -25,5 +25,5 @@ func NewNodeExporterServiceApplier(kb KnowledgeBase, v network.Validator) (netwo
 
 	data := NodeExporterData{Comment: versionHeader(kb.Machineuuid), TenantVrf: tenantVrf}
 
-	return network.NewNetworkApplier(data, v, nil), nil
+	return net.NewNetworkApplier(data, v, nil), nil
 }

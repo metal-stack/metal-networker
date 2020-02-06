@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf"
+	"github.com/metal-stack/metal-networker/internal/netconf"
 
 	"github.com/spf13/cobra"
 )

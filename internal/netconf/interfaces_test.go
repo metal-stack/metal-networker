@@ -6,8 +6,7 @@ import (
 	"testing"
 	"text/template"
 
-	"git.f-i-ts.de/cloud-native/metallib/network"
-
+	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +15,7 @@ type FileRenderInfo struct {
 	expectedOutput   string
 	configuratorType BareMetalType
 	tpl              string
-	newApplierFunc   func(BareMetalType, KnowledgeBase, string) network.Applier
+	newApplierFunc   func(BareMetalType, KnowledgeBase, string) net.Applier
 }
 
 func renderFilesAndVerifyExpectations(t *testing.T, tests []FileRenderInfo) {

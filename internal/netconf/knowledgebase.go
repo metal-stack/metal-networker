@@ -6,14 +6,10 @@ import (
 	"io/ioutil"
 	"net"
 
-	"git.f-i-ts.de/cloud-native/metallib/zapup"
-
 	"github.com/metal-pod/v"
 
 	"gopkg.in/yaml.v3"
 )
-
-var log = zapup.MustRootLogger().Sugar()
 
 const (
 	// VLANOffset defines a number to start with when creating new VLAN IDs.

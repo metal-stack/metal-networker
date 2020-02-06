@@ -6,7 +6,7 @@ import (
 	"testing"
 	"text/template"
 
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +25,7 @@ func TestServices(t *testing.T) {
 	assert.NoError(err)
 
 	tests := []struct {
-		applier  network.Applier
+		applier  net.Applier
 		expected string
 		template string
 	}{

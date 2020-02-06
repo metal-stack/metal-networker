@@ -3,9 +3,9 @@ package netconf
 import (
 	"fmt"
 
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/net"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
+	"github.com/metal-stack/metal-networker/pkg/exec"
 )
 
 const (
@@ -44,7 +44,7 @@ type (
 )
 
 // NewIfacesConfigApplier constructs a new instance of this type.
-func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) network.Applier {
+func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) net.Applier {
 	var data interface{}
 
 	common := CommonIfacesData{
@@ -76,7 +76,7 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 
 	validator := IfacesValidator{path: tmpFile}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 // Validate network interfaces configuration. Assumes ifupdown2 is available.

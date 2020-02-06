@@ -7,8 +7,8 @@ import (
 	"path"
 	"text/template"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/exec"
+	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
 // BareMetalType defines the type of configuration to apply.
@@ -54,7 +54,7 @@ type (
 type unitConfiguration struct {
 	unit             string
 	templateFile     string
-	constructApplier func(kb KnowledgeBase, v ServiceValidator) (network.Applier, error)
+	constructApplier func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error)
 	enabled          bool
 }
 
@@ -85,7 +85,8 @@ func (configurator MachineConfigurator) Configure() {
 
 // Configure applies configuration to a bare metal server to function as 'firewall'.
 func (configurator FirewallConfigurator) Configure() {
-	applyCommonConfiguration(Firewall, configurator.Kb)
+	kb := configurator.Kb
+	applyCommonConfiguration(Firewall, kb)
 
 	src := mustTmpFile("rules.v4_")
 	validatorIPv4 := NftablesV4Validator{NftablesValidator{src}}
@@ -128,7 +129,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 		{
 			unit:         SystemdUnitDroptailer,
 			templateFile: TplDroptailer,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (network.Applier, error) {
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
 				return NewDroptailerServiceApplier(kb, v)
 			},
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
@@ -136,7 +137,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 		{
 			unit:         SystemdUnitFirewallPolicyController,
 			templateFile: TplFirewallPolicyController,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (network.Applier, error) {
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
 				return NewFirewallPolicyControllerServiceApplier(kb, v)
 			},
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
@@ -144,7 +145,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 		{
 			unit:         SystemdUnitNftablesExporter,
 			templateFile: TplNftablesExporter,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (network.Applier, error) {
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
 				return NewNftablesExporterServiceApplier(kb, v)
 			},
 			enabled: true,
@@ -152,7 +153,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 		{
 			unit:         SystemdUnitNodeExporter,
 			templateFile: TplNodeExporter,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (network.Applier, error) {
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
 				return NewNodeExporterServiceApplier(kb, v)
 			},
 			enabled: true,
@@ -206,7 +207,7 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 	}
 }
 
-func applyAndCleanUp(applier network.Applier, tpl, src, dest string, mode os.FileMode) {
+func applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMode) {
 	log.Infof("rendering %s to %s (mode: %ui)", tpl, dest, mode)
 	file := mustRead(tpl)
 	mustApply(applier, file, src, dest)
@@ -230,7 +231,7 @@ func mustEnableUnit(unit string) {
 	}
 }
 
-func mustApply(applier network.Applier, tpl, src, dest string) {
+func mustApply(applier net.Applier, tpl, src, dest string) {
 	t := template.Must(template.New(TplFirewallIfaces).Parse(tpl))
 	err := applier.Apply(*t, src, dest, false)
 

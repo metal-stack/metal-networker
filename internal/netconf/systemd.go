@@ -1,7 +1,7 @@
 package netconf
 
 import (
-	"git.f-i-ts.de/cloud-native/metallib/network"
+	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
 const (
@@ -41,16 +41,16 @@ type (
 )
 
 // NewSystemdNetworkApplier creates a new Applier to configure systemd.network.
-func NewSystemdNetworkApplier(machineUUID string, nicIndex int, tmpFile string) network.Applier {
-	data := SystemdNetworkData{SystemdCommonData{Comment: versionHeader(machineUUID), Index: nicIndex}}
+func NewSystemdNetworkApplier(uuid string, nicIndex int, tmpFile string) net.Applier {
+	data := SystemdNetworkData{SystemdCommonData{Comment: versionHeader(uuid), Index: nicIndex}}
 	validator := SystemdValidator{tmpFile}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 // NewSystemdLinkApplier creates a new Applier to configure systemd.link.
 func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic NIC,
-	tmpFile string) network.Applier {
+	tmpFile string) net.Applier {
 	var mtu int
 
 	switch kind {
@@ -72,7 +72,7 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 	}
 	validator := SystemdValidator{tmpFile}
 
-	return network.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil)
 }
 
 // Validate validates systemd.network and systemd.link files.

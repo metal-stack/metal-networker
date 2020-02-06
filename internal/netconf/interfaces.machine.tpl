@@ -1,4 +1,4 @@
-{{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf.MachineIfacesData*/ -}}
+{{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.MachineIfacesData*/ -}}
 {{ .CommonIfacesData.Comment }}
 #
 # See /etc/systemd/network for additional network configuration.

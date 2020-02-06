@@ -3,7 +3,7 @@ package netconf
 import (
 	"fmt"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-networker/pkg/exec"
+	"github.com/metal-stack/metal-networker/pkg/exec"
 )
 
 // ChronyServiceEnabler can enable chrony systemd service for the given VRF.

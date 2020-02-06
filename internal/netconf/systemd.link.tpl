@@ -1,4 +1,4 @@
-{{- /*gotype: git.f-i-ts.de/cloud-native/metal/metal-networker/internal/netconf.SystemdLinkConfig*/ -}}
+{{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.SystemdLinkConfig*/ -}}
 {{ .Comment }}
 [Match]
 MACAddress={{ .MAC }}

@@ -1,6 +1,6 @@
 # metal-networker
 
-Configures networking related resources such as interfaces, frr, nftables.
+Configures networking related resources such as interfaces, frr and nftables.
 
 ## Preconditions
 
