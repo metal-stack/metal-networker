@@ -28,7 +28,7 @@ bin/$(BINARY): test
 
 .PHONY: release
 release: bin/$(BINARY) validate
-	tar -czvf metal-networker.tar.gz \
+	tar -czvf metal-networker.tgz \
 		-C ./bin metal-networker \
 		-C ../internal/netconf/ \
 			interfaces.firewall.tpl \
