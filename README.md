@@ -1,4 +1,6 @@
 # metal-networker
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmetal-stack%2Fmetal-networker.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmetal-stack%2Fmetal-networker?ref=badge_shield)
+
 
 Configures networking related resources such as interfaces, frr and nftables.
 
@@ -21,3 +23,7 @@ contains valid YAML. See [./internal/netconf/testdata/firewall.yaml](internal/ne
 ./metal-networker machine|firewall configure --input install.yaml
 
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmetal-stack%2Fmetal-networker.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmetal-stack%2Fmetal-networker?ref=badge_large)
