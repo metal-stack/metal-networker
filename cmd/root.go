@@ -5,7 +5,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/metal-pod/v"
+	"github.com/metal-stack/v"
 
 	"github.com/spf13/cobra"
 
