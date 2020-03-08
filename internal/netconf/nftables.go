@@ -5,7 +5,7 @@ import (
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
 
-	"github.com/metal-pod/v"
+	"github.com/metal-stack/v"
 
 	"github.com/metal-stack/metal-networker/pkg/net"
 )

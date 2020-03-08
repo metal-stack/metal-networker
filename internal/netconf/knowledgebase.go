@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 
-	"github.com/metal-pod/v"
+	"github.com/metal-stack/v"
 
 	"gopkg.in/yaml.v3"
 )
