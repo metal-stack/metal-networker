@@ -5,6 +5,7 @@ Description=Droptailer
 After=network.target
 
 [Service]
+LimitMEMLOCK=infinity
 Environment=DROPTAILER_SERVER_ADDRESS=droptailer:50051
 Environment=DROPTAILER_PREFIXES_OF_DROPS="nftables-metal-dropped: ,nftables-firewall-dropped: "
 Environment=DROPTAILER_CLIENT_CERTIFICATE=/etc/droptailer-client/droptailer-client.crt

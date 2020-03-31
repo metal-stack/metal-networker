@@ -5,6 +5,7 @@ Description=Firewall policy controller - generates nftable rules based on k8s re
 After=network.target
 
 [Service]
+LimitMEMLOCK=infinity
 Environment=FIREWALL_KUBECFG=/etc/firewall-policy-controller/.kubeconfig
 ExecStart=/bin/ip vrf exec {{ .DefaultRouteVrf }} /usr/local/bin/firewall-policy-controller
 Restart=always
