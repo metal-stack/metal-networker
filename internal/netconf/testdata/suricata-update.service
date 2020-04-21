@@ -6,7 +6,7 @@ LimitMEMLOCK=infinity
 User=root
 Group=root
 Type=oneshot
-ExecStart=/bin/ip vrf exec {{ .DefaultRouteVrf }} /usr/bin/suricata-update
+ExecStart=/bin/ip vrf exec vrf104009 /usr/bin/suricata-update
 
 [Install]
 WantedBy=multi-user.target
