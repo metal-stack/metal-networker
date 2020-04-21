@@ -5,7 +5,7 @@ import (
 )
 
 // TplSuricataUpdate is the name of the template for the suricata-update service.
-const TplSuricataUpdate = "suricata-update.service.tpl"
+const TplSuricataUpdate = "suricata_update.service.tpl"
 
 // SystemdUnitSuricataUpdate is the name of the systemd unit for the suricata-update.
 const SystemdUnitSuricataUpdate = "suricata-update.service"
