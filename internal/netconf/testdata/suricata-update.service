@@ -1,0 +1,12 @@
+[Unit]
+Description=Suricata Intrusion Detection Service Rules Update
+
+[Service]
+LimitMEMLOCK=infinity
+User=root
+Group=root
+Type=oneshot
+ExecStart=/bin/ip vrf exec vrf104009 /usr/bin/suricata-update
+
+[Install]
+WantedBy=multi-user.target

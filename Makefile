@@ -31,20 +31,23 @@ release: bin/$(BINARY) validate
 	tar -czvf metal-networker.tgz \
 		-C ./bin metal-networker \
 		-C ../internal/netconf/ \
-			interfaces.firewall.tpl \
-			interfaces.machine.tpl \
-			frr.machine.tpl \
-			frr.firewall.tpl \
-			rules.v4.tpl \
-			rules.v6.tpl \
-			systemd.link.tpl \
-			systemd.network.tpl \
-			hosts.tpl \
-			hostname.tpl \
 			droptailer.service.tpl \
 			firewall_policy_controller.service.tpl \
+			frr.firewall.tpl \
+			frr.machine.tpl \
+			hostname.tpl \
+			hosts.tpl \
+			interfaces.firewall.tpl \
+			interfaces.machine.tpl \
 			nftables_exporter.service.tpl \
-			node_exporter.service.tpl
+			node_exporter.service.tpl \
+			rules.v4.tpl \
+			rules.v6.tpl \
+			suricata_config.yaml.tpl \
+			suricata_defaults.tpl \
+			suricata_update.service.tpl \
+			systemd.link.tpl \
+			systemd.network.tpl
 
 .PHONY: validate
 validate:

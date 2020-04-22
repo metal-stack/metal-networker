@@ -122,6 +122,24 @@ func (configurator FirewallConfigurator) Configure() {
 			mustEnableUnit(u.unit)
 		}
 	}
+
+	src = mustTmpFile("suricata_")
+	applier, err = NewSuricataDefaultsApplier(kb, src)
+
+	if err != nil {
+		log.Warnf("failed to configure suricata defaults: %v", err)
+	}
+
+	applyAndCleanUp(applier, TplSuricataDefaults, src, "/etc/default/suricata", FileModeSixFourFour)
+
+	src = mustTmpFile("suricata.yaml_")
+	applier, err = NewSuricataConfigApplier(kb, src)
+
+	if err != nil {
+		log.Warnf("failed to configure suricata: %v", err)
+	}
+
+	applyAndCleanUp(applier, TplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
 }
 
 func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
@@ -155,6 +173,14 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 			templateFile: TplNodeExporter,
 			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
 				return NewNodeExporterServiceApplier(kb, v)
+			},
+			enabled: true,
+		},
+		{
+			unit:         SystemdUnitSuricataUpdate,
+			templateFile: TplSuricataUpdate,
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+				return NewSuricataUpdateServiceApplier(kb, v)
 			},
 			enabled: true,
 		},

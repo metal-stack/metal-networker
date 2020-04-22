@@ -23,6 +23,8 @@ func TestServices(t *testing.T) {
 	assert.NoError(err)
 	nftablesExporterApplier, err := NewNftablesExporterServiceApplier(kb, v)
 	assert.NoError(err)
+	suApplier, err := NewSuricataUpdateServiceApplier(kb, v)
+	assert.NoError(err)
 
 	tests := []struct {
 		applier  net.Applier
@@ -48,6 +50,11 @@ func TestServices(t *testing.T) {
 			applier:  nftablesExporterApplier,
 			expected: "testdata/nftables-exporter.service",
 			template: TplNftablesExporter,
+		},
+		{
+			applier:  suApplier,
+			expected: "testdata/suricata-update.service",
+			template: TplSuricataUpdate,
 		},
 	}
 
