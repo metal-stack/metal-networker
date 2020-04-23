@@ -1,4 +1,4 @@
-%YAML 1.2
+%YAML 1.1
 ---
 
 # Suricata configuration file located in /etc/suricata
