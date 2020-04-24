@@ -1473,7 +1473,7 @@ threading:
   # thread being created. Regardless of the setting at a minimum 1 detect
   # thread will always be created.
   #
-  detect-thread-ratio: 1.0
+  detect-thread-ratio: 0.2
 
 # Luajit has a strange memory requirement, it's 'states' need to be in the
 # first 2G of the process' memory.
