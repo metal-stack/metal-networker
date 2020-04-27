@@ -404,10 +404,10 @@ outputs:
   - stats:
       enabled: yes
       filename: stats.log
-      append: yes       # append to file (yes) or overwrite it (no)
+      append: no       # append to file (yes) or overwrite it (no)
       totals: yes       # stats for all threads merged together
       threads: no       # per thread stats
-      #null-values: yes  # print counters that have value 0
+      null-values: yes  # print counters that have value 0
 
   # a line based alerts log similar to fast.log into syslog
   - syslog:
