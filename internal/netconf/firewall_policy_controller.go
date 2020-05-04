@@ -10,8 +10,8 @@ const TplFirewallPolicyController = "firewall_policy_controller.service.tpl"
 // SystemdUnitFirewallPolicyController is the name of the systemd unit for the firewall policy controller,
 const SystemdUnitFirewallPolicyController = "firewall-policy-controller.service"
 
-// FirewallPolicyControllerData contains the data to render the firewall-policy-controller service template.
-type FirewallPolicyControllerData struct {
+// FirewallControllerData contains the data to render the firewall-policy-controller service template.
+type FirewallControllerData struct {
 	Comment         string
 	DefaultRouteVrf string
 }
@@ -23,7 +23,7 @@ func NewFirewallPolicyControllerServiceApplier(kb KnowledgeBase, v net.Validator
 		return nil, err
 	}
 
-	data := FirewallPolicyControllerData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf}
+	data := FirewallControllerData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf}
 
 	return net.NewNetworkApplier(data, v, nil), nil
 }
