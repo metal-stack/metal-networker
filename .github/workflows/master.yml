@@ -5,6 +5,9 @@ on:
     branches:
     - master
 
+env:
+  GCS_BUCKET: images.metal-pod.io
+
 jobs:
   build:
     runs-on: ubuntu-latest
