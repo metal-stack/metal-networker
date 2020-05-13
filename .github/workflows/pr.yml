@@ -2,9 +2,14 @@ name: pr
 
 on:
   pull_request:
+    branches:
+      - master
     types:
       - assigned
       - edited
+
+env:
+  GCS_BUCKET: images.metal-pod.io
 
 jobs:
   build:
@@ -28,4 +33,4 @@ jobs:
           service_account_email: ${{ secrets.GCP_SA_EMAIL }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
     - name: Upload image tarballs to GCS
-      run: gsutil -m cp -r metal-networker.tgz gs://$GCS_BUCKET/metal-networker/pull_requests/${GITHUB_REF##*/}
+      run: gsutil -m cp metal-networker.tgz gs://$GCS_BUCKET/metal-networker/pull_requests/${GITHUB_REF##*/}
