@@ -6,7 +6,7 @@ FROM metalstack/frr:${FRR_VERSION}-${OS_NAME}-${OS_VERSION} AS frr-artifacts
 FROM ${OS_NAME}:${OS_VERSION}
 
 ENV FRR_FILES="frr.conf.firewall frr.conf.machine" \
-    INTERFACES_FILES="interfaces.firewall interfaces.machine" \
+    INTERFACES_FILES="interfaces.firewall" \
     TESTDATA_DIR="./internal/netconf/testdata"
 
 WORKDIR /tmp
