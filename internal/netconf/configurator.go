@@ -25,8 +25,10 @@ const (
 	Firewall BareMetalType = iota
 	// Machine defines the bare metal server to function as machine.
 	Machine
-	// SystemdUnitPath is the path where systemd units will be generated,
+	// SystemdUnitPath is the path where systemd units will be generated.
 	SystemdUnitPath = "/etc/systemd/system/"
+	// SystemdNetworkPath is the path where systemd-networkd expects its configuration files.
+	SystemdNetworkPath = "/etc/systemd/network"
 )
 
 type (
@@ -194,9 +196,10 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 
 	if kind == Machine {
 		tpl = TplMachineIfaces
+		applyAndCleanUp(applier, tpl, src, SystemdNetworkPath+"/0-lo.network", FileModeSystemd)
+	} else {
+		applyAndCleanUp(applier, tpl, src, "/etc/network/interfaces", FileModeDefault)
 	}
-
-	applyAndCleanUp(applier, tpl, src, "/etc/network/interfaces", FileModeDefault)
 
 	src = mustTmpFile("hosts_")
 	applier = NewHostsApplier(kb, src)
@@ -222,13 +225,13 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 		prefix := fmt.Sprintf("lan%d_link_", i)
 		src = mustTmpFile(prefix)
 		applier = NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src)
-		dest := fmt.Sprintf("/etc/systemd/network/%d0-lan%d.link", i+offset, i)
+		dest := fmt.Sprintf("%s/%d0-lan%d.link", SystemdNetworkPath, i+offset, i)
 		applyAndCleanUp(applier, TplSystemdLink, src, dest, FileModeSystemd)
 
 		prefix = fmt.Sprintf("lan%d_network_", i)
 		src = mustTmpFile(prefix)
 		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src)
-		dest = fmt.Sprintf("/etc/systemd/network/%d0-lan%d.network", i+offset, i)
+		dest = fmt.Sprintf("%s/%d0-lan%d.network", SystemdNetworkPath, i+offset, i)
 		applyAndCleanUp(applier, TplSystemdNetwork, src, dest, FileModeSystemd)
 	}
 }
