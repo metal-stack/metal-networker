@@ -192,13 +192,11 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 	src := mustTmpFile("interfaces_")
 	applier := NewIfacesConfigApplier(kind, kb, src)
-	tpl := TplFirewallIfaces
 
 	if kind == Machine {
-		tpl = TplMachineIfaces
-		applyAndCleanUp(applier, tpl, src, SystemdNetworkPath+"/0-lo.network", FileModeSystemd)
+		applyAndCleanUp(applier, TplMachineIfaces, src, SystemdNetworkPath+"/0-lo.network", FileModeSystemd)
 	} else {
-		applyAndCleanUp(applier, tpl, src, "/etc/network/interfaces", FileModeDefault)
+		applyAndCleanUp(applier, TplFirewallIfaces, src, "/etc/network/interfaces", FileModeDefault)
 	}
 
 	src = mustTmpFile("hosts_")
@@ -211,7 +209,7 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 
 	src = mustTmpFile("frr_")
 	applier = NewFrrConfigApplier(kind, kb, src)
-	tpl = TplFirewallFRR
+	tpl := TplFirewallFRR
 
 	if kind == Machine {
 		tpl = TplMachineFRR
