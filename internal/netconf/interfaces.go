@@ -12,7 +12,7 @@ const (
 	// TplFirewallIfaces defines the name of the template to render interfaces configuration for firewalls.
 	TplFirewallIfaces = "interfaces.firewall.tpl"
 	// TplMachineIfaces defines the name of the template to render interfaces configuration for machines.
-	TplMachineIfaces = "interfaces.machine.tpl"
+	TplMachineIfaces = "lo.network.machine.tpl"
 )
 
 type (
