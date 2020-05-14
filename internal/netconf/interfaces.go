@@ -41,11 +41,16 @@ type (
 	IfacesValidator struct {
 		path string
 	}
+	// SystemdNetworkdValidator defines the base type of an systemd-networkd validator.
+	SystemdNetworkdValidator struct {
+		path string
+	}
 )
 
 // NewIfacesConfigApplier constructs a new instance of this type.
 func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) net.Applier {
 	var data interface{}
+	var validator net.Validator
 
 	common := CommonIfacesData{
 		Comment: versionHeader(kb.Machineuuid),
@@ -61,6 +66,7 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		f.Bridge.Vids = getBridgeVLANIDs(kb)
 		f.EVPNInterfaces = getEVPNInterfaces(kb)
 		data = f
+		validator = IfacesValidator{path: tmpFile}
 	case Machine:
 		private := kb.getPrivateNetwork()
 		common.Loopback.Comment = fmt.Sprintf("networkid: %s", private.Networkid)
@@ -70,11 +76,10 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 		data = MachineIfacesData{
 			CommonIfacesData: common,
 		}
+		validator = SystemdNetworkdValidator{path: tmpFile}
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
-
-	validator := IfacesValidator{path: tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)
 }
@@ -82,11 +87,12 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 // Validate network interfaces configuration. Assumes ifupdown2 is available.
 func (v IfacesValidator) Validate() error {
 	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
-	err := exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
-	if err != nil {
-		log.Errorf("validation of interface configuration failed:%v", err)
-	}
-	// FIXME workaround for centos
+	return exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
+}
+
+// Validate network interfaces configuration done with systemd-networkd. Assumes systemd-networkd is installed.
+func (v SystemdNetworkdValidator) Validate() error {
+	log.Infof("systemd-networkd does not have validation capabilities for the .network file: %s", v.path)
 	return nil
 }
 
