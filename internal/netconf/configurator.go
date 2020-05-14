@@ -235,13 +235,13 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 }
 
 func applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMode) {
-	log.Infof("rendering %s to %s (mode: %ui)", tpl, dest, mode)
+	log.Infof("rendering %s to %s (mode: %s)", tpl, dest, mode)
 	file := mustRead(tpl)
 	mustApply(applier, file, src, dest)
 
 	err := os.Chmod(dest, mode)
 	if err != nil {
-		log.Errorf("error to chmod %s to %ui", dest, mode)
+		log.Errorf("error to chmod %s to %s", dest, mode)
 	}
 
 	_ = os.Remove(src)
