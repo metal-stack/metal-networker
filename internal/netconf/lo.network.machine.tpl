@@ -4,8 +4,12 @@
 # See /etc/systemd/network for additional network configuration.
 
 # {{ .CommonIfacesData.Loopback.Comment }}
-auto lo
-iface lo inet static
+[Match]
+Name=lo
+
+[Address]
+Address=127.0.0.1/8
 {{- range .CommonIfacesData.Loopback.IPs }}
-    address {{ . }}/32
+[Address]
+Address={{ . }}/32
 {{- end }}

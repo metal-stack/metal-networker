@@ -38,7 +38,7 @@ release: bin/$(BINARY) validate
 			hostname.tpl \
 			hosts.tpl \
 			interfaces.firewall.tpl \
-			interfaces.machine.tpl \
+			lo.network.machine.tpl \
 			nftables_exporter.service.tpl \
 			node_exporter.service.tpl \
 			rules.v4.tpl \

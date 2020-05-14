@@ -1,0 +1,36 @@
+name: pr
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - assigned
+      - edited
+
+env:
+  GCS_BUCKET: images.metal-pod.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@master
+    - name: Lint
+      uses: actions-contrib/golangci-lint@master
+      with:
+        args: run
+    - name: Set up Go 1.14
+      uses: actions/setup-go@v2.0.3
+      with:
+        go-version: '1.14.x'
+    - name: Build project
+      run: make
+    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+          version: '278.0.0'
+          service_account_email: ${{ secrets.GCP_SA_EMAIL }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+    - name: Upload image tarballs to GCS
+      run: gsutil -m cp metal-networker.tgz gs://$GCS_BUCKET/metal-networker/pull_requests/metal-networker.tgz

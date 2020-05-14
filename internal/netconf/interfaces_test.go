@@ -50,7 +50,7 @@ func TestCompileInterfaces(t *testing.T) {
 		},
 		{
 			input:            "testdata/machine.yaml",
-			expectedOutput:   "testdata/interfaces.machine",
+			expectedOutput:   "testdata/lo.network.machine",
 			configuratorType: Machine,
 			tpl:              TplMachineIfaces,
 			newApplierFunc:   NewIfacesConfigApplier,
