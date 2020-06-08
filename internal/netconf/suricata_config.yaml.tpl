@@ -82,8 +82,8 @@ outputs:
   # Extensible Event Format (nicknamed EVE) event log in JSON format
   - eve-log:
       enabled: yes
-      filetype: regular #regular|syslog|unix_dgram|unix_stream|redis
-      filename: eve.json
+      filetype: unix_stream
+      filename: /tmp/suri.sock # default of fever
       #prefix: "@cee: " # prefix to prepend to each log entry
       # the following are valid when type: syslog above
       #identity: "suricata"
@@ -1052,7 +1052,7 @@ host-mode: auto
 # activated in live capture mode. You can use the filename variable to set
 # the file name of the socket.
 unix-command:
-  enabled: auto
+  enabled: true
   #filename: custom.socket
 
 # Magic file. The extension .mgc is added to the value here.
