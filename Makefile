@@ -4,13 +4,24 @@ GITVERSION := $(shell git describe --long --all)
 BUILDDATE := $(shell date -Iseconds)
 VERSION := $(or ${VERSION},devel)
 
+# Image URL to use all building/pushing image targets
+DOCKER_TAG := $(or ${GITHUB_TAG_NAME}, latest)
+DOCKER_IMG ?= metalstack/metal-networker:${DOCKER_TAG}
+
 BINARY := metal-networker
+
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
+else
+GOBIN=$(shell go env GOBIN)
+endif
 
 .PHONY: all
 all:: release;
 
 .PHONY: test
-test:
+test: generate
 	go test -ldflags "-X 'github.com/metal-stack/v.Version='" -v -cover ./...
 
 .PHONY: all
@@ -29,25 +40,37 @@ bin/$(BINARY): test
 .PHONY: release
 release: bin/$(BINARY) validate
 	tar -czvf metal-networker.tgz \
-		-C ./bin metal-networker \
-		-C ../internal/netconf/ \
-			droptailer.service.tpl \
-			firewall_policy_controller.service.tpl \
-			frr.firewall.tpl \
-			frr.machine.tpl \
-			hostname.tpl \
-			hosts.tpl \
-			interfaces.firewall.tpl \
-			lo.network.machine.tpl \
-			node_exporter.service.tpl \
-			rules.v4.tpl \
-			rules.v6.tpl \
-			suricata_config.yaml.tpl \
-			suricata_defaults.tpl \
-			suricata_update.service.tpl \
-			systemd.link.tpl \
-			systemd.network.tpl
+		-C ./bin metal-networker
 
 .PHONY: validate
 validate:
 	./validate.sh
+
+.PHONY: .generate
+generate: statik
+	$(STATIK) -src=internal/netconf/tpl -include='*.tpl' -dest=internal/netconf/tpl
+
+# Build the docker image
+docker-build:
+	docker build . -t ${DOCKER_IMG}
+
+# Push the docker image
+docker-push:
+	docker push ${DOCKER_IMG}
+
+# find or download statik
+.PHONY: statik
+statik:
+ifeq (, $(shell which statik))
+	@{ \
+	set -e ;\
+	STATIK_TMP_DIR=$$(mktemp -d) ;\
+	cd $$STATIK_TMP_DIR ;\
+	go mod init tmp ;\
+	go get github.com/rakyll/statik ;\
+	rm -rf $$STATIK_TMP_DIR ;\
+	}
+STATIK=$(GOBIN)/statik
+else
+STATIK=$(shell which statik)
+endif

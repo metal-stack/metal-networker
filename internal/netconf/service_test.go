@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io/ioutil"
 	"testing"
-	"text/template"
 
 	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
@@ -56,10 +55,7 @@ func TestServices(t *testing.T) {
 		assert.NoError(err)
 
 		b := bytes.Buffer{}
-		f := test.template
-		s, err := ioutil.ReadFile(f)
-		assert.NoError(err)
-		tpl := template.Must(template.New(f).Parse(string(s)))
+		tpl := mustParseTpl(test.template)
 		err = test.applier.Render(&b, *tpl)
 		assert.NoError(err)
 		assert.Equal(string(expected), b.String())
