@@ -12,12 +12,10 @@ ENV FRR_FILES="frr.conf.firewall frr.conf.machine" \
 WORKDIR /tmp
 COPY --from=frr-artifacts /artifacts .
 
-RUN ls -alhR /tmp
-RUN apt-get update --quiet --quiet \
+RUN apt-get update --quiet \
  && apt-get install \
     --yes \
     --no-install-recommends \
-    --quiet \
     --quiet \
     ifupdown2 \
     ./frr_*.deb \
