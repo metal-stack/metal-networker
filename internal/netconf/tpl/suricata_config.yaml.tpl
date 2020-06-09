@@ -1053,7 +1053,7 @@ host-mode: auto
 # the file name of the socket.
 unix-command:
   enabled: true
-  #filename: custom.socket
+  filename: /run/suricata-command.socket
 
 # Magic file. The extension .mgc is added to the value here.
 #magic-file: /usr/share/file/magic
