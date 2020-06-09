@@ -39,7 +39,6 @@ release: bin/$(BINARY) validate
 			hosts.tpl \
 			interfaces.firewall.tpl \
 			lo.network.machine.tpl \
-			nftables_exporter.service.tpl \
 			node_exporter.service.tpl \
 			rules.v4.tpl \
 			rules.v6.tpl \
