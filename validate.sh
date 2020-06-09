@@ -13,6 +13,7 @@ validate () {
         --build-arg OS_NAME="${1}" \
         --build-arg OS_VERSION="${2}" \
         --build-arg FRR_VERSION="${3}" \
+        --file Dockerfile.validate \
         . -t metal-networker
 }
 

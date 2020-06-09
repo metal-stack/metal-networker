@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io/ioutil"
 	"testing"
-	"text/template"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,9 +19,7 @@ func TestNewHostsApplier(t *testing.T) {
 	a := NewHostsApplier(kb, "")
 	b := bytes.Buffer{}
 
-	s, err := ioutil.ReadFile(TplHosts)
-	assert.NoError(err)
-	tpl := template.Must(template.New(TplHosts).Parse(string(s)))
+	tpl := mustParseTpl(TplHosts)
 	err = a.Render(&b, *tpl)
 	assert.NoError(err)
 	assert.Equal(string(expected), b.String())

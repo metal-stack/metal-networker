@@ -228,7 +228,7 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 
 func applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMode) {
 	log.Infof("rendering %s to %s (mode: %s)", tpl, dest, mode)
-	file := mustRead(tpl)
+	file := mustReadTpl(tpl)
 	mustApply(applier, file, src, dest)
 
 	err := os.Chmod(dest, mode)
@@ -257,15 +257,6 @@ func mustApply(applier net.Applier, tpl, src, dest string) {
 	if err != nil {
 		log.Panic(err)
 	}
-}
-
-func mustRead(name string) string {
-	c, err := ioutil.ReadFile(name)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	return string(c)
 }
 
 func mustTmpFile(prefix string) string {

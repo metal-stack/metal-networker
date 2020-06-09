@@ -51,9 +51,7 @@ func TestNewSystemdLinkConfig(t *testing.T) {
 		a := NewSystemdLinkApplier(t.configuratorType, t.machineUUID, t.nicIndex, nic, "")
 		b := bytes.Buffer{}
 
-		s, err := ioutil.ReadFile(t.tpl)
-		assert.NoError(err)
-		tpl := template.Must(template.New(t.tpl).Parse(string(s)))
+		tpl := mustParseTpl(t.tpl)
 		err = a.Render(&b, *tpl)
 		assert.NoError(err)
 		assert.Equal(string(expected), b.String())
@@ -93,7 +91,7 @@ func TestNewSystemdNetworkConfig(t *testing.T) {
 		a := t.configFunc(t.machineUUID, t.nicIndex, "")
 		b := bytes.Buffer{}
 
-		s, err := ioutil.ReadFile(t.tpl)
+		s := mustReadTpl(t.tpl)
 		assert.NoError(err)
 		tpl := template.Must(template.New(t.tpl).Parse(string(s)))
 		err = a.Render(&b, *tpl)

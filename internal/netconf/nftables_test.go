@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io/ioutil"
 	"testing"
-	"text/template"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -30,10 +29,7 @@ func TestCompileNftRules(t *testing.T) {
 		a := NewNftablesConfigApplier(kb, nil)
 		b := bytes.Buffer{}
 
-		f := test.template
-		s, err := ioutil.ReadFile(f)
-		assert.NoError(err)
-		tpl := template.Must(template.New(f).Parse(string(s)))
+		tpl := mustParseTpl(test.template)
 		err = a.Render(&b, *tpl)
 		assert.NoError(err)
 		assert.Equal(string(expected), b.String())

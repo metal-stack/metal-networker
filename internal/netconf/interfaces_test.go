@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io/ioutil"
 	"testing"
-	"text/template"
 
 	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
@@ -30,9 +29,7 @@ func renderFilesAndVerifyExpectations(t *testing.T, tests []FileRenderInfo) {
 		a := t.newApplierFunc(t.configuratorType, kb, "")
 		b := bytes.Buffer{}
 
-		s, err := ioutil.ReadFile(t.tpl)
-		assert.NoError(err)
-		tpl := template.Must(template.New(t.tpl).Parse(string(s)))
+		tpl := mustParseTpl(t.tpl)
 		err = a.Render(&b, *tpl)
 		assert.NoError(err)
 		assert.Equal(string(expected), b.String())
