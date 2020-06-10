@@ -15,4 +15,4 @@ Restart=always
 RestartSec=10
 
 [Install]
-WantedBy=firewall-policy-controller.service
+WantedBy=firewall-controller.service
