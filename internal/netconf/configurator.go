@@ -155,10 +155,10 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
 		},
 		{
-			unit:         SystemdUnitFirewallPolicyController,
-			templateFile: TplFirewallPolicyController,
+			unit:         SystemdUnitFirewallController,
+			templateFile: TplFirewallController,
 			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
-				return NewFirewallPolicyControllerServiceApplier(kb, v)
+				return NewFirewallControllerServiceApplier(kb, v)
 			},
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
 		},

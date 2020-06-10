@@ -4,20 +4,20 @@ import (
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
-// TplFirewallPolicyController is the name of the template for the firewall-policy-controller service.
-const TplFirewallPolicyController = "firewall_policy_controller.service.tpl"
+// TplFirewallController is the name of the template for the firewall-policy-controller service.
+const TplFirewallController = "firewall_controller.service.tpl"
 
-// SystemdUnitFirewallPolicyController is the name of the systemd unit for the firewall policy controller,
-const SystemdUnitFirewallPolicyController = "firewall-policy-controller.service"
+// SystemdUnitFirewallController is the name of the systemd unit for the firewall policy controller,
+const SystemdUnitFirewallController = "firewall-controller.service"
 
-// FirewallControllerData contains the data to render the firewall-policy-controller service template.
+// FirewallControllerData contains the data to render the firewall-controller service template.
 type FirewallControllerData struct {
 	Comment         string
 	DefaultRouteVrf string
 }
 
-// NewFirewallPolicyControllerServiceApplier constructs a new instance of this type.
-func NewFirewallPolicyControllerServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
+// NewFirewallControllerServiceApplier constructs a new instance of this type.
+func NewFirewallControllerServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
 	defaultRouteVrf, err := getDefaultRouteVRFName(kb)
 	if err != nil {
 		return nil, err
