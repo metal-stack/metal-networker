@@ -16,7 +16,7 @@ func TestServices(t *testing.T) {
 	v := ServiceValidator{}
 	dsApplier, err := NewDroptailerServiceApplier(kb, v)
 	assert.NoError(err)
-	fpcApplier, err := NewFirewallPolicyControllerServiceApplier(kb, v)
+	fcApplier, err := NewFirewallControllerServiceApplier(kb, v)
 	assert.NoError(err)
 	nodeExporterApplier, err := NewNodeExporterServiceApplier(kb, v)
 	assert.NoError(err)
@@ -34,9 +34,9 @@ func TestServices(t *testing.T) {
 			template: TplDroptailer,
 		},
 		{
-			applier:  fpcApplier,
-			expected: "testdata/firewall-policy-controller.service",
-			template: TplFirewallPolicyController,
+			applier:  fcApplier,
+			expected: "testdata/firewall-controller.service",
+			template: TplFirewallController,
 		},
 		{
 			applier:  nodeExporterApplier,
