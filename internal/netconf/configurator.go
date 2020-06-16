@@ -163,6 +163,14 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
 		},
 		{
+			unit:         SystemdUnitNftablesExporter,
+			templateFile: TplNftablesExporter,
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+				return NewNftablesExporterServiceApplier(kb, v)
+			},
+			enabled: true,
+		},
+		{
 			unit:         SystemdUnitNodeExporter,
 			templateFile: TplNodeExporter,
 			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
