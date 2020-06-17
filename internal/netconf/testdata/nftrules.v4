@@ -8,8 +8,7 @@ table ip metal {
         iifname "lan0" ip saddr 10.0.0.0/8 udp dport 4789 counter accept comment "incoming VXLAN lan0"
         iifname "lan1" ip saddr 10.0.0.0/8 udp dport 4789 counter accept comment "incoming VXLAN lan1"
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
-        ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
-        ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
+        ip saddr 10.0.0.0/8 tcp dport { 9100, 9630 } counter accept comment "firewall metrics"
         ct state invalid counter drop comment "drop invalid packets to prevent malicious activity"
         counter jump refuse
     }

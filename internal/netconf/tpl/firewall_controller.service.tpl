@@ -6,10 +6,8 @@ After=network.target
 
 [Service]
 LimitMEMLOCK=infinity
-# FIXME this path is comming from gardener-extension-provider-metal, should be changed to something less specific
-# Also binary location is not changed for now
 Environment=KUBECONFIG=/etc/firewall-controller/.kubeconfig
-ExecStart=/bin/ip vrf exec {{ .DefaultRouteVrf }} /usr/local/bin/firewall-controller
+ExecStart=/bin/ip vrf exec {{ .DefaultRouteVrf }} /usr/local/bin/firewall-controller --service-ip {{ .ServiceIP }}
 Restart=always
 RestartSec=10
 
