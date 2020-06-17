@@ -1,6 +1,8 @@
 package netconf
 
 import (
+	"fmt"
+
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
@@ -14,6 +16,7 @@ const SystemdUnitFirewallController = "firewall-controller.service"
 type FirewallControllerData struct {
 	Comment         string
 	DefaultRouteVrf string
+	ServiceIP       string
 }
 
 // NewFirewallControllerServiceApplier constructs a new instance of this type.
@@ -23,7 +26,11 @@ func NewFirewallControllerServiceApplier(kb KnowledgeBase, v net.Validator) (net
 		return nil, err
 	}
 
-	data := FirewallControllerData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf}
+	if len(kb.getPrivateNetwork().Ips) == 0 {
+		return nil, fmt.Errorf("no private IP found useable for the firewall controller")
+	}
+	serviceIP := kb.getPrivateNetwork().Ips[0]
+	data := FirewallControllerData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf, ServiceIP: serviceIP}
 
 	return net.NewNetworkApplier(data, v, nil), nil
 }
