@@ -7,10 +7,10 @@ import (
 )
 
 // TplDroptailer is the name of the template for the droptailer service.
-const TplDroptailer = "droptailer.service.tpl"
+const tplDroptailer = "droptailer.service.tpl"
 
 // SystemdUnitDroptailer is the name of the systemd unit for the droptailer.
-const SystemdUnitDroptailer = "droptailer.service"
+const systemdUnitDroptailer = "droptailer.service"
 
 // DroptailerData contains the data to render the droptailer service template.
 type DroptailerData struct {

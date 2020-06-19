@@ -4,11 +4,11 @@ import (
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
-// TplNodeExporter is the name of the template for the node_exporter service.
-const TplNodeExporter = "node_exporter.service.tpl"
+// tplNodeExporter is the name of the template for the node_exporter service.
+const tplNodeExporter = "node_exporter.service.tpl"
 
-// SystemdUnitNodeExporter is the name of the systemd unit for the node_exporter.
-const SystemdUnitNodeExporter = "node-exporter.service"
+// systemdUnitNodeExporter is the name of the systemd unit for the node_exporter.
+const systemdUnitNodeExporter = "node-exporter.service"
 
 // NodeExporterData contains the data to render the node_exporter service template.
 type NodeExporterData struct {

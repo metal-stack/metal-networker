@@ -4,11 +4,11 @@ import (
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
-// TplSuricataUpdate is the name of the template for the suricata-update service.
-const TplSuricataUpdate = "suricata_update.service.tpl"
+// tplSuricataUpdate is the name of the template for the suricata-update service.
+const tplSuricataUpdate = "suricata_update.service.tpl"
 
-// SystemdUnitSuricataUpdate is the name of the systemd unit for the suricata-update.
-const SystemdUnitSuricataUpdate = "suricata-update.service"
+// systemdUnitSuricataUpdate is the name of the systemd unit for the suricata-update.
+const systemdUnitSuricataUpdate = "suricata-update.service"
 
 // SuricataUpdateData contains the data to render the suricata-update service template.
 type SuricataUpdateData struct {

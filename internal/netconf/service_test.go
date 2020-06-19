@@ -33,27 +33,27 @@ func TestServices(t *testing.T) {
 		{
 			applier:  dsApplier,
 			expected: "testdata/droptailer.service",
-			template: TplDroptailer,
+			template: tplDroptailer,
 		},
 		{
 			applier:  fcApplier,
 			expected: "testdata/firewall-controller.service",
-			template: TplFirewallController,
+			template: tplFirewallController,
 		},
 		{
 			applier:  nodeExporterApplier,
 			expected: "testdata/node-exporter.service",
-			template: TplNodeExporter,
+			template: tplNodeExporter,
 		},
 		{
 			applier:  nftablesExporterApplier,
 			expected: "testdata/nftables-exporter.service",
-			template: TplNftablesExporter,
+			template: tplNftablesExporter,
 		},
 		{
 			applier:  suApplier,
 			expected: "testdata/suricata-update.service",
-			template: TplSuricataUpdate,
+			template: tplSuricataUpdate,
 		},
 	}
 

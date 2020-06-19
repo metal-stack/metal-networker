@@ -5,10 +5,10 @@ import (
 )
 
 // TplNftablesExporter is the name of the template for the nftables_exporter service.
-const TplNftablesExporter = "nftables_exporter.service.tpl"
+const tplNftablesExporter = "nftables_exporter.service.tpl"
 
 // SystemdUnitNftablesExporter is the name of the systemd unit for the nftables_exporter.
-const SystemdUnitNftablesExporter = "nftables-exporter.service"
+const systemdUnitNftablesExporter = "nftables-exporter.service"
 
 // NftablesExporterData contains the data to render the nftables_exporter service template.
 type NftablesExporterData struct {

@@ -5,14 +5,14 @@ import (
 )
 
 const (
-	// TplSystemdLink defines the name of the template to render system.link file.
-	TplSystemdLink = "systemd.link.tpl"
-	// TplSystemdNetwork defines the name of the template to render system.network file.
-	TplSystemdNetwork = "systemd.network.tpl"
-	// MTUFirewall defines the value for MTU specific to the needs of a firewall. VXLAN requires higher MTU.
-	MTUFirewall = 9216
-	// MTUMachine defines the value for MTU specific to the needs of a machine.
-	MTUMachine = 9000
+	// tplSystemdLink defines the name of the template to render system.link file.
+	tplSystemdLink = "systemd.link.tpl"
+	// tplSystemdNetwork defines the name of the template to render system.network file.
+	tplSystemdNetwork = "systemd.network.tpl"
+	// mtuFirewall defines the value for MTU specific to the needs of a firewall. VXLAN requires higher MTU.
+	mtuFirewall = 9216
+	// mtuMachine defines the value for MTU specific to the needs of a machine.
+	mtuMachine = 9000
 )
 
 type (
@@ -55,9 +55,9 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 
 	switch kind {
 	case Firewall:
-		mtu = MTUFirewall
+		mtu = mtuFirewall
 	case Machine:
-		mtu = MTUMachine
+		mtu = mtuMachine
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %validator", kind)
 	}
