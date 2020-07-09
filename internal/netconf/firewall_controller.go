@@ -17,6 +17,7 @@ type FirewallControllerData struct {
 	Comment         string
 	DefaultRouteVrf string
 	ServiceIP       string
+	PrivateVrfID    int
 }
 
 // NewFirewallControllerServiceApplier constructs a new instance of this type.
@@ -30,7 +31,13 @@ func NewFirewallControllerServiceApplier(kb KnowledgeBase, v net.Validator) (net
 		return nil, fmt.Errorf("no private IP found useable for the firewall controller")
 	}
 	serviceIP := kb.getPrivateNetwork().Ips[0]
-	data := FirewallControllerData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf, ServiceIP: serviceIP}
+	privateVrfID := kb.getPrivateNetwork().Vrf
+	data := FirewallControllerData{
+		Comment:         versionHeader(kb.Machineuuid),
+		DefaultRouteVrf: defaultRouteVrf,
+		ServiceIP:       serviceIP,
+		PrivateVrfID:    privateVrfID,
+	}
 
 	return net.NewNetworkApplier(data, v, nil), nil
 }
