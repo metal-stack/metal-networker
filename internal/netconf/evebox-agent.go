@@ -10,7 +10,7 @@ const tplEveboxAgent = "evebox-agent.service.tpl"
 // systemdUnitEveboxAgent is the name of the systemd unit for the evebox-agent.
 const systemdUnitEveboxAgent = "evebox-agent.service.service"
 
-//EveboxAgentData contains the data to render the evebox-agent service template.
+// EveboxAgentData contains the data to render the evebox-agent service template.
 type EveboxAgentData struct {
 	Comment         string
 	DefaultRouteVrf string
