@@ -82,8 +82,8 @@ outputs:
   # Extensible Event Format (nicknamed EVE) event log in JSON format
   - eve-log:
       enabled: yes
-      filetype: unix_stream
-      filename: /tmp/suri.sock # default of fever
+      filetype: regular
+      filename: eve.json
       #prefix: "@cee: " # prefix to prepend to each log entry
       # the following are valid when type: syslog above
       #identity: "suricata"

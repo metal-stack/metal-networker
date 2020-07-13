@@ -132,7 +132,7 @@ func (configurator FirewallConfigurator) Configure() {
 		log.Warnf("failed to configure suricata defaults: %v", err)
 	}
 
-	applyAndCleanUp(applier, TplSuricataDefaults, src, "/etc/default/suricata", FileModeSixFourFour)
+	applyAndCleanUp(applier, tplSuricataDefaults, src, "/etc/default/suricata", FileModeSixFourFour)
 
 	src = mustTmpFile("suricata.yaml_")
 	applier, err = NewSuricataConfigApplier(kb, src)
@@ -147,40 +147,40 @@ func (configurator FirewallConfigurator) Configure() {
 func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 	return []unitConfiguration{
 		{
-			unit:         SystemdUnitDroptailer,
-			templateFile: TplDroptailer,
+			unit:         systemdUnitDroptailer,
+			templateFile: tplDroptailer,
 			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
 				return NewDroptailerServiceApplier(kb, v)
 			},
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
 		},
 		{
-			unit:         SystemdUnitFirewallController,
-			templateFile: TplFirewallController,
+			unit:         systemdUnitFirewallController,
+			templateFile: tplFirewallController,
 			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
 				return NewFirewallControllerServiceApplier(kb, v)
 			},
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
 		},
 		{
-			unit:         SystemdUnitNftablesExporter,
-			templateFile: TplNftablesExporter,
+			unit:         systemdUnitNftablesExporter,
+			templateFile: tplNftablesExporter,
 			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
 				return NewNftablesExporterServiceApplier(kb, v)
 			},
 			enabled: true,
 		},
 		{
-			unit:         SystemdUnitNodeExporter,
-			templateFile: TplNodeExporter,
+			unit:         systemdUnitNodeExporter,
+			templateFile: tplNodeExporter,
 			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
 				return NewNodeExporterServiceApplier(kb, v)
 			},
 			enabled: true,
 		},
 		{
-			unit:         SystemdUnitSuricataUpdate,
-			templateFile: TplSuricataUpdate,
+			unit:         systemdUnitSuricataUpdate,
+			templateFile: tplSuricataUpdate,
 			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
 				return NewSuricataUpdateServiceApplier(kb, v)
 			},
@@ -224,13 +224,13 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 		src = mustTmpFile(prefix)
 		applier = NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src)
 		dest := fmt.Sprintf("%s/%d0-lan%d.link", SystemdNetworkPath, i+offset, i)
-		applyAndCleanUp(applier, TplSystemdLink, src, dest, FileModeSystemd)
+		applyAndCleanUp(applier, tplSystemdLink, src, dest, FileModeSystemd)
 
 		prefix = fmt.Sprintf("lan%d_network_", i)
 		src = mustTmpFile(prefix)
 		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src)
 		dest = fmt.Sprintf("%s/%d0-lan%d.network", SystemdNetworkPath, i+offset, i)
-		applyAndCleanUp(applier, TplSystemdNetwork, src, dest, FileModeSystemd)
+		applyAndCleanUp(applier, tplSystemdNetwork, src, dest, FileModeSystemd)
 	}
 }
 

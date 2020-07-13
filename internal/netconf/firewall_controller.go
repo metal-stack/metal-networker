@@ -7,10 +7,10 @@ import (
 )
 
 // TplFirewallController is the name of the template for the firewall-policy-controller service.
-const TplFirewallController = "firewall_controller.service.tpl"
+const tplFirewallController = "firewall_controller.service.tpl"
 
 // SystemdUnitFirewallController is the name of the systemd unit for the firewall policy controller,
-const SystemdUnitFirewallController = "firewall-controller.service"
+const systemdUnitFirewallController = "firewall-controller.service"
 
 // FirewallControllerData contains the data to render the firewall-controller service template.
 type FirewallControllerData struct {

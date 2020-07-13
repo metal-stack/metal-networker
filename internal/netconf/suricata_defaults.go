@@ -4,8 +4,8 @@ import (
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
-// TplSuricataDefaults is the name of the template for the suricata defaults.
-const TplSuricataDefaults = "suricata_defaults.tpl"
+// tplSuricataDefaults is the name of the template for the suricata defaults.
+const tplSuricataDefaults = "suricata_defaults.tpl"
 
 // SuricataDefaultsData represents the information required to render suricata defaults.
 type SuricataDefaultsData struct {
