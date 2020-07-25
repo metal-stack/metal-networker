@@ -28,6 +28,7 @@ type (
 	// VRF represents data required to render VRF information into frr.conf.
 	VRF struct {
 		Identity
+		Table          int
 		VNI            int
 		ImportVRFNames []string
 		IPPrefixLists  []IPPrefixList
@@ -61,8 +62,8 @@ type (
 		TunnelIP string
 	}
 
-	// EVPNIface represents the information required to render EVPN interfaces configuration.
-	EVPNIface struct {
+	// Tenant represents the information required to render EVPN interfaces configuration.
+	Tenant struct {
 		VRF   VRF
 		SVI   SVI
 		VXLAN VXLAN

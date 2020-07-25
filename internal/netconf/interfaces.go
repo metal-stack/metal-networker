@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/metal-stack/metal-networker/pkg/net"
-
-	"github.com/metal-stack/metal-networker/pkg/exec"
 )
 
 const (
@@ -16,31 +14,14 @@ const (
 )
 
 type (
-	// CommonIfacesData contains attributes required to render common network interfaces configuration of a bare metal
+	// IfacesData contains attributes required to render network interfaces configuration of a bare metal
 	// server.
-	CommonIfacesData struct {
+	IfacesData struct {
 		Comment  string
 		Loopback Loopback
+		Tenants  []Tenant
 	}
 
-	// MachineIfacesData contains attributes required to render network interfaces configuration of a bare metal
-	// server that functions as 'machine'.
-	MachineIfacesData struct {
-		CommonIfacesData
-	}
-
-	// FirewallIfacesData contains attributes required to render network interfaces configuration of a bare metal
-	// server that functions as 'firewall'.
-	FirewallIfacesData struct {
-		CommonIfacesData
-		Bridge         Bridge
-		EVPNInterfaces []EVPNIface
-	}
-
-	// IfacesValidator defines the base type of an interfaces validator.
-	IfacesValidator struct {
-		path string
-	}
 	// SystemdNetworkdValidator defines the base type of an systemd-networkd validator.
 	SystemdNetworkdValidator struct {
 		path string
@@ -52,42 +33,27 @@ func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string
 	var data interface{}
 	var validator net.Validator
 
-	common := CommonIfacesData{
+	d := IfacesData{
 		Comment: versionHeader(kb.Machineuuid),
 	}
 
+	d.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getUnderlayNetwork().Networkid)
+	validator = SystemdNetworkdValidator{path: tmpFile}
 	switch kind {
 	case Firewall:
-		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getUnderlayNetwork().Networkid)
-		common.Loopback.IPs = kb.getUnderlayNetwork().Ips
-		f := FirewallIfacesData{}
-		f.CommonIfacesData = common
-		f.Bridge.Ports = getBridgePorts(kb)
-		f.Bridge.Vids = getBridgeVLANIDs(kb)
-		f.EVPNInterfaces = getEVPNInterfaces(kb)
-		data = f
-		validator = IfacesValidator{path: tmpFile}
+		d.Loopback.IPs = kb.getUnderlayNetwork().Ips
+		d.Tenants = getTenants(kb)
 	case Machine:
 		private := kb.getPrivateNetwork()
-		common.Loopback.Comment = fmt.Sprintf("networkid: %s", private.Networkid)
+		d.Loopback.Comment = fmt.Sprintf("networkid: %s", private.Networkid)
 		// Ensure that the ips of the private network are the first ips at the loopback interface.
 		// The first lo IP is used within network communication and other systems depend on seeing the first private ip.
-		common.Loopback.IPs = append(private.Ips, kb.CollectIPs(Public)...)
-		data = MachineIfacesData{
-			CommonIfacesData: common,
-		}
-		validator = SystemdNetworkdValidator{path: tmpFile}
+		d.Loopback.IPs = append(private.Ips, kb.CollectIPs(Public)...)
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
 
 	return net.NewNetworkApplier(data, validator, nil)
-}
-
-// Validate network interfaces configuration. Assumes ifupdown2 is available.
-func (v IfacesValidator) Validate() error {
-	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
-	return exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
 }
 
 // Validate network interfaces configuration done with systemd-networkd. Assumes systemd-networkd is installed.
@@ -96,15 +62,16 @@ func (v SystemdNetworkdValidator) Validate() error {
 	return nil
 }
 
-func getEVPNInterfaces(kb KnowledgeBase) []EVPNIface {
-	var result []EVPNIface
+func getTenants(kb KnowledgeBase) []Tenant {
+	var result []Tenant
 
-	for _, n := range kb.Networks {
+	offset := 1000
+	for i, n := range kb.Networks {
 		if n.Underlay {
 			continue
 		}
 
-		e := EVPNIface{}
+		e := Tenant{}
 		e.SVI.Comment = fmt.Sprintf("svi (networkid: %s)", n.Networkid)
 		e.SVI.VlanID = n.Vlan
 		e.SVI.Addresses = n.Ips
@@ -113,41 +80,8 @@ func getEVPNInterfaces(kb KnowledgeBase) []EVPNIface {
 		e.VXLAN.TunnelIP = kb.getUnderlayNetwork().Ips[0]
 		e.VRF.Comment = fmt.Sprintf("vrf (networkid: %s)", n.Networkid)
 		e.VRF.ID = n.Vrf
+		e.VRF.Table = offset + i
 		result = append(result, e)
-	}
-
-	return result
-}
-
-func getBridgeVLANIDs(kb KnowledgeBase) string {
-	result := ""
-	networks := kb.GetNetworks(Private, Public)
-
-	for _, n := range networks {
-		if result == "" {
-			result = fmt.Sprintf("%d", n.Vlan)
-		} else {
-			result = fmt.Sprintf("%s %d", result, n.Vlan)
-		}
-	}
-
-	return result
-}
-
-func getBridgePorts(kb KnowledgeBase) string {
-	result := ""
-	networks := kb.GetNetworks(Private, Public)
-
-	for _, n := range networks {
-		if n.Underlay {
-			continue
-		}
-
-		if result == "" {
-			result = fmt.Sprintf("vni%d", n.Vrf)
-		} else {
-			result = fmt.Sprintf("%s vni%d", result, n.Vrf)
-		}
 	}
 
 	return result

@@ -190,6 +190,22 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 }
 
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
+	offset := 1
+
+	for i, nic := range kb.Nics {
+		prefix := fmt.Sprintf("lan%d_link_", i)
+		src := mustTmpFile(prefix)
+		applier := NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src)
+		dest := fmt.Sprintf("%s/1%d-lan%d.link", SystemdNetworkPath, i+offset, i)
+		applyAndCleanUp(applier, tplSystemdLink, src, dest, FileModeSystemd)
+
+		prefix = fmt.Sprintf("lan%d_network_", i)
+		src = mustTmpFile(prefix)
+		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src)
+		dest = fmt.Sprintf("%s/1%d-lan%d.network", SystemdNetworkPath, i+offset, i)
+		applyAndCleanUp(applier, tplSystemdNetwork, src, dest, FileModeSystemd)
+	}
+
 	src := mustTmpFile("interfaces_")
 	applier := NewIfacesConfigApplier(kind, kb, src)
 
@@ -216,22 +232,6 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 	}
 
 	applyAndCleanUp(applier, tpl, src, "/etc/frr/frr.conf", FileModeDefault)
-
-	offset := 1
-
-	for i, nic := range kb.Nics {
-		prefix := fmt.Sprintf("lan%d_link_", i)
-		src = mustTmpFile(prefix)
-		applier = NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src)
-		dest := fmt.Sprintf("%s/%d0-lan%d.link", SystemdNetworkPath, i+offset, i)
-		applyAndCleanUp(applier, tplSystemdLink, src, dest, FileModeSystemd)
-
-		prefix = fmt.Sprintf("lan%d_network_", i)
-		src = mustTmpFile(prefix)
-		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src)
-		dest = fmt.Sprintf("%s/%d0-lan%d.network", SystemdNetworkPath, i+offset, i)
-		applyAndCleanUp(applier, tplSystemdNetwork, src, dest, FileModeSystemd)
-	}
 }
 
 func applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMode) {
