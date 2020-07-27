@@ -51,7 +51,7 @@ type (
 
 	// SVI represents a switched virtual interface.
 	SVI struct {
-		VlanID    int
+		VLANID    int
 		Comment   string
 		Addresses []string
 	}
@@ -64,9 +64,10 @@ type (
 
 	// Tenant represents the information required to render EVPN interfaces configuration.
 	Tenant struct {
-		VRF   VRF
-		SVI   SVI
-		VXLAN VXLAN
+		Comment string
+		VRF     VRF
+		SVI     SVI
+		VXLAN   VXLAN
 	}
 
 	// Bridge represents a network bridge.

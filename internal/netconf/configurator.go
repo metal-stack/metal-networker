@@ -27,6 +27,9 @@ const (
 	Machine
 	// SystemdUnitPath is the path where systemd units will be generated.
 	SystemdUnitPath = "/etc/systemd/system/"
+)
+
+var (
 	// SystemdNetworkPath is the path where systemd-networkd expects its configuration files.
 	SystemdNetworkPath = "/etc/systemd/network"
 )
@@ -190,33 +193,11 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 }
 
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
-	offset := 1
+	a := NewIfacesConfigApplier(kind, kb)
+	a.Apply()
 
-	for i, nic := range kb.Nics {
-		prefix := fmt.Sprintf("lan%d_link_", i)
-		src := mustTmpFile(prefix)
-		applier := NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src)
-		dest := fmt.Sprintf("%s/1%d-lan%d.link", SystemdNetworkPath, i+offset, i)
-		applyAndCleanUp(applier, tplSystemdLink, src, dest, FileModeSystemd)
-
-		prefix = fmt.Sprintf("lan%d_network_", i)
-		src = mustTmpFile(prefix)
-		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src)
-		dest = fmt.Sprintf("%s/1%d-lan%d.network", SystemdNetworkPath, i+offset, i)
-		applyAndCleanUp(applier, tplSystemdNetwork, src, dest, FileModeSystemd)
-	}
-
-	src := mustTmpFile("interfaces_")
-	applier := NewIfacesConfigApplier(kind, kb, src)
-
-	if kind == Machine {
-		applyAndCleanUp(applier, TplMachineIfaces, src, SystemdNetworkPath+"/0-lo.network", FileModeSystemd)
-	} else {
-		applyAndCleanUp(applier, TplFirewallIfaces, src, "/etc/network/interfaces", FileModeDefault)
-	}
-
-	src = mustTmpFile("hosts_")
-	applier = NewHostsApplier(kb, src)
+	src := mustTmpFile("hosts_")
+	applier := NewHostsApplier(kb, src)
 	applyAndCleanUp(applier, TplHosts, src, "/etc/hosts", FileModeDefault)
 
 	src = mustTmpFile("hostname_")
@@ -259,7 +240,7 @@ func mustEnableUnit(unit string) {
 }
 
 func mustApply(applier net.Applier, tpl, src, dest string) {
-	t := template.Must(template.New(TplFirewallIfaces).Parse(tpl))
+	t := template.Must(template.New(src).Parse(tpl))
 	err := applier.Apply(*t, src, dest, false)
 
 	if err != nil {
@@ -267,8 +248,10 @@ func mustApply(applier net.Applier, tpl, src, dest string) {
 	}
 }
 
+var tmpPath = "/etc/metal/networker/"
+
 func mustTmpFile(prefix string) string {
-	f, err := ioutil.TempFile("/etc/metal/networker/", prefix)
+	f, err := ioutil.TempFile(tmpPath, prefix)
 	if err != nil {
 		log.Panic(err)
 	}

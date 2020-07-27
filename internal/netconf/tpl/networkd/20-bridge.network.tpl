@@ -7,9 +7,8 @@ Name=bridge
 {{- range .Tenants }}
 VLAN=vlan{{ .VRF.ID }}
 {{- end }}
-
 {{- range .Tenants }}
+
 [BridgeVLAN]
 VLAN={{ .SVI.VLANID }}
-
 {{- end }}

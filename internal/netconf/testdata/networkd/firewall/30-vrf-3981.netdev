@@ -1,0 +1,7 @@
+# vrf (networkid: bc830818-2df1-4904-8c40-4322296d393d)
+[NetDev]
+Name=vrf3981
+Kind=vrf
+
+[VRF]
+Table=1000

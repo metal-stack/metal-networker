@@ -4,7 +4,6 @@
 Name=lan{{ .Index }}
 
 [Network]
-DHCP=ipv6
 {{- range .Tenants }}
 VXLAN={{ .VXLAN.ID }}
 {{- end }}

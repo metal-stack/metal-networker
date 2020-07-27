@@ -17,8 +17,6 @@ validate () {
         . -t metal-networker
 }
 
-validate "ubuntu" "19.10" "7.2"
-validate "ubuntu" "19.10" "7.3"
 validate "ubuntu" "20.04" "7.2"
 validate "ubuntu" "20.04" "7.3"
 validate "debian" "10" "7.2"

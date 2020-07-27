@@ -4,4 +4,6 @@
 Name=lan0
 
 [Network]
-DHCP=ipv6
+VXLAN=3981
+VXLAN=104009
+VXLAN=104010

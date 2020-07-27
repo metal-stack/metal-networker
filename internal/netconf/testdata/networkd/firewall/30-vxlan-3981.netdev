@@ -1,0 +1,11 @@
+# vxlan (networkid: bc830818-2df1-4904-8c40-4322296d393d)
+[NetDev]
+Name=vni3981
+Kind=vxlan
+
+[VXLAN]
+VNI=3981
+Local=10.1.0.1
+UDPChecksum=true
+MacLearning=false
+DestinationPort=4789

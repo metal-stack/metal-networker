@@ -1,0 +1,7 @@
+# svi (networkid: internet-vagrant-lab)
+[NetDev]
+Name=vlan104009
+Kind=vlan
+
+[VLAN]
+Id=1001

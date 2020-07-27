@@ -1,0 +1,7 @@
+# svi (networkid: mpls-nbg-w8101-test)
+[NetDev]
+Name=vlan104010
+Kind=vlan
+
+[VLAN]
+Id=1003
