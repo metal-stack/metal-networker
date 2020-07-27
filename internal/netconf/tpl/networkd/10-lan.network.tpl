@@ -5,5 +5,5 @@ Name=lan{{ .Index }}
 
 [Network]
 {{- range .Tenants }}
-VXLAN={{ .VXLAN.ID }}
+VXLAN=vni{{ .VXLAN.ID }}
 {{- end }}

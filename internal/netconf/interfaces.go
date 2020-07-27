@@ -108,9 +108,6 @@ func applyNetdevAndNetwork(si, di int, prefix, suffix string, data interface{}) 
 	tpl := fmt.Sprintf("networkd/%d-%s.netdev.tpl", si, prefix)
 	applyAndCleanUp(applier, tpl, src, dest, FileModeSystemd)
 
-	if prefix == "vrf" {
-		return
-	}
 	src = mustTmpFile(prefix + "_network_")
 	applier = NewSystemdNetworkdApplier(src, data)
 	dest = fmt.Sprintf("%s/%d-%s%s.network", SystemdNetworkPath, di, prefix, suffix)

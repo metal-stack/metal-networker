@@ -9,5 +9,5 @@ MTUBytes=9000
 [Network]
 VRF=vrf{{ .VRF.ID }}
 {{- range .SVI.Addresses }}
-Address={{ . }}
+Address={{ . }}/32
 {{- end }}

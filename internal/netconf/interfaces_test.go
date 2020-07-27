@@ -67,8 +67,10 @@ func equalDirs(dir1, dir2 string) (bool, string) {
 		if err != nil {
 			panic(err)
 		}
-		if !cmp.Equal(f1, f2) {
-			return false, fmt.Sprintf("file %s differs: %v", f, cmp.Diff(f1, f2))
+		s1 := string(f1)
+		s2 := string(f2)
+		if !cmp.Equal(s1, s2) {
+			return false, fmt.Sprintf("file %s differs: %v", f, cmp.Diff(s1, s2))
 		}
 	}
 	return true, ""
