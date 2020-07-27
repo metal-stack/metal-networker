@@ -6,7 +6,6 @@ FROM metalstack/frr:${FRR_VERSION}-${OS_NAME}-${OS_VERSION} AS frr-artifacts
 FROM ${OS_NAME}:${OS_VERSION}
 
 ENV FRR_FILES="frr.conf.firewall frr.conf.machine" \
-    INTERFACES_FILES="interfaces.firewall" \
     TESTDATA_DIR="./internal/netconf/testdata"
 
 WORKDIR /tmp
@@ -17,7 +16,6 @@ RUN apt-get update --quiet \
     --yes \
     --no-install-recommends \
     --quiet \
-    ifupdown2 \
     ./frr_*.deb \
     ./frr-pythontools_*.deb \
     ./libyang*.deb
