@@ -4,10 +4,10 @@
 Name=bridge
 
 [Network]
-{{- range .Tenants }}
+{{- range .EVPNIfaces }}
 VLAN=vlan{{ .VRF.ID }}
 {{- end }}
-{{- range .Tenants }}
+{{- range .EVPNIfaces }}
 
 [BridgeVLAN]
 VLAN={{ .SVI.VLANID }}

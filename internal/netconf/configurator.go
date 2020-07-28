@@ -30,8 +30,10 @@ const (
 )
 
 var (
-	// SystemdNetworkPath is the path where systemd-networkd expects its configuration files.
-	SystemdNetworkPath = "/etc/systemd/network"
+	// systemdNetworkPath is the path where systemd-networkd expects its configuration files.
+	systemdNetworkPath = "/etc/systemd/network"
+	// tmpPath is the path where temporary files are stored for validation before they are moved to their intended place.
+	tmpPath = "/etc/metal/networker/"
 )
 
 type (
@@ -193,7 +195,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 }
 
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
-	a := NewIfacesConfigApplier(kind, kb)
+	a := NewIfacesApplier(kind, kb)
 	a.Apply()
 
 	src := mustTmpFile("hosts_")
@@ -247,8 +249,6 @@ func mustApply(applier net.Applier, tpl, src, dest string) {
 		log.Panic(err)
 	}
 }
-
-var tmpPath = "/etc/metal/networker/"
 
 func mustTmpFile(prefix string) string {
 	f, err := ioutil.TempFile(tmpPath, prefix)

@@ -27,9 +27,9 @@ type (
 	// SystemdLinkData contains attributes required to render systemd.link files.
 	SystemdLinkData struct {
 		SystemdCommonData
-		MAC     string
-		MTU     int
-		Tenants []Tenant
+		MAC        string
+		MTU        int
+		EVPNIfaces []EVPNIface
 	}
 
 	// SystemdValidator validates systemd.network and system.link files.
@@ -47,7 +47,7 @@ func NewSystemdNetworkdApplier(tmpFile string, data interface{}) net.Applier {
 
 // NewSystemdLinkApplier creates a new Applier to configure systemd.link.
 func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic NIC,
-	tmpFile string, tenants []Tenant) net.Applier {
+	tmpFile string, evpnIfaces []EVPNIface) net.Applier {
 	var mtu int
 
 	switch kind {
@@ -64,9 +64,9 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 			Comment: versionHeader(machineUUID),
 			Index:   nicIndex,
 		},
-		MTU:     mtu,
-		MAC:     nic.Mac,
-		Tenants: tenants,
+		MTU:        mtu,
+		MAC:        nic.Mac,
+		EVPNIfaces: evpnIfaces,
 	}
 	validator := SystemdValidator{tmpFile}
 

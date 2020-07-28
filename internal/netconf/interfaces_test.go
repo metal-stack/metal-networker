@@ -31,20 +31,20 @@ func TestIfacesApplier(t *testing.T) {
 	tmpPath = os.TempDir()
 	for _, tc := range tests {
 		func() {
-			old := SystemdNetworkPath
+			old := systemdNetworkPath
 			tempdir, err := ioutil.TempDir(os.TempDir(), "networkd*")
-			SystemdNetworkPath = tempdir
+			systemdNetworkPath = tempdir
 			if err != nil {
 				log.Fatal(err)
 			}
 			defer func() {
-				os.RemoveAll(SystemdNetworkPath)
-				SystemdNetworkPath = old
+				os.RemoveAll(systemdNetworkPath)
+				systemdNetworkPath = old
 			}()
 			kb := NewKnowledgeBase(tc.input)
-			a := NewIfacesConfigApplier(tc.configuratorType, kb)
+			a := NewIfacesApplier(tc.configuratorType, kb)
 			a.Apply()
-			if equal, s := equalDirs(SystemdNetworkPath, tc.expectedOutput); !equal {
+			if equal, s := equalDirs(systemdNetworkPath, tc.expectedOutput); !equal {
 				t.Error(s)
 			}
 		}()

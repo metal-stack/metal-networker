@@ -1,4 +1,4 @@
-{{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.TenantData*/ -}}
+{{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.EVPNIface*/ -}}
 {{ .SVI.Comment }}
 [Match]
 Name=vlan{{ .VRF.ID }}

@@ -62,8 +62,8 @@ type (
 		TunnelIP string
 	}
 
-	// Tenant represents the information required to render EVPN interfaces configuration.
-	Tenant struct {
+	// EVPNIface represents the information required to render EVPN interfaces configuration.
+	EVPNIface struct {
 		Comment string
 		VRF     VRF
 		SVI     SVI
