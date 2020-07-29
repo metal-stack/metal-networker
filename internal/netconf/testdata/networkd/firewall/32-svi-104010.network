@@ -1,0 +1,10 @@
+# svi (networkid: mpls-nbg-w8101-test)
+[Match]
+Name=vlan104010
+
+[Link]
+MTUBytes=9000
+
+[Network]
+VRF=vrf104010
+Address=100.127.129.1/32

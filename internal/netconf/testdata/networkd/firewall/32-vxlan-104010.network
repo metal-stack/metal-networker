@@ -1,0 +1,13 @@
+# vxlan (networkid: mpls-nbg-w8101-test)
+[Match]
+Name=vni104010
+
+[Link]
+MTUBytes=9000
+
+[Network]
+Bridge=bridge
+
+[BridgeVLAN]
+PVID=1003
+EgressUntagged=1003

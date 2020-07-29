@@ -1,0 +1,7 @@
+# svi (networkid: bc830818-2df1-4904-8c40-4322296d393d)
+[NetDev]
+Name=vlan3981
+Kind=vlan
+
+[VLAN]
+Id=1000

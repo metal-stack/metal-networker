@@ -1,0 +1,10 @@
+# svi (networkid: internet-vagrant-lab)
+[Match]
+Name=vlan104009
+
+[Link]
+MTUBytes=9000
+
+[Network]
+VRF=vrf104009
+Address=185.1.2.3/32

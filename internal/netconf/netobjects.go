@@ -28,6 +28,7 @@ type (
 	// VRF represents data required to render VRF information into frr.conf.
 	VRF struct {
 		Identity
+		Table          int
 		VNI            int
 		ImportVRFNames []string
 		IPPrefixLists  []IPPrefixList
@@ -50,7 +51,7 @@ type (
 
 	// SVI represents a switched virtual interface.
 	SVI struct {
-		VlanID    int
+		VLANID    int
 		Comment   string
 		Addresses []string
 	}
@@ -63,9 +64,10 @@ type (
 
 	// EVPNIface represents the information required to render EVPN interfaces configuration.
 	EVPNIface struct {
-		VRF   VRF
-		SVI   SVI
-		VXLAN VXLAN
+		Comment string
+		VRF     VRF
+		SVI     SVI
+		VXLAN   VXLAN
 	}
 
 	// Bridge represents a network bridge.

@@ -1,0 +1,11 @@
+# vxlan (networkid: internet-vagrant-lab)
+[NetDev]
+Name=vni104009
+Kind=vxlan
+
+[VXLAN]
+VNI=104009
+Local=10.1.0.1
+UDPChecksum=true
+MacLearning=false
+DestinationPort=4789

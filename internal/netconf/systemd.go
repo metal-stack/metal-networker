@@ -5,10 +5,12 @@ import (
 )
 
 const (
-	// tplSystemdLink defines the name of the template to render system.link file.
-	tplSystemdLink = "systemd.link.tpl"
-	// tplSystemdNetwork defines the name of the template to render system.network file.
-	tplSystemdNetwork = "systemd.network.tpl"
+	// tplSystemdLinkLan defines the name of the template to render system.link file.
+	tplSystemdLinkLan = "networkd/10-lan.link.tpl"
+
+	tplSystemdNetworkLo = "networkd/00-lo.network.tpl"
+	// tplSystemdNetworkLan defines the name of the template to render system.network file.
+	tplSystemdNetworkLan = "networkd/10-lan.network.tpl"
 	// mtuFirewall defines the value for MTU specific to the needs of a firewall. VXLAN requires higher MTU.
 	mtuFirewall = 9216
 	// mtuMachine defines the value for MTU specific to the needs of a machine.
@@ -22,16 +24,12 @@ type (
 		Index   int
 	}
 
-	// SystemdNetworkData contains attributes required to render systemd.network files.
-	SystemdNetworkData struct {
-		SystemdCommonData
-	}
-
 	// SystemdLinkData contains attributes required to render systemd.link files.
 	SystemdLinkData struct {
 		SystemdCommonData
-		MAC string
-		MTU int
+		MAC        string
+		MTU        int
+		EVPNIfaces []EVPNIface
 	}
 
 	// SystemdValidator validates systemd.network and system.link files.
@@ -40,9 +38,8 @@ type (
 	}
 )
 
-// NewSystemdNetworkApplier creates a new Applier to configure systemd.network.
-func NewSystemdNetworkApplier(uuid string, nicIndex int, tmpFile string) net.Applier {
-	data := SystemdNetworkData{SystemdCommonData{Comment: versionHeader(uuid), Index: nicIndex}}
+// NewSystemdNetworkdApplier creates a new Applier to configure systemd.network.
+func NewSystemdNetworkdApplier(tmpFile string, data interface{}) net.Applier {
 	validator := SystemdValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)
@@ -50,7 +47,7 @@ func NewSystemdNetworkApplier(uuid string, nicIndex int, tmpFile string) net.App
 
 // NewSystemdLinkApplier creates a new Applier to configure systemd.link.
 func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic NIC,
-	tmpFile string) net.Applier {
+	tmpFile string, evpnIfaces []EVPNIface) net.Applier {
 	var mtu int
 
 	switch kind {
@@ -67,8 +64,9 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 			Comment: versionHeader(machineUUID),
 			Index:   nicIndex,
 		},
-		MTU: mtu,
-		MAC: nic.Mac,
+		MTU:        mtu,
+		MAC:        nic.Mac,
+		EVPNIfaces: evpnIfaces,
 	}
 	validator := SystemdValidator{tmpFile}
 

@@ -1,0 +1,11 @@
+# vxlan (networkid: mpls-nbg-w8101-test)
+[NetDev]
+Name=vni104010
+Kind=vxlan
+
+[VXLAN]
+VNI=104010
+Local=10.1.0.1
+UDPChecksum=true
+MacLearning=false
+DestinationPort=4789

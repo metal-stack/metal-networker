@@ -27,8 +27,13 @@ const (
 	Machine
 	// SystemdUnitPath is the path where systemd units will be generated.
 	SystemdUnitPath = "/etc/systemd/system/"
-	// SystemdNetworkPath is the path where systemd-networkd expects its configuration files.
-	SystemdNetworkPath = "/etc/systemd/network"
+)
+
+var (
+	// systemdNetworkPath is the path where systemd-networkd expects its configuration files.
+	systemdNetworkPath = "/etc/systemd/network"
+	// tmpPath is the path where temporary files are stored for validation before they are moved to their intended place.
+	tmpPath = "/etc/metal/networker/"
 )
 
 type (
@@ -190,17 +195,11 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 }
 
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
-	src := mustTmpFile("interfaces_")
-	applier := NewIfacesConfigApplier(kind, kb, src)
+	a := NewIfacesApplier(kind, kb)
+	a.Apply()
 
-	if kind == Machine {
-		applyAndCleanUp(applier, TplMachineIfaces, src, SystemdNetworkPath+"/0-lo.network", FileModeSystemd)
-	} else {
-		applyAndCleanUp(applier, TplFirewallIfaces, src, "/etc/network/interfaces", FileModeDefault)
-	}
-
-	src = mustTmpFile("hosts_")
-	applier = NewHostsApplier(kb, src)
+	src := mustTmpFile("hosts_")
+	applier := NewHostsApplier(kb, src)
 	applyAndCleanUp(applier, TplHosts, src, "/etc/hosts", FileModeDefault)
 
 	src = mustTmpFile("hostname_")
@@ -216,22 +215,6 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 	}
 
 	applyAndCleanUp(applier, tpl, src, "/etc/frr/frr.conf", FileModeDefault)
-
-	offset := 1
-
-	for i, nic := range kb.Nics {
-		prefix := fmt.Sprintf("lan%d_link_", i)
-		src = mustTmpFile(prefix)
-		applier = NewSystemdLinkApplier(kind, kb.Machineuuid, i, nic, src)
-		dest := fmt.Sprintf("%s/%d0-lan%d.link", SystemdNetworkPath, i+offset, i)
-		applyAndCleanUp(applier, tplSystemdLink, src, dest, FileModeSystemd)
-
-		prefix = fmt.Sprintf("lan%d_network_", i)
-		src = mustTmpFile(prefix)
-		applier = NewSystemdNetworkApplier(kb.Machineuuid, i, src)
-		dest = fmt.Sprintf("%s/%d0-lan%d.network", SystemdNetworkPath, i+offset, i)
-		applyAndCleanUp(applier, tplSystemdNetwork, src, dest, FileModeSystemd)
-	}
 }
 
 func applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMode) {
@@ -259,7 +242,7 @@ func mustEnableUnit(unit string) {
 }
 
 func mustApply(applier net.Applier, tpl, src, dest string) {
-	t := template.Must(template.New(TplFirewallIfaces).Parse(tpl))
+	t := template.Must(template.New(src).Parse(tpl))
 	err := applier.Apply(*t, src, dest, false)
 
 	if err != nil {
@@ -268,7 +251,7 @@ func mustApply(applier net.Applier, tpl, src, dest string) {
 }
 
 func mustTmpFile(prefix string) string {
-	f, err := ioutil.TempFile("/etc/metal/networker/", prefix)
+	f, err := ioutil.TempFile(tmpPath, prefix)
 	if err != nil {
 		log.Panic(err)
 	}

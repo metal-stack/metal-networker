@@ -1,0 +1,7 @@
+# vrf (networkid: mpls-nbg-w8101-test)
+[NetDev]
+Name=vrf104010
+Kind=vrf
+
+[VRF]
+Table=1003

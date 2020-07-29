@@ -2,92 +2,118 @@ package netconf
 
 import (
 	"fmt"
-
-	"github.com/metal-stack/metal-networker/pkg/net"
-
-	"github.com/metal-stack/metal-networker/pkg/exec"
-)
-
-const (
-	// TplFirewallIfaces defines the name of the template to render interfaces configuration for firewalls.
-	TplFirewallIfaces = "interfaces.firewall.tpl"
-	// TplMachineIfaces defines the name of the template to render interfaces configuration for machines.
-	TplMachineIfaces = "lo.network.machine.tpl"
+	"io"
+	"text/template"
 )
 
 type (
-	// CommonIfacesData contains attributes required to render common network interfaces configuration of a bare metal
+	// IfacesData contains attributes required to render network interfaces configuration of a bare metal
 	// server.
-	CommonIfacesData struct {
-		Comment  string
-		Loopback Loopback
+	IfacesData struct {
+		Comment    string
+		Loopback   Loopback
+		EVPNIfaces []EVPNIface
 	}
 
-	// MachineIfacesData contains attributes required to render network interfaces configuration of a bare metal
-	// server that functions as 'machine'.
-	MachineIfacesData struct {
-		CommonIfacesData
-	}
-
-	// FirewallIfacesData contains attributes required to render network interfaces configuration of a bare metal
-	// server that functions as 'firewall'.
-	FirewallIfacesData struct {
-		CommonIfacesData
-		Bridge         Bridge
-		EVPNInterfaces []EVPNIface
-	}
-
-	// IfacesValidator defines the base type of an interfaces validator.
-	IfacesValidator struct {
-		path string
-	}
 	// SystemdNetworkdValidator defines the base type of an systemd-networkd validator.
 	SystemdNetworkdValidator struct {
 		path string
 	}
 )
 
-// NewIfacesConfigApplier constructs a new instance of this type.
-func NewIfacesConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) net.Applier {
-	var data interface{}
-	var validator net.Validator
+// IfacesApplier applies interfaces configuration.
+type IfacesApplier struct {
+	kind BareMetalType
+	kb   KnowledgeBase
+	data IfacesData
+}
 
-	common := CommonIfacesData{
+// NewIfacesApplier constructs a new instance of this type.
+func NewIfacesApplier(kind BareMetalType, kb KnowledgeBase) IfacesApplier {
+	d := IfacesData{
 		Comment: versionHeader(kb.Machineuuid),
 	}
 
 	switch kind {
 	case Firewall:
-		common.Loopback.Comment = fmt.Sprintf("networkid: %s", kb.getUnderlayNetwork().Networkid)
-		common.Loopback.IPs = kb.getUnderlayNetwork().Ips
-		f := FirewallIfacesData{}
-		f.CommonIfacesData = common
-		f.Bridge.Ports = getBridgePorts(kb)
-		f.Bridge.Vids = getBridgeVLANIDs(kb)
-		f.EVPNInterfaces = getEVPNInterfaces(kb)
-		data = f
-		validator = IfacesValidator{path: tmpFile}
+		underlay := kb.getUnderlayNetwork()
+		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", underlay.Networkid)
+		d.Loopback.IPs = underlay.Ips
+		d.EVPNIfaces = getEVPNIfaces(kb)
 	case Machine:
 		private := kb.getPrivateNetwork()
-		common.Loopback.Comment = fmt.Sprintf("networkid: %s", private.Networkid)
+		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", private.Networkid)
 		// Ensure that the ips of the private network are the first ips at the loopback interface.
 		// The first lo IP is used within network communication and other systems depend on seeing the first private ip.
-		common.Loopback.IPs = append(private.Ips, kb.CollectIPs(Public)...)
-		data = MachineIfacesData{
-			CommonIfacesData: common,
-		}
-		validator = SystemdNetworkdValidator{path: tmpFile}
+		d.Loopback.IPs = append(private.Ips, kb.CollectIPs(Public)...)
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
 
-	return net.NewNetworkApplier(data, validator, nil)
+	return IfacesApplier{kind: kind, kb: kb, data: d}
 }
 
-// Validate network interfaces configuration. Assumes ifupdown2 is available.
-func (v IfacesValidator) Validate() error {
-	log.Infof("running 'ifup --syntax-check --all --interfaces %s to validate changes.'", v.path)
-	return exec.NewVerboseCmd("ifup", "--syntax-check", "--all", "--interfaces", v.path).Run()
+// Render renders the network interfaces to the given writer using the given template.
+func (a *IfacesApplier) Render(w io.Writer, tpl template.Template) error {
+	return tpl.Execute(w, a.data)
+}
+
+// Apply applies the interface configuration with systemd-networkd.
+func (a *IfacesApplier) Apply() {
+	uuid := a.kb.Machineuuid
+	evpnIfaces := a.data.EVPNIfaces
+
+	// /etc/systemd/network/00 loopback
+	src := mustTmpFile("lo_network_")
+	applier := NewSystemdNetworkdApplier(src, a.data)
+	dest := fmt.Sprintf("%s/00-lo.network", systemdNetworkPath)
+	applyAndCleanUp(applier, tplSystemdNetworkLo, src, dest, FileModeSystemd)
+
+	// /etc/systemd/network/1x* lan interfaces
+	offset := 10
+	for i, nic := range a.kb.Nics {
+		prefix := fmt.Sprintf("lan%d_link_", i)
+		src := mustTmpFile(prefix)
+		applier := NewSystemdLinkApplier(a.kind, uuid, i, nic, src, evpnIfaces)
+		dest := fmt.Sprintf("%s/%d-lan%d.link", systemdNetworkPath, offset+i, i)
+		applyAndCleanUp(applier, tplSystemdLinkLan, src, dest, FileModeSystemd)
+
+		prefix = fmt.Sprintf("lan%d_network_", i)
+		src = mustTmpFile(prefix)
+		applier = NewSystemdLinkApplier(a.kind, uuid, i, nic, src, evpnIfaces)
+		dest = fmt.Sprintf("%s/%d-lan%d.network", systemdNetworkPath, offset+i, i)
+		applyAndCleanUp(applier, tplSystemdNetworkLan, src, dest, FileModeSystemd)
+	}
+
+	if a.kind == Machine {
+		return
+	}
+
+	// /etc/systemd/network/20 bridge interface
+	applyNetdevAndNetwork(20, 20, "bridge", "", a.data)
+
+	// /etc/systemd/network/3x* triplet of interfaces for a tenant: vrf, svi, vxlan
+	offset = 30
+	for i, tenant := range a.data.EVPNIfaces {
+		suffix := fmt.Sprintf("-%d", tenant.VRF.ID)
+		applyNetdevAndNetwork(offset, offset+i, "vrf", suffix, tenant)
+		applyNetdevAndNetwork(offset, offset+i, "svi", suffix, tenant)
+		applyNetdevAndNetwork(offset, offset+i, "vxlan", suffix, tenant)
+	}
+}
+
+func applyNetdevAndNetwork(si, di int, prefix, suffix string, data interface{}) {
+	src := mustTmpFile(prefix + "_netdev_")
+	applier := NewSystemdNetworkdApplier(src, data)
+	dest := fmt.Sprintf("%s/%d-%s%s.netdev", systemdNetworkPath, di, prefix, suffix)
+	tpl := fmt.Sprintf("networkd/%d-%s.netdev.tpl", si, prefix)
+	applyAndCleanUp(applier, tpl, src, dest, FileModeSystemd)
+
+	src = mustTmpFile(prefix + "_network_")
+	applier = NewSystemdNetworkdApplier(src, data)
+	dest = fmt.Sprintf("%s/%d-%s%s.network", systemdNetworkPath, di, prefix, suffix)
+	tpl = fmt.Sprintf("networkd/%d-%s.network.tpl", si, prefix)
+	applyAndCleanUp(applier, tpl, src, dest, FileModeSystemd)
 }
 
 // Validate network interfaces configuration done with systemd-networkd. Assumes systemd-networkd is installed.
@@ -96,58 +122,27 @@ func (v SystemdNetworkdValidator) Validate() error {
 	return nil
 }
 
-func getEVPNInterfaces(kb KnowledgeBase) []EVPNIface {
+func getEVPNIfaces(kb KnowledgeBase) []EVPNIface {
 	var result []EVPNIface
 
-	for _, n := range kb.Networks {
+	vrfTableOffset := 1000
+	for i, n := range kb.Networks {
 		if n.Underlay {
 			continue
 		}
 
 		e := EVPNIface{}
-		e.SVI.Comment = fmt.Sprintf("svi (networkid: %s)", n.Networkid)
-		e.SVI.VlanID = n.Vlan
+		e.Comment = versionHeader(kb.Machineuuid)
+		e.SVI.Comment = fmt.Sprintf("# svi (networkid: %s)", n.Networkid)
+		e.SVI.VLANID = n.Vlan
 		e.SVI.Addresses = n.Ips
-		e.VXLAN.Comment = fmt.Sprintf("vxlan (networkid: %s)", n.Networkid)
+		e.VXLAN.Comment = fmt.Sprintf("# vxlan (networkid: %s)", n.Networkid)
 		e.VXLAN.ID = n.Vrf
 		e.VXLAN.TunnelIP = kb.getUnderlayNetwork().Ips[0]
-		e.VRF.Comment = fmt.Sprintf("vrf (networkid: %s)", n.Networkid)
+		e.VRF.Comment = fmt.Sprintf("# vrf (networkid: %s)", n.Networkid)
 		e.VRF.ID = n.Vrf
+		e.VRF.Table = vrfTableOffset + i
 		result = append(result, e)
-	}
-
-	return result
-}
-
-func getBridgeVLANIDs(kb KnowledgeBase) string {
-	result := ""
-	networks := kb.GetNetworks(Private, Public)
-
-	for _, n := range networks {
-		if result == "" {
-			result = fmt.Sprintf("%d", n.Vlan)
-		} else {
-			result = fmt.Sprintf("%s %d", result, n.Vlan)
-		}
-	}
-
-	return result
-}
-
-func getBridgePorts(kb KnowledgeBase) string {
-	result := ""
-	networks := kb.GetNetworks(Private, Public)
-
-	for _, n := range networks {
-		if n.Underlay {
-			continue
-		}
-
-		if result == "" {
-			result = fmt.Sprintf("vni%d", n.Vrf)
-		} else {
-			result = fmt.Sprintf("%s vni%d", result, n.Vrf)
-		}
 	}
 
 	return result

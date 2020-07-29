@@ -1,0 +1,13 @@
+# vxlan (networkid: bc830818-2df1-4904-8c40-4322296d393d)
+[Match]
+Name=vni3981
+
+[Link]
+MTUBytes=9000
+
+[Network]
+Bridge=bridge
+
+[BridgeVLAN]
+PVID=1000
+EgressUntagged=1000
