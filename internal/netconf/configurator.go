@@ -191,6 +191,14 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 			},
 			enabled: true,
 		},
+		{
+			unit:         systemdUnitEveboxAgent,
+			templateFile: tplEveboxAgent,
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+				return NewEveboxAgentServiceApplier(kb, v)
+			},
+			enabled: true,
+		},
 	}
 }
 
