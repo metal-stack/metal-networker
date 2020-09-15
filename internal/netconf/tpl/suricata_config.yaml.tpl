@@ -578,7 +578,7 @@ logging:
 
 # Linux high speed capture support
 af-packet:
-  - interface: {{ .DefaultRouteVrf }}
+  - interface: {{ .Interface }}
     # Number of receive threads. "auto" uses the number of cores
     #threads: auto
     # Default clusterid. AF_PACKET will load balance packets based on flow.
