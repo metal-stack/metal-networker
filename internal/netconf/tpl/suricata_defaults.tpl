@@ -16,7 +16,7 @@ SURCONF=/etc/suricata/suricata.yaml
 LISTENMODE=af-packet
 
 # Interface to listen on (for pcap mode)
-IFACE={{ .DefaultRouteVrf }}
+IFACE={{ .Interface }}
 
 # Queue number to listen on (for nfqueue mode)
 NFQUEUE="-q 0"
