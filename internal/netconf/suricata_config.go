@@ -1,6 +1,8 @@
 package netconf
 
 import (
+	"strings"
+
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
@@ -11,6 +13,7 @@ const TplSuricataConfig = "suricata_config.yaml.tpl"
 type SuricataConfigData struct {
 	Comment         string
 	DefaultRouteVrf string
+	Interface       string
 }
 
 // SuricataConfigValidator can validate configuration for suricata.
@@ -25,7 +28,8 @@ func NewSuricataConfigApplier(kb KnowledgeBase, tmpFile string) (net.Applier, er
 		return nil, err
 	}
 
-	data := SuricataUpdateData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf}
+	i := strings.Replace(defaultRouteVrf, "vrf", "vlan", 1)
+	data := SuricataConfigData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf, Interface: i}
 	validator := SuricataConfigValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil), nil
