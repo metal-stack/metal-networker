@@ -625,7 +625,7 @@ af-packet:
     # recv buffer size, increase value could improve performance
     # buffer-size: 32768
     # Set to yes to disable promiscuous mode
-    # disable-promisc: no
+    disable-promisc: yes
     # Choose checksum verification mode for the interface. At the moment
     # of the capture, some packets may be with an invalid checksum due to
     # offloading to the network card of the checksum computation.
@@ -652,6 +652,7 @@ af-packet:
   # Put default values here. These will be used for an interface that is not
   # in the list above.
   - interface: default
+    disable-promisc: yes
     #threads: auto
     #use-mmap: no
     #tpacket-v3: yes
@@ -687,6 +688,7 @@ pcap:
   # Put default values here
   - interface: default
     #checksum-checks: auto
+    promisc: no
 
 # Settings for reading pcap files
 pcap-file:
@@ -1670,6 +1672,7 @@ netmap:
    #copy-iface: eth2
    # Put default values here
  - interface: default
+   disable-promisc: yes
 
 # PF_RING configuration. for use with native PF_RING support
 # for more info see http://www.ntop.org/products/pf_ring/
