@@ -61,7 +61,7 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 	var result []SNAT
 
 	private := kb.getPrivateNetwork()
-	networks := kb.GetNetworks(Private, Public)
+	networks := kb.GetNetworks(PrivatePrimary, Public)
 
 	for _, n := range networks {
 		if !n.Nat {

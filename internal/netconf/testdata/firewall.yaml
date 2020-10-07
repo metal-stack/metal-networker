@@ -77,6 +77,25 @@ networks:
     underlay: false
     # Defines the tenant VRF id.
     vrf: 3981
+  # === Private shared networks to route to
+    # [IGNORED]
+  - asn: 4200003073
+    # [IGNORED in case of private network]
+    destinationprefixes: []
+    # Applied to the SVI (as /32)
+    ips:
+      - 10.0.18.2/22
+    # In case nat equals true, Source NAT via SVI is added.
+    nat: true
+    networkid: storage-net
+    # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
+    prefixes:
+      - 10.0.18.0/22
+    private: true
+    shared: true
+    underlay: false
+    # VRF id considered to define EVPN interfaces.
+    vrf: 3982
   # === Public networks to route to
     # [IGNORED]
   - asn: 4200003073

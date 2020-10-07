@@ -16,8 +16,10 @@ const (
 	VLANOffset = 1000
 	// Underlay represents the fabric network where infrastructure switches and routers are placed in.
 	Underlay NetworkType = iota
-	// Private represents the local machine network where all machines of a project are placed in.
-	Private
+	// PrivatePrimary represents the local machine network where all machines of a project are placed in.
+	PrivatePrimary
+	// PrivateShared represents a machine network that is allowed to be shared.
+	PrivateShared
 	// Public represents an external network a machine has access to.
 	Public
 )
@@ -61,6 +63,7 @@ type (
 		Networkid           string   `yaml:"networkid"`
 		Prefixes            []string `yaml:"prefixes"`
 		Private             bool     `yaml:"private"`
+		Shared              bool     `yaml:"shared"`
 		Underlay            bool     `yaml:"underlay"`
 		Vrf                 int      `yaml:"vrf"`
 		Vlan                int      `yaml:"vlan,omitempty"`
@@ -157,7 +160,7 @@ func (kb KnowledgeBase) containsAnyPublicNetwork() bool {
 }
 
 func (kb KnowledgeBase) containsSinglePrivate() bool {
-	return kb.containsSingleNetworkOf(Private)
+	return kb.containsSingleNetworkOf(PrivatePrimary)
 }
 
 func (kb KnowledgeBase) containsSingleUnderlay() bool {
@@ -189,8 +192,12 @@ func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
 	for _, t := range types {
 		for _, n := range kb.Networks {
 			switch t {
-			case Private:
-				if n.Private {
+			case PrivatePrimary:
+				if n.Private && !n.Shared {
+					result = append(result, n)
+				}
+			case PrivateShared:
+				if n.Private && n.Shared {
 					result = append(result, n)
 				}
 			case Underlay:
@@ -220,7 +227,7 @@ func (kb KnowledgeBase) isAnyNAT() bool {
 
 func (kb KnowledgeBase) getPrivateNetwork() Network {
 	// Safe access since a priory validation ensures there is exactly one.
-	return kb.GetNetworks(Private)[0]
+	return kb.GetNetworks(PrivatePrimary)[0]
 }
 
 func (kb KnowledgeBase) getUnderlayNetwork() Network {

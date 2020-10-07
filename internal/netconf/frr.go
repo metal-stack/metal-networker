@@ -110,20 +110,24 @@ func getPrefixes(networks ...Network) []string {
 func assembleVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
 
-	networks := kb.GetNetworks(Private, Public)
+	networks := kb.GetNetworks(PrivatePrimary, PrivateShared, Public)
 
 	for _, network := range networks {
 		var targets []Network
 
 		var prefixes []string
 
-		if network.Private {
-			// reach out from private into to public networks
-			targets = kb.GetNetworks(Public)
+		if network.Private && !network.Shared {
+			// reach out from private primary network into public networks and shared private networks
+			targets = kb.GetNetworks(Public, PrivateShared)
 			prefixes = getDestinationPrefixes(targets)
+		} else if network.Private && network.Shared {
+			// reach out from private shared networks into private primary network
+			targets = kb.GetNetworks(PrivatePrimary)
+			prefixes = getPrefixes(append(targets, network)...)
 		} else {
 			// reach out from public into private and other public networks
-			targets = kb.GetNetworks(Private)
+			targets = kb.GetNetworks(PrivatePrimary)
 			prefixes = getPrefixes(append(targets, network)...)
 		}
 

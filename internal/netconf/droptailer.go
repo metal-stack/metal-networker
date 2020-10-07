@@ -31,7 +31,7 @@ func NewDroptailerServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier
 }
 
 func getTenantVRFName(kb KnowledgeBase) (string, error) {
-	networks := kb.GetNetworks(Private)
+	networks := kb.GetNetworks(PrivatePrimary)
 	for _, network := range networks {
 		if network.Vrf != 0 {
 			vrf := fmt.Sprintf("vrf%d", network.Vrf)
