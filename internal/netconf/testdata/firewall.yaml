@@ -84,7 +84,7 @@ networks:
     destinationprefixes: []
     # Applied to the SVI (as /32)
     ips:
-      - 10.0.18.2/22
+      - 10.0.18.2
     # In case nat equals true, Source NAT via SVI is added.
     nat: true
     networkid: storage-net

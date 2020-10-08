@@ -22,7 +22,7 @@ func TestNewKnowledgeBase(t *testing.T) {
 
 	assert.Equal("firewall", d.Hostname)
 	assert.NotEmpty(d.Networks)
-	assert.Equal(4, len(d.Networks))
+	assert.Equal(5, len(d.Networks))
 
 	// private network
 	n := d.Networks[0]
@@ -31,10 +31,21 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal(1, len(n.Prefixes))
 	assert.Equal("10.0.16.0/22", n.Prefixes[0])
 	assert.True(n.Private)
+	assert.False(n.Shared)
 	assert.Equal(3981, n.Vrf)
 
-	// public networks
+	// private shared network
 	n = d.Networks[1]
+	assert.Equal(1, len(n.Ips))
+	assert.Equal("10.0.18.2", n.Ips[0])
+	assert.Equal(1, len(n.Prefixes))
+	assert.Equal("10.0.18.0/22", n.Prefixes[0])
+	assert.True(n.Private)
+	assert.True(n.Shared)
+	assert.Equal(3982, n.Vrf)
+
+	// public networks
+	n = d.Networks[2]
 	assert.Equal(1, len(n.Destinationprefixes))
 	assert.Equal(AllZerosCIDR, n.Destinationprefixes[0])
 	assert.Equal(1, len(n.Ips))
@@ -48,7 +59,7 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal(104009, n.Vrf)
 
 	// underlay network
-	n = d.Networks[2]
+	n = d.Networks[3]
 	assert.Equal(int64(4200003073), n.Asn)
 	assert.Equal(1, len(n.Ips))
 	assert.Equal("10.1.0.1", n.Ips[0])
@@ -57,7 +68,7 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.True(n.Underlay)
 
 	// public network mpls
-	n = d.Networks[3]
+	n = d.Networks[4]
 	assert.Equal(1, len(n.Destinationprefixes))
 	assert.Equal("100.127.1.0/24", n.Destinationprefixes[0])
 	assert.Equal(1, len(n.Ips))
