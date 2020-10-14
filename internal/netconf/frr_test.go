@@ -17,6 +17,12 @@ func TestFrrConfigApplier(t *testing.T) {
 		tpl              string
 	}{
 		{
+			input:            "testdata/firewall_shared.yaml",
+			expectedOutput:   "testdata/frr.conf.firewall_shared",
+			configuratorType: Firewall,
+			tpl:              TplFirewallFRR,
+		},
+		{
 			input:            "testdata/firewall.yaml",
 			expectedOutput:   "testdata/frr.conf.firewall",
 			configuratorType: Firewall,

@@ -99,9 +99,9 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 		return errors.New("expectation at least one network is present failed")
 	}
 
-	if !kb.containsSinglePrivate() {
-		return errors.New("expectation exactly one 'private: true' network is present failed")
-	}
+	// if !kb.containsSinglePrivate() {
+	// 	return errors.New("expectation exactly one 'private: true' network is present failed")
+	// }
 
 	if kind == Firewall {
 		if !kb.allNonUnderlayNetworksHaveNonZeroVRF() {
@@ -226,8 +226,11 @@ func (kb KnowledgeBase) isAnyNAT() bool {
 }
 
 func (kb KnowledgeBase) getPrivateNetwork() Network {
-	// Safe access since a priory validation ensures there is exactly one.
-	return kb.GetNetworks(PrivatePrimary)[0]
+	ns := kb.GetNetworks(PrivatePrimary)
+	if len(ns) > 0 {
+		return ns[0]
+	}
+	return kb.GetNetworks(PrivateShared)[0]
 }
 
 func (kb KnowledgeBase) getUnderlayNetwork() Network {

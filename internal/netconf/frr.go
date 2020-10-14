@@ -119,8 +119,12 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 
 		if network.Private && !network.Shared {
 			// reach out from private primary network into public networks and shared private networks
-			targets = kb.GetNetworks(Public, PrivateShared)
-			prefixes = getDestinationPrefixes(targets)
+			publicTargets := kb.GetNetworks(Public)
+			prefixes = getDestinationPrefixes(publicTargets)
+			privateSharedTargets := kb.GetNetworks(PrivateShared)
+			prefixes = append(prefixes, getPrefixes(privateSharedTargets...)...)
+			targets = append(targets, publicTargets...)
+			targets = append(targets, privateSharedTargets...)
 		} else if network.Private && network.Shared {
 			// reach out from private shared networks into private primary network
 			targets = kb.GetNetworks(PrivatePrimary)
@@ -132,7 +136,7 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 		}
 
 		vrfName := "vrf" + strconv.Itoa(network.Vrf)
-		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb)
+		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb, network.Shared)
 		vrf := VRF{
 			Identity: Identity{
 				ID: network.Vrf,
@@ -228,7 +232,7 @@ func buildIPPrefixListSpecs(seq int, prefix string) []string {
 	return result
 }
 
-func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb KnowledgeBase) []IPPrefixList {
+func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb KnowledgeBase, shared bool) []IPPrefixList {
 	var result []IPPrefixList
 
 	private := kb.getPrivateNetwork()
@@ -241,7 +245,7 @@ func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb Kn
 		specs := buildIPPrefixListSpecs(seed, prefix)
 
 		for _, spec := range specs {
-			name := namePrefixList(vrfName, private, prefix)
+			name := namePrefixList(vrfName, private, prefix, shared)
 			prefixList := IPPrefixList{
 				Name: name,
 				Spec: spec,
@@ -255,11 +259,11 @@ func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb Kn
 	return result
 }
 
-func namePrefixList(vrfName string, private Network, prefix string) string {
+func namePrefixList(vrfName string, private Network, prefix string, shared bool) string {
 	name := vrfName + "-import-prefixes"
 
 	for _, privatePrefix := range private.Prefixes {
-		if privatePrefix == prefix {
+		if privatePrefix == prefix && !shared {
 			// tenant private network ip addresses must not be visible in the public VRFs to avoid blown up routing tables
 			name += IPPrefixListNoExportSuffix
 		}
