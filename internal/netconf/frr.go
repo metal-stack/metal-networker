@@ -63,7 +63,7 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 			VRFs:          assembleVRFs(kb),
 		}
 	case Machine:
-		net := kb.getPrivateNetwork()
+		net := kb.getPrivatePrimaryNetwork()
 		data = MachineFRRData{
 			CommonFRRData: newCommonFRRData(net, kb),
 		}
@@ -110,6 +110,7 @@ func getPrefixes(networks ...Network) []string {
 func assembleVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
 
+	privatePrimary := kb.GetNetworks(PrivatePrimary)[0]
 	networks := kb.GetNetworks(PrivatePrimary, PrivateShared, Public)
 
 	for _, network := range networks {
@@ -117,7 +118,8 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 
 		var prefixes []string
 
-		if network.Private && !network.Shared {
+		isPrimary := network.Networkid == privatePrimary.Networkid
+		if isPrimary {
 			// reach out from private primary network into public networks and shared private networks
 			publicTargets := kb.GetNetworks(Public)
 			prefixes = getDestinationPrefixes(publicTargets)
@@ -235,7 +237,7 @@ func buildIPPrefixListSpecs(seq int, prefix string) []string {
 func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb KnowledgeBase, shared bool) []IPPrefixList {
 	var result []IPPrefixList
 
-	private := kb.getPrivateNetwork()
+	private := kb.getPrivatePrimaryNetwork()
 
 	for _, prefix := range prefixes {
 		if len(prefix) == 0 {

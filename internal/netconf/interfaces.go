@@ -41,7 +41,7 @@ func NewIfacesApplier(kind BareMetalType, kb KnowledgeBase) IfacesApplier {
 		d.Loopback.IPs = underlay.Ips
 		d.EVPNIfaces = getEVPNIfaces(kb)
 	case Machine:
-		private := kb.getPrivateNetwork()
+		private := kb.getPrivatePrimaryNetwork()
 		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", private.Networkid)
 		// Ensure that the ips of the private network are the first ips at the loopback interface.
 		// The first lo IP is used within network communication and other systems depend on seeing the first private ip.

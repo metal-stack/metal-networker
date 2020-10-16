@@ -16,7 +16,9 @@ const (
 	VLANOffset = 1000
 	// Underlay represents the fabric network where infrastructure switches and routers are placed in.
 	Underlay NetworkType = iota
-	// PrivatePrimary represents the local machine network where all machines of a project are placed in.
+	// Private represents the privte networks a machine is connected to.
+	Private
+	// PrivatePrimary represents the local machine network where all machines of a project are placed in. This might be a shared network.
 	PrivatePrimary
 	// PrivateShared represents a machine network that is allowed to be shared.
 	PrivateShared
@@ -99,9 +101,9 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 		return errors.New("expectation at least one network is present failed")
 	}
 
-	// if !kb.containsSinglePrivate() {
-	// 	return errors.New("expectation exactly one 'private: true' network is present failed")
-	// }
+	if !kb.containsSinglePrivatePrimary() {
+		return errors.New("expectation exactly one 'private: true' network is present failed")
+	}
 
 	if kind == Firewall {
 		if !kb.allNonUnderlayNetworksHaveNonZeroVRF() {
@@ -124,12 +126,12 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 			}
 		}
 
-		if kb.isAnyNAT() && len(kb.getPrivateNetwork().Prefixes) == 0 {
+		if kb.isAnyNAT() && len(kb.getPrivatePrimaryNetwork().Prefixes) == 0 {
 			return errors.New("private network must not lack prefixes since nat is required")
 		}
 	}
 
-	net := kb.getPrivateNetwork()
+	net := kb.getPrivatePrimaryNetwork()
 
 	if kind == Firewall {
 		net = kb.getUnderlayNetwork()
@@ -159,7 +161,7 @@ func (kb KnowledgeBase) containsAnyPublicNetwork() bool {
 	return len(kb.GetNetworks(Public)) > 0
 }
 
-func (kb KnowledgeBase) containsSinglePrivate() bool {
+func (kb KnowledgeBase) containsSinglePrivatePrimary() bool {
 	return kb.containsSingleNetworkOf(PrivatePrimary)
 }
 
@@ -189,15 +191,32 @@ func (kb KnowledgeBase) CollectIPs(types ...NetworkType) []string {
 func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
 	var result []Network
 
+	var primaryPrivate *Network
+	for _, n := range kb.Networks {
+		if n.Private && !n.Shared {
+			primaryPrivate = &n
+			break
+		}
+	}
+
+	if primaryPrivate == nil {
+		for _, n := range kb.Networks {
+			if n.Private && n.Shared {
+				primaryPrivate = &n
+				break
+			}
+		}
+	}
+
 	for _, t := range types {
 		for _, n := range kb.Networks {
 			switch t {
 			case PrivatePrimary:
-				if n.Private && !n.Shared {
+				if primaryPrivate != nil && n.Networkid == primaryPrivate.Networkid {
 					result = append(result, n)
 				}
 			case PrivateShared:
-				if n.Private && n.Shared {
+				if n.Private && n.Shared && (primaryPrivate != nil && n.Networkid != primaryPrivate.Networkid) {
 					result = append(result, n)
 				}
 			case Underlay:
@@ -225,12 +244,8 @@ func (kb KnowledgeBase) isAnyNAT() bool {
 	return false
 }
 
-func (kb KnowledgeBase) getPrivateNetwork() Network {
-	ns := kb.GetNetworks(PrivatePrimary)
-	if len(ns) > 0 {
-		return ns[0]
-	}
-	return kb.GetNetworks(PrivateShared)[0]
+func (kb KnowledgeBase) getPrivatePrimaryNetwork() Network {
+	return kb.GetNetworks(PrivatePrimary)[0]
 }
 
 func (kb KnowledgeBase) getUnderlayNetwork() Network {

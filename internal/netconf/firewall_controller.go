@@ -27,11 +27,11 @@ func NewFirewallControllerServiceApplier(kb KnowledgeBase, v net.Validator) (net
 		return nil, err
 	}
 
-	if len(kb.getPrivateNetwork().Ips) == 0 {
+	if len(kb.getPrivatePrimaryNetwork().Ips) == 0 {
 		return nil, fmt.Errorf("no private IP found useable for the firewall controller")
 	}
-	serviceIP := kb.getPrivateNetwork().Ips[0]
-	privateVrfID := kb.getPrivateNetwork().Vrf
+	serviceIP := kb.getPrivatePrimaryNetwork().Ips[0]
+	privateVrfID := kb.getPrivatePrimaryNetwork().Vrf
 	data := FirewallControllerData{
 		Comment:         versionHeader(kb.Machineuuid),
 		DefaultRouteVrf: defaultRouteVrf,

@@ -83,9 +83,9 @@ func TestNewKnowledgeBase(t *testing.T) {
 
 func stubKnowledgeBase() KnowledgeBase {
 	return KnowledgeBase{Networks: []Network{
-		{Private: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 1011209},
-		{Underlay: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 0},
-		{Private: false, Underlay: false, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: 1011209, Vrf: 1011209},
+		{Private: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 1011209, Networkid: "private"},
+		{Underlay: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 0, Networkid: "underlay"},
+		{Private: false, Underlay: false, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: 1011209, Vrf: 1011209, Networkid: "underlay"},
 	}, Nics: []NIC{{Mac: "00:00:00:00:00:00"}}}
 }
 
@@ -115,9 +115,9 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 		{expectedErrMsg: "expectation exactly one underlay network is present failed",
 			kb:    maskUnderlayNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
-		// {expectedErrMsg: "expectation exactly one 'private: true' network is present failed",
-		// 	kb:    maskPrivateNetworks(stubKnowledgeBase()),
-		// 	kinds: []BareMetalType{Firewall, Machine}},
+		{expectedErrMsg: "expectation exactly one 'private: true' network is present failed",
+			kb:    maskPrivateNetworks(stubKnowledgeBase()),
+			kinds: []BareMetalType{Firewall, Machine}},
 		{expectedErrMsg: "'asn' of private (machine) resp. underlay (firewall) network must not be missing",
 			kb:    stripPrivateNetworkASN(stubKnowledgeBase()),
 			kinds: []BareMetalType{Machine}},

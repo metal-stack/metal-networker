@@ -60,7 +60,7 @@ func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator) net.App
 func getSNAT(kb KnowledgeBase) []SNAT {
 	var result []SNAT
 
-	private := kb.getPrivateNetwork()
+	private := kb.getPrivatePrimaryNetwork()
 	networks := kb.GetNetworks(PrivatePrimary, PrivateShared, Public)
 
 	for _, n := range networks {
