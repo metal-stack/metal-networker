@@ -115,17 +115,18 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 
 	for _, network := range networks {
 		var targets []Network
-
 		var prefixes []string
 
-		isPrimary := network.Networkid == privatePrimary.Networkid
-		if isPrimary {
-			// reach out from private primary network into public networks and shared private networks
+		isPrivatePrimary := network.Networkid == privatePrimary.Networkid
+		if isPrivatePrimary {
+			// reach out from private primary network into public networks
 			publicTargets := kb.GetNetworks(Public)
 			prefixes = getDestinationPrefixes(publicTargets)
+			targets = append(targets, publicTargets...)
+
+			// reach out from private primary network into shared private networks
 			privateSharedTargets := kb.GetNetworks(PrivateShared)
 			prefixes = append(prefixes, getPrefixes(privateSharedTargets...)...)
-			targets = append(targets, publicTargets...)
 			targets = append(targets, privateSharedTargets...)
 		} else if network.Private && network.Shared {
 			// reach out from private shared networks into private primary network
