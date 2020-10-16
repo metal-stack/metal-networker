@@ -83,9 +83,9 @@ func TestNewKnowledgeBase(t *testing.T) {
 
 func stubKnowledgeBase() KnowledgeBase {
 	return KnowledgeBase{Networks: []Network{
-		{Private: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 1011209, Networkid: "private"},
-		{Underlay: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 0, Networkid: "underlay"},
-		{Private: false, Underlay: false, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: 1011209, Vrf: 1011209, Networkid: "underlay"},
+		{Private: true, PrivatePrimary: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 1011209, Networkid: "private"},
+		{Underlay: true, PrivatePrimary: false, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 0, Networkid: "underlay"},
+		{Private: false, PrivatePrimary: false, Underlay: false, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: 1011209, Vrf: 1011209, Networkid: "underlay"},
 	}, Nics: []NIC{{Mac: "00:00:00:00:00:00"}}}
 }
 
@@ -240,7 +240,7 @@ func stripNetworks(kb KnowledgeBase) KnowledgeBase {
 }
 
 func maskUnderlayNetworks(kb KnowledgeBase) KnowledgeBase {
-	for i := 0; i < len(kb.Networks); i++ {
+	for i := range kb.Networks {
 		kb.Networks[i].Underlay = false
 		// avoid to run into validation error for absent vrf
 		kb.Networks[i].Vrf = 10112009
@@ -249,8 +249,8 @@ func maskUnderlayNetworks(kb KnowledgeBase) KnowledgeBase {
 }
 
 func maskPrivateNetworks(kb KnowledgeBase) KnowledgeBase {
-	for i := 0; i < len(kb.Networks); i++ {
-		kb.Networks[i].Private = false
+	for i := range kb.Networks {
+		kb.Networks[i].PrivatePrimary = false
 	}
 	return kb
 }

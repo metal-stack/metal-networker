@@ -73,6 +73,7 @@ networks:
     prefixes:
       - 10.0.16.0/22
     private: true
+    privateprimary: true
     # [IGNORED in case of private network]
     underlay: false
     # Defines the tenant VRF id.
@@ -92,6 +93,7 @@ networks:
     prefixes:
       - 10.0.18.0/22
     private: true
+    privateprimary: false
     shared: true
     underlay: false
     # VRF id considered to define EVPN interfaces.
@@ -113,6 +115,7 @@ networks:
       - 185.1.2.0/24
       - 185.27.0.0/22
     private: false
+    privateprimary: false
     underlay: false
     # VRF id considered to define EVPN interfaces.
     vrf: 104009
@@ -130,6 +133,7 @@ networks:
     prefixes:
       - 10.0.12.0/22
     private: false
+    privateprimary: false
     underlay: true
     # [IGNORED] Underlay runs in default VRF.
     vrf: 0

@@ -65,6 +65,7 @@ type (
 		Networkid           string   `yaml:"networkid"`
 		Prefixes            []string `yaml:"prefixes"`
 		Private             bool     `yaml:"private"`
+		PrivatePrimary      bool     `yaml:"privateprimary"`
 		Shared              bool     `yaml:"shared"`
 		Underlay            bool     `yaml:"underlay"`
 		Vrf                 int      `yaml:"vrf"`
@@ -193,7 +194,7 @@ func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
 
 	var privatePrimary *Network
 	for _, n := range kb.Networks {
-		if n.Private && !n.Shared {
+		if n.PrivatePrimary {
 			privatePrimary = &n
 			break
 		}
@@ -204,13 +205,8 @@ func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
 	var publicNetworks []Network
 
 	for _, n := range kb.Networks {
-		if n.Private && n.Shared {
-			if privatePrimary == nil {
-				net := n
-				privatePrimary = &net
-			} else {
-				privateSharedNetworks = append(privateSharedNetworks, n)
-			}
+		if n.Private && n.Shared && (privatePrimary != nil && privatePrimary.Networkid != n.Networkid) {
+			privateSharedNetworks = append(privateSharedNetworks, n)
 		} else if n.Underlay {
 			underlayNetworks = append(underlayNetworks, n)
 		} else if !n.Underlay && !n.Private {
