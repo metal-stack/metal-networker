@@ -16,7 +16,7 @@ const (
 	VLANOffset = 1000
 	// Underlay represents the fabric network where infrastructure switches and routers are placed in.
 	Underlay NetworkType = iota
-	// Private represents the privte networks a machine is connected to.
+	// Private represents the private networks a machine is connected to.
 	Private
 	// PrivatePrimary represents the local machine network where all machines of a project are placed in. This might be a shared network.
 	PrivatePrimary
@@ -191,43 +191,45 @@ func (kb KnowledgeBase) CollectIPs(types ...NetworkType) []string {
 func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
 	var result []Network
 
-	var primaryPrivate *Network
+	var privatePrimary *Network
 	for _, n := range kb.Networks {
 		if n.Private && !n.Shared {
-			primaryPrivate = &n
+			privatePrimary = &n
 			break
 		}
 	}
 
-	if primaryPrivate == nil {
-		for _, n := range kb.Networks {
-			if n.Private && n.Shared {
-				primaryPrivate = &n
-				break
+	var privateSharedNetworks []Network
+	var underlayNetworks []Network
+	var publicNetworks []Network
+
+	for _, n := range kb.Networks {
+		if n.Private && n.Shared {
+			if privatePrimary == nil {
+				net := n
+				privatePrimary = &net
+			} else {
+				privateSharedNetworks = append(privateSharedNetworks, n)
 			}
+		} else if n.Underlay {
+			underlayNetworks = append(underlayNetworks, n)
+		} else if !n.Underlay && !n.Private {
+			publicNetworks = append(publicNetworks, n)
 		}
 	}
 
 	for _, t := range types {
-		for _, n := range kb.Networks {
-			switch t {
-			case PrivatePrimary:
-				if primaryPrivate != nil && n.Networkid == primaryPrivate.Networkid {
-					result = append(result, n)
-				}
-			case PrivateShared:
-				if n.Private && n.Shared && (primaryPrivate != nil && n.Networkid != primaryPrivate.Networkid) {
-					result = append(result, n)
-				}
-			case Underlay:
-				if n.Underlay {
-					result = append(result, n)
-				}
-			case Public:
-				if !n.Underlay && !n.Private {
-					result = append(result, n)
-				}
+		switch t {
+		case PrivatePrimary:
+			if privatePrimary != nil {
+				result = append(result, *privatePrimary)
 			}
+		case PrivateShared:
+			result = append(result, privateSharedNetworks...)
+		case Underlay:
+			result = append(result, underlayNetworks...)
+		case Public:
+			result = append(result, publicNetworks...)
 		}
 	}
 
