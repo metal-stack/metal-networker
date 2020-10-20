@@ -3,22 +3,24 @@ package netconf
 import (
 	"testing"
 
+	"github.com/metal-stack/metal-go/api/models"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestChronyServiceEnabler_Enable(t *testing.T) {
 	assert := assert.New(t)
 
-	network := Network{Private: false, Underlay: false, Destinationprefixes: []string{AllZerosCIDR}, Vrf: 104009}
+	vrf := int64(104009)
+	network := models.V1MachineNetwork{Networktype: &External, Destinationprefixes: []string{AllZerosCIDR}, Vrf: &vrf}
 	tests := []struct {
 		kb              KnowledgeBase
 		vrf             string
 		isErrorExpected bool
 	}{
-		{kb: KnowledgeBase{Networks: []Network{network}},
+		{kb: KnowledgeBase{Networks: []models.V1MachineNetwork{network}},
 			vrf:             "vrf104009",
 			isErrorExpected: false},
-		{kb: KnowledgeBase{Networks: []Network{}},
+		{kb: KnowledgeBase{Networks: []models.V1MachineNetwork{}},
 			vrf:             "",
 			isErrorExpected: true},
 	}

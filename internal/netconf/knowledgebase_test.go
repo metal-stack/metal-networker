@@ -1,8 +1,10 @@
 package netconf
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/metal-stack/metal-go/api/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,9 +32,9 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal("10.0.16.2", n.Ips[0])
 	assert.Equal(1, len(n.Prefixes))
 	assert.Equal("10.0.16.0/22", n.Prefixes[0])
-	assert.True(n.Private)
-	assert.False(n.Shared)
-	assert.Equal(3981, n.Vrf)
+	assert.True(*n.Private)
+	assert.False(n.Networktype.Shared)
+	assert.Equal(int64(3981), *n.Vrf)
 
 	// private shared network
 	n = d.Networks[1]
@@ -40,9 +42,9 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal("10.0.18.2", n.Ips[0])
 	assert.Equal(1, len(n.Prefixes))
 	assert.Equal("10.0.18.0/22", n.Prefixes[0])
-	assert.True(n.Private)
-	assert.True(n.Shared)
-	assert.Equal(3982, n.Vrf)
+	assert.True(*n.Private)
+	assert.True(n.Networktype.Shared)
+	assert.Equal(int64(3982), *n.Vrf)
 
 	// public networks
 	n = d.Networks[2]
@@ -53,19 +55,19 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal(2, len(n.Prefixes))
 	assert.Equal("185.1.2.0/24", n.Prefixes[0])
 	assert.Equal("185.27.0.0/22", n.Prefixes[1])
-	assert.False(n.Underlay)
-	assert.False(n.Private)
-	assert.True(n.Nat)
-	assert.Equal(104009, n.Vrf)
+	assert.False(*n.Underlay)
+	assert.False(*n.Private)
+	assert.True(*n.Nat)
+	assert.Equal(int64(104009), *n.Vrf)
 
 	// underlay network
 	n = d.Networks[3]
-	assert.Equal(int64(4200003073), n.Asn)
+	assert.Equal(int64(4200003073), *n.Asn)
 	assert.Equal(1, len(n.Ips))
 	assert.Equal("10.1.0.1", n.Ips[0])
 	assert.Equal(1, len(n.Prefixes))
 	assert.Equal("10.0.12.0/22", n.Prefixes[0])
-	assert.True(n.Underlay)
+	assert.True(*n.Underlay)
 
 	// public network mpls
 	n = d.Networks[4]
@@ -75,23 +77,32 @@ func TestNewKnowledgeBase(t *testing.T) {
 	assert.Equal("100.127.129.1", n.Ips[0])
 	assert.Equal(1, len(n.Prefixes))
 	assert.Equal("100.127.129.0/24", n.Prefixes[0])
-	assert.False(n.Underlay)
-	assert.False(n.Private)
-	assert.True(n.Nat)
-	assert.Equal(104010, n.Vrf)
+	assert.False(*n.Underlay)
+	assert.False(*n.Private)
+	assert.True(*n.Nat)
+	assert.Equal(int64(104010), *n.Vrf)
 }
 
+var (
+	boolTrue  = true
+	boolFalse = false
+	asn0      = int64(0)
+	asn1      = int64(1011209)
+	vrf0      = int64(0)
+	vrf1      = int64(1011209)
+)
+
 func stubKnowledgeBase() KnowledgeBase {
-	return KnowledgeBase{Networks: []Network{
-		{Private: true, PrivatePrimary: true, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 1011209, Networkid: "private"},
-		{Underlay: true, PrivatePrimary: false, Ips: []string{"10.0.0.1"}, Asn: 1011209, Vrf: 0, Networkid: "underlay"},
-		{Private: false, PrivatePrimary: false, Underlay: false, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: 1011209, Vrf: 1011209, Networkid: "underlay"},
+	privateNetID := "private"
+	underlayNetID := "underlay"
+	return KnowledgeBase{Networks: []models.V1MachineNetwork{
+		{Private: &boolTrue, Networktype: &PrivatePrimaryUnshared, Ips: []string{"10.0.0.1"}, Asn: &asn1, Vrf: &vrf1, Networkid: &privateNetID},
+		{Underlay: &boolTrue, Networktype: &Underlay, Ips: []string{"10.0.0.1"}, Asn: &asn1, Vrf: &vrf0, Networkid: &underlayNetID},
+		{Private: &boolFalse, Networktype: &External, Underlay: &boolFalse, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: &asn1, Vrf: &vrf1, Networkid: &underlayNetID},
 	}, Nics: []NIC{{Mac: "00:00:00:00:00:00"}}}
 }
 
 func TestKnowledgeBase_Validate(t *testing.T) {
-	assert := assert.New(t)
-
 	tests := []struct {
 		expectedErrMsg string
 		kb             KnowledgeBase
@@ -116,7 +127,7 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 			kb:    maskUnderlayNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "expectation exactly one 'private: true' network is present failed",
-			kb:    maskPrivateNetworks(stubKnowledgeBase()),
+			kb:    maskPrivatePrimaryNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine}},
 		{expectedErrMsg: "'asn' of private (machine) resp. underlay (firewall) network must not be missing",
 			kb:    stripPrivateNetworkASN(stubKnowledgeBase()),
@@ -144,14 +155,16 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 			kinds: []BareMetalType{Firewall, Machine}},
 	}
 
-	for _, test := range tests {
+	for i, test := range tests {
 		for _, kind := range test.kinds {
-			actualErr := test.kb.Validate(kind)
-			if test.expectedErrMsg == "" {
-				assert.NoError(actualErr)
-				continue
-			}
-			assert.EqualError(actualErr, test.expectedErrMsg, "expected error: %s", test.expectedErrMsg)
+			t.Run(fmt.Sprintf("testcase %d - kind %v", i, kind), func(t *testing.T) {
+				actualErr := test.kb.Validate(kind)
+				if test.expectedErrMsg == "" {
+					assert.NoError(t, actualErr)
+					return
+				}
+				assert.EqualError(t, actualErr, test.expectedErrMsg, "expected error: %s", test.expectedErrMsg)
+			})
 		}
 	}
 }
@@ -159,10 +172,11 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 func stripVRFValueOfNonUnderlayNetworks(kb KnowledgeBase) KnowledgeBase {
 	for i := 0; i < len(kb.Networks); i++ {
 		// underlay runs in default vrf and no name is required
-		if kb.Networks[i].Underlay {
+		if kb.Networks[i].Underlay != nil && *kb.Networks[i].Underlay {
 			continue
 		}
-		kb.Networks[i].Vrf = 0
+		vrf := int64(0)
+		kb.Networks[i].Vrf = &vrf
 	}
 	return kb
 }
@@ -171,9 +185,9 @@ func stripVRFValueOfNonUnderlayNetworks(kb KnowledgeBase) KnowledgeBase {
 // Destination prefixes are used to import routes from the public network.
 // Without route import there is no communication into that public network.
 func stripDestinationPrefixesFromPublicNetworks(kb KnowledgeBase) KnowledgeBase {
-	kb.Networks[0].Nat = true
+	kb.Networks[0].Nat = &boolTrue
 	for i := 0; i < len(kb.Networks); i++ {
-		if !kb.Networks[i].Underlay && !kb.Networks[i].Private {
+		if kb.Networks[i].Underlay != nil && !*kb.Networks[i].Underlay && kb.Networks[i].Private != nil && !*kb.Networks[i].Private {
 			kb.Networks[i].Destinationprefixes = []string{}
 		}
 	}
@@ -181,9 +195,9 @@ func stripDestinationPrefixesFromPublicNetworks(kb KnowledgeBase) KnowledgeBase 
 }
 
 func setupIllegalNat(kb KnowledgeBase) KnowledgeBase {
-	kb.Networks[0].Nat = true
+	kb.Networks[0].Nat = &boolTrue
 	for i := 0; i < len(kb.Networks); i++ {
-		if kb.Networks[i].Private {
+		if kb.Networks[i].Private != nil && *kb.Networks[i].Private {
 			kb.Networks[i].Prefixes = []string{}
 		}
 	}
@@ -211,8 +225,8 @@ func stripNICs(kb KnowledgeBase) KnowledgeBase {
 
 func stripUnderlayNetworkASN(kb KnowledgeBase) KnowledgeBase {
 	for i := 0; i < len(kb.Networks); i++ {
-		if kb.Networks[i].Underlay {
-			kb.Networks[i].Asn = 0
+		if kb.Networks[i].Underlay != nil && *kb.Networks[i].Underlay {
+			kb.Networks[i].Asn = &asn0
 		}
 	}
 	return kb
@@ -220,8 +234,8 @@ func stripUnderlayNetworkASN(kb KnowledgeBase) KnowledgeBase {
 
 func stripPrivateNetworkASN(kb KnowledgeBase) KnowledgeBase {
 	for i := 0; i < len(kb.Networks); i++ {
-		if kb.Networks[i].Private {
-			kb.Networks[i].Asn = 0
+		if kb.Networks[i].Private != nil && *kb.Networks[i].Private {
+			kb.Networks[i].Asn = &asn0
 		}
 	}
 	return kb
@@ -235,22 +249,25 @@ func stripIPs(kb KnowledgeBase) KnowledgeBase {
 }
 
 func stripNetworks(kb KnowledgeBase) KnowledgeBase {
-	kb.Networks = []Network{}
+	kb.Networks = []models.V1MachineNetwork{}
 	return kb
 }
 
 func maskUnderlayNetworks(kb KnowledgeBase) KnowledgeBase {
-	for i := range kb.Networks {
-		kb.Networks[i].Underlay = false
-		// avoid to run into validation error for absent vrf
-		kb.Networks[i].Vrf = 10112009
+	for i, n := range kb.Networks {
+		if n.Networktype != nil && *n.Networktype == Underlay {
+			kb.Networks[i].Underlay = &boolFalse
+			kb.Networks[i].Networktype = &PrivateSecondaryShared
+			// avoid to run into validation error for absent vrf
+			kb.Networks[i].Vrf = &vrf1
+		}
 	}
 	return kb
 }
 
-func maskPrivateNetworks(kb KnowledgeBase) KnowledgeBase {
+func maskPrivatePrimaryNetworks(kb KnowledgeBase) KnowledgeBase {
 	for i := range kb.Networks {
-		kb.Networks[i].PrivatePrimary = false
+		kb.Networks[i].Networktype = &PrivatePrimaryUnshared
 	}
 	return kb
 }

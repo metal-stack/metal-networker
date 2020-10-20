@@ -37,15 +37,15 @@ func NewIfacesApplier(kind BareMetalType, kb KnowledgeBase) IfacesApplier {
 	switch kind {
 	case Firewall:
 		underlay := kb.getUnderlayNetwork()
-		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", underlay.Networkid)
+		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", *underlay.Networkid)
 		d.Loopback.IPs = underlay.Ips
 		d.EVPNIfaces = getEVPNIfaces(kb)
 	case Machine:
 		private := kb.getPrivatePrimaryNetwork()
-		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", private.Networkid)
+		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", *private.Networkid)
 		// Ensure that the ips of the private network are the first ips at the loopback interface.
 		// The first lo IP is used within network communication and other systems depend on seeing the first private ip.
-		d.Loopback.IPs = append(private.Ips, kb.CollectIPs(Public)...)
+		d.Loopback.IPs = append(private.Ips, kb.CollectIPs(External)...)
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
@@ -127,20 +127,21 @@ func getEVPNIfaces(kb KnowledgeBase) []EVPNIface {
 
 	vrfTableOffset := 1000
 	for i, n := range kb.Networks {
-		if n.Underlay {
+		if n.Underlay != nil && *n.Underlay {
 			continue
 		}
 
+		vrf := int(*n.Vrf)
 		e := EVPNIface{}
 		e.Comment = versionHeader(kb.Machineuuid)
-		e.SVI.Comment = fmt.Sprintf("# svi (networkid: %s)", n.Networkid)
-		e.SVI.VLANID = n.Vlan
+		e.SVI.Comment = fmt.Sprintf("# svi (networkid: %s)", *n.Networkid)
+		e.SVI.VLANID = VLANOffset + i
 		e.SVI.Addresses = n.Ips
-		e.VXLAN.Comment = fmt.Sprintf("# vxlan (networkid: %s)", n.Networkid)
-		e.VXLAN.ID = n.Vrf
+		e.VXLAN.Comment = fmt.Sprintf("# vxlan (networkid: %s)", *n.Networkid)
+		e.VXLAN.ID = vrf
 		e.VXLAN.TunnelIP = kb.getUnderlayNetwork().Ips[0]
-		e.VRF.Comment = fmt.Sprintf("# vrf (networkid: %s)", n.Networkid)
-		e.VRF.ID = n.Vrf
+		e.VRF.Comment = fmt.Sprintf("# vrf (networkid: %s)", *n.Networkid)
+		e.VRF.ID = vrf
 		e.VRF.Table = vrfTableOffset + i
 		result = append(result, e)
 	}

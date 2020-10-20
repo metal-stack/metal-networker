@@ -31,12 +31,10 @@ func NewDroptailerServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier
 }
 
 func getTenantVRFName(kb KnowledgeBase) (string, error) {
-	networks := kb.GetNetworks(PrivatePrimary)
-	for _, network := range networks {
-		if network.Vrf != 0 {
-			vrf := fmt.Sprintf("vrf%d", network.Vrf)
-			return vrf, nil
-		}
+	primary := kb.getPrivatePrimaryNetwork()
+	if primary.Vrf != nil && *primary.Vrf != 0 {
+		vrf := fmt.Sprintf("vrf%d", *primary.Vrf)
+		return vrf, nil
 	}
 
 	return "", fmt.Errorf("there is no private tenant network")

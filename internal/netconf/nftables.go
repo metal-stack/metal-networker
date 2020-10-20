@@ -61,17 +61,17 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 	var result []SNAT
 
 	private := kb.getPrivatePrimaryNetwork()
-	networks := kb.GetNetworks(PrivatePrimary, PrivateShared, Public)
+	networks := kb.GetNetworks(PrivatePrimaryUnshared, PrivatePrimaryShared, PrivateSecondaryShared, External)
 
 	for _, n := range networks {
-		if !n.Nat {
+		if n.Nat != nil && !*n.Nat {
 			continue
 		}
 
 		var sources []string
 		sources = append(sources, private.Prefixes...)
-		cmt := fmt.Sprintf("snat (networkid: %s)", n.Networkid)
-		svi := fmt.Sprintf("vlan%d", n.Vrf)
+		cmt := fmt.Sprintf("snat (networkid: %s)", *n.Networkid)
+		svi := fmt.Sprintf("vlan%d", *n.Vrf)
 
 		s := SNAT{
 			Comment:      cmt,

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 
+	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/v"
 
 	"gopkg.in/yaml.v3"
@@ -14,35 +15,22 @@ import (
 const (
 	// VLANOffset defines a number to start with when creating new VLAN IDs.
 	VLANOffset = 1000
-	// Underlay represents the fabric network where infrastructure switches and routers are placed in.
-	Underlay NetworkType = iota
-	// Private represents the private networks a machine is connected to.
-	Private
-	// PrivatePrimary represents the local machine network where all machines of a project are placed in. This might be a shared network.
-	PrivatePrimary
-	// PrivateShared represents a machine network that is allowed to be shared.
-	PrivateShared
-	// Public represents an external network a machine has access to.
-	Public
 )
 
 type (
-	// NetworkType represents the functional type of a network.
-	NetworkType int
-
 	// KnowledgeBase was generated with: https://mengzhuo.github.io/yaml-to-go/.
 	// It represents the input yaml that is needed to render network configuration files.
 	KnowledgeBase struct {
-		Hostname     string    `yaml:"hostname"`
-		Ipaddress    string    `yaml:"ipaddress"`
-		Asn          string    `yaml:"asn"`
-		Networks     []Network `yaml:"networks"`
-		Machineuuid  string    `yaml:"machineuuid"`
-		Sshpublickey string    `yaml:"sshpublickey"`
-		Password     string    `yaml:"password"`
-		Devmode      bool      `yaml:"devmode"`
-		Console      string    `yaml:"console"`
-		Nics         []NIC     `yaml:"nics"`
+		Hostname     string                    `yaml:"hostname"`
+		Ipaddress    string                    `yaml:"ipaddress"`
+		Asn          string                    `yaml:"asn"`
+		Networks     []models.V1MachineNetwork `yaml:"networks"`
+		Machineuuid  string                    `yaml:"machineuuid"`
+		Sshpublickey string                    `yaml:"sshpublickey"`
+		Password     string                    `yaml:"password"`
+		Devmode      bool                      `yaml:"devmode"`
+		Console      string                    `yaml:"console"`
+		Nics         []NIC                     `yaml:"nics"`
 	}
 
 	// NIC is a representation of network interfaces attributes.
@@ -55,21 +43,50 @@ type (
 			Neighbors []interface{} `yaml:"neighbors"`
 		} `yaml:"neighbors"`
 	}
+)
 
-	// Network is a representation of a tenant network.
-	Network struct {
-		Asn                 int64    `yaml:"asn"`
-		Destinationprefixes []string `yaml:"destinationprefixes"`
-		Ips                 []string `yaml:"ips"`
-		Nat                 bool     `yaml:"nat"`
-		Networkid           string   `yaml:"networkid"`
-		Prefixes            []string `yaml:"prefixes"`
-		Private             bool     `yaml:"private"`
-		PrivatePrimary      bool     `yaml:"privateprimary"`
-		Shared              bool     `yaml:"shared"`
-		Underlay            bool     `yaml:"underlay"`
-		Vrf                 int      `yaml:"vrf"`
-		Vlan                int      `yaml:"vlan,omitempty"`
+var (
+	PrivatePrimaryUnshared models.MetalNetworkType = models.MetalNetworkType{
+		Name:           "privateprimaryunshared",
+		Private:        true,
+		PrivatePrimary: true,
+		Shared:         false,
+		Underlay:       false,
+	}
+	PrivatePrimaryShared models.MetalNetworkType = models.MetalNetworkType{
+		Name:           "privateprimaryshared",
+		Private:        true,
+		PrivatePrimary: true,
+		Shared:         true,
+		Underlay:       false,
+	}
+	PrivateSecondaryShared models.MetalNetworkType = models.MetalNetworkType{
+		Name:           "privatesecondaryshared",
+		Private:        true,
+		PrivatePrimary: false,
+		Shared:         true,
+		Underlay:       false,
+	}
+	PrivateSecondaryUnshared models.MetalNetworkType = models.MetalNetworkType{
+		Name:           "privatesecondaryunshared",
+		Private:        true,
+		PrivatePrimary: false,
+		Shared:         false,
+		Underlay:       false,
+	}
+	External models.MetalNetworkType = models.MetalNetworkType{
+		Name:           "external",
+		Private:        false,
+		PrivatePrimary: false,
+		Shared:         false,
+		Underlay:       false,
+	}
+	Underlay models.MetalNetworkType = models.MetalNetworkType{
+		Name:           "underlay",
+		Private:        false,
+		PrivatePrimary: false,
+		Shared:         false,
+		Underlay:       true,
 	}
 )
 
@@ -87,10 +104,6 @@ func NewKnowledgeBase(path string) KnowledgeBase {
 
 	if err != nil {
 		log.Panic(err)
-	}
-
-	for i := 0; i < len(kb.Networks); i++ {
-		kb.Networks[i].Vlan = VLANOffset + i
 	}
 
 	return *kb
@@ -120,7 +133,7 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 				"underlay: false) is present failed")
 		}
 
-		for _, net := range kb.GetNetworks(Public) {
+		for _, net := range kb.GetNetworks(External) {
 			if len(net.Destinationprefixes) == 0 {
 				return errors.New("non-private, non-underlay networks must contain destination prefix(es) to make " +
 					"any sense of it")
@@ -143,7 +156,7 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 			"'private: true' network IP for machine, 'underlay: true' network IP for firewall")
 	}
 
-	if net.Asn <= 0 {
+	if net.Asn != nil && *net.Asn <= 0 {
 		return errors.New("'asn' of private (machine) resp. underlay (firewall) network must not be missing")
 	}
 
@@ -159,28 +172,27 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 }
 
 func (kb KnowledgeBase) containsAnyPublicNetwork() bool {
-	return len(kb.GetNetworks(Public)) > 0
+	return len(kb.GetNetworks(External)) > 0
 }
 
 func (kb KnowledgeBase) containsSinglePrivatePrimary() bool {
-	return kb.containsSingleNetworkOf(PrivatePrimary)
+	return kb.containsSingleNetworkOf(PrivatePrimaryUnshared) != kb.containsSingleNetworkOf(PrivatePrimaryShared)
 }
 
 func (kb KnowledgeBase) containsSingleUnderlay() bool {
 	return kb.containsSingleNetworkOf(Underlay)
 }
 
-func (kb KnowledgeBase) containsSingleNetworkOf(types NetworkType) bool {
-	possibleNetworks := kb.GetNetworks(types)
+func (kb KnowledgeBase) containsSingleNetworkOf(t models.MetalNetworkType) bool {
+	possibleNetworks := kb.GetNetworks(t)
 	return len(possibleNetworks) == 1
 }
 
 // CollectIPs collects IPs of the given networks.
-func (kb KnowledgeBase) CollectIPs(types ...NetworkType) []string {
+func (kb KnowledgeBase) CollectIPs(types ...models.MetalNetworkType) []string {
 	var result []string
 
 	networks := kb.GetNetworks(types...)
-
 	for _, network := range networks {
 		result = append(result, network.Ips...)
 	}
@@ -189,43 +201,18 @@ func (kb KnowledgeBase) CollectIPs(types ...NetworkType) []string {
 }
 
 // GetNetworks returns all networks present.
-func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
-	var result []Network
-
-	var privatePrimary *Network
-	for _, n := range kb.Networks {
-		if n.PrivatePrimary {
-			privatePrimary = &n
-			break
-		}
-	}
-
-	var privateSharedNetworks []Network
-	var underlayNetworks []Network
-	var publicNetworks []Network
-
-	for _, n := range kb.Networks {
-		if n.Private && n.Shared && (privatePrimary != nil && privatePrimary.Networkid != n.Networkid) {
-			privateSharedNetworks = append(privateSharedNetworks, n)
-		} else if n.Underlay {
-			underlayNetworks = append(underlayNetworks, n)
-		} else if !n.Underlay && !n.Private {
-			publicNetworks = append(publicNetworks, n)
-		}
-	}
+func (kb KnowledgeBase) GetNetworks(types ...models.MetalNetworkType) []models.V1MachineNetwork {
+	var result []models.V1MachineNetwork
 
 	for _, t := range types {
-		switch t {
-		case PrivatePrimary:
-			if privatePrimary != nil {
-				result = append(result, *privatePrimary)
+		for _, n := range kb.Networks {
+			if n.Networktype == nil {
+				continue
 			}
-		case PrivateShared:
-			result = append(result, privateSharedNetworks...)
-		case Underlay:
-			result = append(result, underlayNetworks...)
-		case Public:
-			result = append(result, publicNetworks...)
+			nt := *n.Networktype
+			if nt == t {
+				result = append(result, n)
+			}
 		}
 	}
 
@@ -234,7 +221,7 @@ func (kb KnowledgeBase) GetNetworks(types ...NetworkType) []Network {
 
 func (kb KnowledgeBase) isAnyNAT() bool {
 	for _, net := range kb.Networks {
-		if net.Nat {
+		if net.Nat != nil && *net.Nat {
 			return true
 		}
 	}
@@ -242,11 +229,11 @@ func (kb KnowledgeBase) isAnyNAT() bool {
 	return false
 }
 
-func (kb KnowledgeBase) getPrivatePrimaryNetwork() Network {
-	return kb.GetNetworks(PrivatePrimary)[0]
+func (kb KnowledgeBase) getPrivatePrimaryNetwork() models.V1MachineNetwork {
+	return kb.GetNetworks(PrivatePrimaryUnshared, PrivatePrimaryShared)[0]
 }
 
-func (kb KnowledgeBase) getUnderlayNetwork() Network {
+func (kb KnowledgeBase) getUnderlayNetwork() models.V1MachineNetwork {
 	// Safe access since validation ensures there is exactly one.
 	return kb.GetNetworks(Underlay)[0]
 }
@@ -268,11 +255,11 @@ func (kb KnowledgeBase) nicsContainValidMACs() bool {
 
 func (kb KnowledgeBase) allNonUnderlayNetworksHaveNonZeroVRF() bool {
 	for _, net := range kb.Networks {
-		if net.Underlay {
+		if net.Underlay != nil && *net.Underlay {
 			continue
 		}
 
-		if net.Vrf <= 0 {
+		if net.Vrf != nil && *net.Vrf <= 0 {
 			return false
 		}
 	}

@@ -4,9 +4,9 @@ go 1.15
 
 require (
 	github.com/coreos/go-systemd/v22 v22.1.0
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/google/go-cmp v0.5.1
 	github.com/magiconair/properties v1.8.3 // indirect
+	github.com/metal-stack/metal-go v0.9.5-0.20201020134718-e43893f68206
 	github.com/metal-stack/v v1.0.2
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
@@ -22,6 +22,5 @@ require (
 	go.uber.org/zap v1.16.0
 	golang.org/x/sys v0.0.0-20200915084602-288bc346aa39 // indirect
 	gopkg.in/ini.v1 v1.61.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )

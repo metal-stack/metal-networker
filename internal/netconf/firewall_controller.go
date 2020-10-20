@@ -17,7 +17,7 @@ type FirewallControllerData struct {
 	Comment         string
 	DefaultRouteVrf string
 	ServiceIP       string
-	PrivateVrfID    int
+	PrivateVrfID    int64
 }
 
 // NewFirewallControllerServiceApplier constructs a new instance of this type.
@@ -36,7 +36,7 @@ func NewFirewallControllerServiceApplier(kb KnowledgeBase, v net.Validator) (net
 		Comment:         versionHeader(kb.Machineuuid),
 		DefaultRouteVrf: defaultRouteVrf,
 		ServiceIP:       serviceIP,
-		PrivateVrfID:    privateVrfID,
+		PrivateVrfID:    *privateVrfID,
 	}
 
 	return net.NewNetworkApplier(data, v, nil), nil
