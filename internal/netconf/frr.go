@@ -108,8 +108,6 @@ func getPrefixes(networks ...models.V1MachineNetwork) []string {
 	return result
 }
 
-var networkTypes = []string{"privateprimaryunshared", "privateprimaryshared", "privatesecondaryshared", "external"}
-
 func assembleVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
 
