@@ -70,12 +70,7 @@ networks:
     private: true
     underlay: false
     privateprimary: true
-    networktype:
-      name: privateprimaryshared
-      privateprimary: true
-      private: true
-      shared: true
-      underlay: false
+    networktype: privateprimaryshared
     # VRF id considered to define EVPN interfaces.
     vrf: 3982
   # === Public networks to route to
@@ -96,12 +91,7 @@ networks:
       - 185.27.0.0/22
     private: false
     underlay: false
-    networktype:
-      name: external
-      privateprimary: false
-      private: false
-      shared: false
-      underlay: false
+    networktype: external
     # VRF id considered to define EVPN interfaces.
     vrf: 104009
   # === Underlay Network (underlay=true)
@@ -119,12 +109,7 @@ networks:
       - 10.0.12.0/22
     private: false
     underlay: true
-    networktype:
-      name: underlay
-      privateprimary: false
-      private: false
-      shared: false
-      underlay: true
+    networktype: underlay
     # [IGNORED] Underlay runs in default VRF.
     vrf: 0
 machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258

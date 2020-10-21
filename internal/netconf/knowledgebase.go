@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"github.com/metal-stack/metal-go/api/models"
+	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/v"
 
 	"gopkg.in/yaml.v3"
@@ -42,51 +43,6 @@ type (
 			Name      interface{}   `yaml:"name"`
 			Neighbors []interface{} `yaml:"neighbors"`
 		} `yaml:"neighbors"`
-	}
-)
-
-var (
-	PrivatePrimaryUnshared models.MetalNetworkType = models.MetalNetworkType{
-		Name:           "privateprimaryunshared",
-		Private:        true,
-		PrivatePrimary: true,
-		Shared:         false,
-		Underlay:       false,
-	}
-	PrivatePrimaryShared models.MetalNetworkType = models.MetalNetworkType{
-		Name:           "privateprimaryshared",
-		Private:        true,
-		PrivatePrimary: true,
-		Shared:         true,
-		Underlay:       false,
-	}
-	PrivateSecondaryShared models.MetalNetworkType = models.MetalNetworkType{
-		Name:           "privatesecondaryshared",
-		Private:        true,
-		PrivatePrimary: false,
-		Shared:         true,
-		Underlay:       false,
-	}
-	PrivateSecondaryUnshared models.MetalNetworkType = models.MetalNetworkType{
-		Name:           "privatesecondaryunshared",
-		Private:        true,
-		PrivatePrimary: false,
-		Shared:         false,
-		Underlay:       false,
-	}
-	External models.MetalNetworkType = models.MetalNetworkType{
-		Name:           "external",
-		Private:        false,
-		PrivatePrimary: false,
-		Shared:         false,
-		Underlay:       false,
-	}
-	Underlay models.MetalNetworkType = models.MetalNetworkType{
-		Name:           "underlay",
-		Private:        false,
-		PrivatePrimary: false,
-		Shared:         false,
-		Underlay:       true,
 	}
 )
 
@@ -133,7 +89,7 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 				"underlay: false) is present failed")
 		}
 
-		for _, net := range kb.GetNetworks(External) {
+		for _, net := range kb.GetNetworks(mn.External) {
 			if len(net.Destinationprefixes) == 0 {
 				return errors.New("non-private, non-underlay networks must contain destination prefix(es) to make " +
 					"any sense of it")
@@ -172,24 +128,24 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 }
 
 func (kb KnowledgeBase) containsAnyPublicNetwork() bool {
-	return len(kb.GetNetworks(External)) > 0
+	return len(kb.GetNetworks(mn.External)) > 0
 }
 
 func (kb KnowledgeBase) containsSinglePrivatePrimary() bool {
-	return kb.containsSingleNetworkOf(PrivatePrimaryUnshared) != kb.containsSingleNetworkOf(PrivatePrimaryShared)
+	return kb.containsSingleNetworkOf(mn.PrivatePrimaryUnshared) != kb.containsSingleNetworkOf(mn.PrivatePrimaryShared)
 }
 
 func (kb KnowledgeBase) containsSingleUnderlay() bool {
-	return kb.containsSingleNetworkOf(Underlay)
+	return kb.containsSingleNetworkOf(mn.Underlay)
 }
 
-func (kb KnowledgeBase) containsSingleNetworkOf(t models.MetalNetworkType) bool {
+func (kb KnowledgeBase) containsSingleNetworkOf(t string) bool {
 	possibleNetworks := kb.GetNetworks(t)
 	return len(possibleNetworks) == 1
 }
 
 // CollectIPs collects IPs of the given networks.
-func (kb KnowledgeBase) CollectIPs(types ...models.MetalNetworkType) []string {
+func (kb KnowledgeBase) CollectIPs(types ...string) []string {
 	var result []string
 
 	networks := kb.GetNetworks(types...)
@@ -201,7 +157,7 @@ func (kb KnowledgeBase) CollectIPs(types ...models.MetalNetworkType) []string {
 }
 
 // GetNetworks returns all networks present.
-func (kb KnowledgeBase) GetNetworks(types ...models.MetalNetworkType) []models.V1MachineNetwork {
+func (kb KnowledgeBase) GetNetworks(types ...string) []models.V1MachineNetwork {
 	var result []models.V1MachineNetwork
 
 	for _, t := range types {
@@ -209,8 +165,7 @@ func (kb KnowledgeBase) GetNetworks(types ...models.MetalNetworkType) []models.V
 			if n.Networktype == nil {
 				continue
 			}
-			nt := *n.Networktype
-			if nt == t {
+			if *n.Networktype == t {
 				result = append(result, n)
 			}
 		}
@@ -230,12 +185,12 @@ func (kb KnowledgeBase) isAnyNAT() bool {
 }
 
 func (kb KnowledgeBase) getPrivatePrimaryNetwork() models.V1MachineNetwork {
-	return kb.GetNetworks(PrivatePrimaryUnshared, PrivatePrimaryShared)[0]
+	return kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared)[0]
 }
 
 func (kb KnowledgeBase) getUnderlayNetwork() models.V1MachineNetwork {
 	// Safe access since validation ensures there is exactly one.
-	return kb.GetNetworks(Underlay)[0]
+	return kb.GetNetworks(mn.Underlay)[0]
 }
 
 func (kb KnowledgeBase) nicsContainValidMACs() bool {

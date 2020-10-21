@@ -8,6 +8,8 @@ import (
 	"github.com/metal-stack/v"
 
 	"github.com/metal-stack/metal-networker/pkg/net"
+
+	mn "github.com/metal-stack/metal-lib/pkg/net"
 )
 
 // TplNftablesV4 defines the name of the template to render nftables configuration.
@@ -61,7 +63,7 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 	var result []SNAT
 
 	private := kb.getPrivatePrimaryNetwork()
-	networks := kb.GetNetworks(PrivatePrimaryUnshared, PrivatePrimaryShared, PrivateSecondaryShared, External)
+	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
 
 	for _, n := range networks {
 		if n.Nat != nil && !*n.Nat {

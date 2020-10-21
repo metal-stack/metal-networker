@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"text/template"
+
+	mn "github.com/metal-stack/metal-lib/pkg/net"
 )
 
 type (
@@ -45,7 +47,7 @@ func NewIfacesApplier(kind BareMetalType, kb KnowledgeBase) IfacesApplier {
 		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", *private.Networkid)
 		// Ensure that the ips of the private network are the first ips at the loopback interface.
 		// The first lo IP is used within network communication and other systems depend on seeing the first private ip.
-		d.Loopback.IPs = append(private.Ips, kb.CollectIPs(External)...)
+		d.Loopback.IPs = append(private.Ips, kb.CollectIPs(mn.External)...)
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}

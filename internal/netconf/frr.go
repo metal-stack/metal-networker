@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/metal-stack/metal-go/api/models"
+	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
@@ -112,7 +113,7 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
 
 	privatePrimary := kb.getPrivatePrimaryNetwork()
-	networks := kb.GetNetworks(PrivatePrimaryUnshared, PrivatePrimaryShared, PrivateSecondaryShared, External)
+	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
 
 	for _, network := range networks {
 		var targets []models.V1MachineNetwork
@@ -122,29 +123,32 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 			continue
 		}
 		nt := *network.Networktype
-		if nt == PrivatePrimaryUnshared || nt == PrivatePrimaryShared {
+		switch nt {
+		case mn.PrivatePrimaryUnshared:
+			fallthrough
+		case mn.PrivatePrimaryShared:
 			// reach out from private primary network into public networks
-			publicTargets := kb.GetNetworks(External)
+			publicTargets := kb.GetNetworks(mn.External)
 			prefixes = getDestinationPrefixes(publicTargets)
 			targets = append(targets, publicTargets...)
 
 			// reach out from private primary network into shared private networks
-			privateSharedTargets := kb.GetNetworks(PrivateSecondaryShared)
+			privateSharedTargets := kb.GetNetworks(mn.PrivateSecondaryShared)
 			prefixes = append(prefixes, getPrefixes(privateSharedTargets...)...)
 			targets = append(targets, privateSharedTargets...)
-		} else if nt == PrivateSecondaryShared {
+		case mn.PrivateSecondaryShared:
 			// reach out from private shared networks into private primary network
 			targets = []models.V1MachineNetwork{privatePrimary}
 			prefixes = getPrefixes(append(targets, network)...)
-		} else if nt == External {
+		case mn.External:
 			// reach out from public into private and other public networks
 			targets = []models.V1MachineNetwork{privatePrimary}
 			prefixes = getPrefixes(append(targets, network)...)
 		}
-
+		shared := (nt == mn.PrivatePrimaryShared || nt == mn.PrivateSecondaryShared)
 		vrfID := network.Vrf
 		vrfName := "vrf" + strconv.Itoa(int(*vrfID))
-		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb, network.Networktype.Shared)
+		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb, shared)
 		vrf := VRF{
 			Identity: Identity{
 				ID: int(*network.Vrf),

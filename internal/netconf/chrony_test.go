@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/metal-stack/metal-go/api/models"
+	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,7 +12,8 @@ func TestChronyServiceEnabler_Enable(t *testing.T) {
 	assert := assert.New(t)
 
 	vrf := int64(104009)
-	network := models.V1MachineNetwork{Networktype: &External, Destinationprefixes: []string{AllZerosCIDR}, Vrf: &vrf}
+	external := mn.External
+	network := models.V1MachineNetwork{Networktype: &external, Destinationprefixes: []string{AllZerosCIDR}, Vrf: &vrf}
 	tests := []struct {
 		kb              KnowledgeBase
 		vrf             string
