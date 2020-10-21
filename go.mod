@@ -6,7 +6,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.1.0
 	github.com/google/go-cmp v0.5.2
 	github.com/magiconair/properties v1.8.3 // indirect
-	github.com/metal-stack/metal-go v0.9.5-0.20201021123440-46bad744f10e
+	github.com/metal-stack/metal-go v0.10.0
 	github.com/metal-stack/metal-lib v0.6.3
 	github.com/metal-stack/v v1.0.2
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
