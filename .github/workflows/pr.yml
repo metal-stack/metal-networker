@@ -4,9 +4,6 @@ on:
   pull_request:
     branches:
       - master
-    types:
-      - assigned
-      - edited
 
 env:
   GCS_BUCKET: images.metal-pod.io
@@ -29,7 +26,7 @@ jobs:
       run: make
     - name: Build and push docker image
       run: |
-        export GITHUB_TAG_NAME=${GITHUB_REF##*/}
+        export GITHUB_TAG_NAME=${GITHUB_HEAD_REF##*/}
         docker login -u metalstackci -p ${{ secrets.DOCKER_HUB_TOKEN }}
         make docker-build
         make docker-push

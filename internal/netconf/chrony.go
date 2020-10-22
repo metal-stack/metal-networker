@@ -3,6 +3,7 @@ package netconf
 import (
 	"fmt"
 
+	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/metal-networker/pkg/exec"
 )
 
@@ -26,11 +27,11 @@ func (c ChronyServiceEnabler) Enable() error {
 }
 
 func getDefaultRouteVRFName(kb KnowledgeBase) (string, error) {
-	networks := kb.GetNetworks(Public)
+	networks := kb.GetNetworks(mn.External)
 	for _, network := range networks {
 		for _, prefix := range network.Destinationprefixes {
 			if prefix == AllZerosCIDR {
-				vrf := fmt.Sprintf("vrf%d", network.Vrf)
+				vrf := fmt.Sprintf("vrf%d", *network.Vrf)
 				return vrf, nil
 			}
 		}

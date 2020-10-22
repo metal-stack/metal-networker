@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/metal-stack/metal-go/api/models"
+	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
@@ -63,7 +65,7 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 			VRFs:          assembleVRFs(kb),
 		}
 	case Machine:
-		net := kb.getPrivateNetwork()
+		net := kb.getPrivatePrimaryNetwork()
 		data = MachineFRRData{
 			CommonFRRData: newCommonFRRData(net, kb),
 		}
@@ -76,9 +78,9 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 	return net.NewNetworkApplier(data, validator, nil)
 }
 
-func newCommonFRRData(net Network, kb KnowledgeBase) CommonFRRData {
+func newCommonFRRData(net models.V1MachineNetwork, kb KnowledgeBase) CommonFRRData {
 	return CommonFRRData{FRRVersion: FRRVersion, Hostname: kb.Hostname, Comment: versionHeader(kb.Machineuuid),
-		ASN: net.Asn, RouterID: net.Ips[0]}
+		ASN: *net.Asn, RouterID: net.Ips[0]}
 }
 
 // Validate can be used to run validation on FRR configuration using vtysh.
@@ -89,7 +91,7 @@ func (v FRRValidator) Validate() error {
 	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }
 
-func getDestinationPrefixes(networks []Network) []string {
+func getDestinationPrefixes(networks []models.V1MachineNetwork) []string {
 	var result []string
 	for _, network := range networks {
 		result = append(result, network.Destinationprefixes...)
@@ -98,7 +100,7 @@ func getDestinationPrefixes(networks []Network) []string {
 	return result
 }
 
-func getPrefixes(networks ...Network) []string {
+func getPrefixes(networks ...models.V1MachineNetwork) []string {
 	var result []string
 	for _, network := range networks {
 		result = append(result, network.Prefixes...)
@@ -110,30 +112,48 @@ func getPrefixes(networks ...Network) []string {
 func assembleVRFs(kb KnowledgeBase) []VRF {
 	var result []VRF
 
-	networks := kb.GetNetworks(Private, Public)
+	privatePrimary := kb.getPrivatePrimaryNetwork()
+	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
 
 	for _, network := range networks {
-		var targets []Network
-
+		var targets []models.V1MachineNetwork
 		var prefixes []string
 
-		if network.Private {
-			// reach out from private into to public networks
-			targets = kb.GetNetworks(Public)
-			prefixes = getDestinationPrefixes(targets)
-		} else {
+		if network.Networktype == nil {
+			continue
+		}
+		nt := *network.Networktype
+		switch nt {
+		case mn.PrivatePrimaryUnshared:
+			fallthrough
+		case mn.PrivatePrimaryShared:
+			// reach out from private primary network into public networks
+			publicTargets := kb.GetNetworks(mn.External)
+			prefixes = getDestinationPrefixes(publicTargets)
+			targets = append(targets, publicTargets...)
+
+			// reach out from private primary network into shared private networks
+			privateSharedTargets := kb.GetNetworks(mn.PrivateSecondaryShared)
+			prefixes = append(prefixes, getPrefixes(privateSharedTargets...)...)
+			targets = append(targets, privateSharedTargets...)
+		case mn.PrivateSecondaryShared:
+			// reach out from private shared networks into private primary network
+			targets = []models.V1MachineNetwork{privatePrimary}
+			prefixes = getPrefixes(append(targets, network)...)
+		case mn.External:
 			// reach out from public into private and other public networks
-			targets = kb.GetNetworks(Private)
+			targets = []models.V1MachineNetwork{privatePrimary}
 			prefixes = getPrefixes(append(targets, network)...)
 		}
-
-		vrfName := "vrf" + strconv.Itoa(network.Vrf)
-		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb)
+		shared := (nt == mn.PrivatePrimaryShared || nt == mn.PrivateSecondaryShared)
+		vrfID := network.Vrf
+		vrfName := "vrf" + strconv.Itoa(int(*vrfID))
+		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb, shared)
 		vrf := VRF{
 			Identity: Identity{
-				ID: network.Vrf,
+				ID: int(*network.Vrf),
 			},
-			VNI:            network.Vrf,
+			VNI:            int(*network.Vrf),
 			ImportVRFNames: vrfNamesOf(targets...),
 			IPPrefixLists:  prefixLists,
 			RouteMaps:      assembleRouteMapsFor(vrfName, prefixLists),
@@ -200,11 +220,11 @@ func routeMapName(vrfName string) string {
 	return vrfName + "-import-map"
 }
 
-func vrfNamesOf(networks ...Network) []string {
+func vrfNamesOf(networks ...models.V1MachineNetwork) []string {
 	var result []string
 
 	for _, n := range networks {
-		vrf := fmt.Sprintf("vrf%d", n.Vrf)
+		vrf := fmt.Sprintf("vrf%d", *n.Vrf)
 		result = append(result, vrf)
 	}
 
@@ -224,10 +244,10 @@ func buildIPPrefixListSpecs(seq int, prefix string) []string {
 	return result
 }
 
-func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb KnowledgeBase) []IPPrefixList {
+func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb KnowledgeBase, shared bool) []IPPrefixList {
 	var result []IPPrefixList
 
-	private := kb.getPrivateNetwork()
+	private := kb.getPrivatePrimaryNetwork()
 
 	for _, prefix := range prefixes {
 		if len(prefix) == 0 {
@@ -237,7 +257,7 @@ func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb Kn
 		specs := buildIPPrefixListSpecs(seed, prefix)
 
 		for _, spec := range specs {
-			name := namePrefixList(vrfName, private, prefix)
+			name := namePrefixList(vrfName, private, prefix, shared)
 			prefixList := IPPrefixList{
 				Name: name,
 				Spec: spec,
@@ -251,11 +271,11 @@ func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb Kn
 	return result
 }
 
-func namePrefixList(vrfName string, private Network, prefix string) string {
+func namePrefixList(vrfName string, private models.V1MachineNetwork, prefix string, shared bool) string {
 	name := vrfName + "-import-prefixes"
 
 	for _, privatePrefix := range private.Prefixes {
-		if privatePrefix == prefix {
+		if privatePrefix == prefix && !shared {
 			// tenant private network ip addresses must not be visible in the public VRFs to avoid blown up routing tables
 			name += IPPrefixListNoExportSuffix
 		}

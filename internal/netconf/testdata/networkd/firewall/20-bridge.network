@@ -5,6 +5,7 @@ Name=bridge
 
 [Network]
 VLAN=vlan3981
+VLAN=vlan3982
 VLAN=vlan104009
 VLAN=vlan104010
 
@@ -15,4 +16,7 @@ VLAN=1000
 VLAN=1001
 
 [BridgeVLAN]
-VLAN=1003
+VLAN=1002
+
+[BridgeVLAN]
+VLAN=1004

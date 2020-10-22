@@ -9,5 +9,5 @@ MTUBytes=9000
 Bridge=bridge
 
 [BridgeVLAN]
-PVID=1003
-EgressUntagged=1003
+PVID=1004
+EgressUntagged=1004

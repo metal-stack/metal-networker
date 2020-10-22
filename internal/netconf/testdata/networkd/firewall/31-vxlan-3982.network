@@ -1,6 +1,6 @@
-# vxlan (networkid: internet-vagrant-lab)
+# vxlan (networkid: storage-net)
 [Match]
-Name=vni104009
+Name=vni3982
 
 [Link]
 MTUBytes=9000

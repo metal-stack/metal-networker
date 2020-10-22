@@ -5,5 +5,6 @@ Name=lan1
 
 [Network]
 VXLAN=vni3981
+VXLAN=vni3982
 VXLAN=vni104009
 VXLAN=vni104010

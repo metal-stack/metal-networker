@@ -1,0 +1,13 @@
+# vxlan (networkid: internet-vagrant-lab)
+[Match]
+Name=vni104009
+
+[Link]
+MTUBytes=9000
+
+[Network]
+Bridge=bridge
+
+[BridgeVLAN]
+PVID=1002
+EgressUntagged=1002

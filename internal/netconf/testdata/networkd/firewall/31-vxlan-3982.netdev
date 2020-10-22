@@ -1,0 +1,11 @@
+# vxlan (networkid: storage-net)
+[NetDev]
+Name=vni3982
+Kind=vxlan
+
+[VXLAN]
+VNI=3982
+Local=10.1.0.1
+UDPChecksum=true
+MacLearning=false
+DestinationPort=4789

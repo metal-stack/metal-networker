@@ -55,31 +55,6 @@
 # Applies to hostname of the firewall.
 hostname: firewall
 networks:
-  # === Tenant Network (private=true)
-    # [IGNORED]
-  - asn: 4200003073
-    # [IGNORED in case of private network]
-    destinationprefixes: []
-    # For Firewall: Used to consider the set of prefixes that originate the given IP's to establish route leak in public
-    # network VRF's for return traffic. Applied to the SVI (as /32)
-    # For Machine: Used to set the loopback ips.
-    ips:
-      - 10.0.16.2
-    # [IGNORED in case of private network]
-    nat: false
-    # [IGNORED in case of private network]
-    networkid: bc830818-2df1-4904-8c40-4322296d393d
-    # considered as source range for nat and to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
-    prefixes:
-      - 10.0.16.0/22
-    private: true
-    underlay: false
-    networktype: privateprimaryunshared
-    # [IGNORED in case of private network]
-    # Defines the tenant VRF id.
-    vrf: 3981
-  # === Private shared networks to route to
-    # [IGNORED]
   - asn: 4200003073
     # [IGNORED in case of private network]
     destinationprefixes: []
@@ -87,14 +62,15 @@ networks:
     ips:
       - 10.0.18.2
     # In case nat equals true, Source NAT via SVI is added.
-    nat: false
+    nat: true
     networkid: storage-net
     # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
     prefixes:
       - 10.0.18.0/22
     private: true
     underlay: false
-    networktype: privatesecondaryshared
+    privateprimary: true
+    networktype: privateprimaryshared
     # VRF id considered to define EVPN interfaces.
     vrf: 3982
   # === Public networks to route to
@@ -132,27 +108,10 @@ networks:
     prefixes:
       - 10.0.12.0/22
     private: false
-    privateprimary: false
     underlay: true
     networktype: underlay
     # [IGNORED] Underlay runs in default VRF.
     vrf: 0
-  - asn: 4200003073
-    # considered to figure out allowed prefixes for route imports from public network into tenant network
-    destinationprefixes:
-      - 100.127.1.0/24
-    # Applied to local loopback as /32.
-    ips:
-      - 100.127.129.1
-    nat: true
-    networkid: mpls-nbg-w8101-test
-    # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
-    prefixes:
-      - 100.127.129.0/24
-    private: false
-    underlay: false
-    networktype: external
-    vrf: 104010
 machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
 # [IGNORED]
 sshpublickey: ""
