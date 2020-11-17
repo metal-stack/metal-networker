@@ -7,7 +7,7 @@ After=network.target
 [Service]
 LimitMEMLOCK=infinity
 Environment=KUBECONFIG=/etc/firewall-controller/.kubeconfig
-ExecStart=/bin/ip vrf exec {{ .DefaultRouteVrf }} /usr/local/bin/firewall-controller --service-ip {{ .ServiceIP }} --private-vrf {{ .PrivateVrfID }}
+ExecStart=/bin/ip vrf exec {{ .DefaultRouteVrf }} /usr/local/bin/firewall-controller
 Restart=always
 RestartSec=10
 
