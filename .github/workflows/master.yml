@@ -5,15 +5,12 @@ on:
     branches:
     - master
 
-env:
-  GCS_BUCKET: images.metal-pod.io
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@master
+      uses: actions/checkout@v2
     - name: Lint
       uses: actions-contrib/golangci-lint@master
       with:
@@ -24,6 +21,13 @@ jobs:
         go-version: '1.15.x'
     - name: Build project
       run: make
+    - name: Docker Login
+      uses: docker/login-action@v1
+      with:
+        registry: ${{ secrets.DOCKER_REGISTRY }}
+        username: ${{ secrets.DOCKER_REGISTRY_USER }}
+        password: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
     - name: Build docker image
       run: |
         make docker-build
+        make docker-push
