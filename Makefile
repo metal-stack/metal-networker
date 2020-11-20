@@ -6,7 +6,7 @@ VERSION := $(or ${VERSION},devel)
 
 # Image URL to use all building/pushing image targets
 DOCKER_TAG := $(or ${GITHUB_TAG_NAME}, latest)
-DOCKER_IMG ?= metalstack/metal-networker:${DOCKER_TAG}
+DOCKER_IMG ?= ghcr.io/metal-stack/metal-networker:${DOCKER_TAG}
 
 BINARY := metal-networker
 
