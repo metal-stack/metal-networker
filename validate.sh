@@ -15,3 +15,6 @@ validate () {
 
 validate "ubuntu" "20.04" "7.3"
 validate "debian" "10" "7.3"
+
+validate "ubuntu" "20.04" "7.5"
+validate "debian" "10" "7.5"

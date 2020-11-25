@@ -23,6 +23,8 @@ interface lan1
  ipv6 nd ra-interval 6
  no ipv6 nd suppress-ra
 !
+no zebra nexthop kernel enable
+!
 router bgp {{ .ASN }}
  bgp router-id {{ .RouterID }}
  bgp bestpath as-path multipath-relax
