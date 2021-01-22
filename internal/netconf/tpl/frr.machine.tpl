@@ -44,6 +44,12 @@ router bgp {{ .ASN }}
   redistribute kernel
   neighbor TOR route-map only-self-out out
  exit-address-family
+ !
+ address-family ipv6 unicast
+  redistribute connected
+  redistribute kernel
+  neighbor TOR route-map only-self-out out
+ exit-address-family
 !
 bgp as-path access-list SELF permit ^$
 !

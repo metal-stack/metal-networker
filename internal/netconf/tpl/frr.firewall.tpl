@@ -42,6 +42,11 @@ router bgp {{ .ASN }}
   neighbor FABRIC route-map only-self-out out
  exit-address-family
  !
+ address-family ipv6 unicast
+  redistribute connected route-map LOOPBACKS
+  neighbor FABRIC route-map only-self-out out
+ exit-address-family
+ !
  address-family l2vpn evpn
   neighbor FABRIC activate
   advertise-all-vni
@@ -53,6 +58,14 @@ router bgp {{ $ASN }} vrf vrf{{ .ID }}
  bgp bestpath as-path multipath-relax
  !
  address-family ipv4 unicast
+  redistribute connected
+ {{- range .ImportVRFNames }}
+  import vrf {{ . }}
+ {{- end }}
+  import vrf route-map vrf{{ .ID }}-import-map
+ exit-address-family
+ !
+ address-family ipv6 unicast
   redistribute connected
  {{- range .ImportVRFNames }}
   import vrf {{ . }}
