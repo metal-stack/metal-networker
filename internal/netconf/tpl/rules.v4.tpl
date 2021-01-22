@@ -1,6 +1,6 @@
 {{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.IptablesData*/ -}}
 {{ .Comment }}
-table ip metal {
+table inet metal {
     chain input {
         type filter hook input priority 0; policy drop;
         ct state established,related counter accept comment "stateful input"
@@ -30,7 +30,7 @@ table ip metal {
         counter drop
     }
 }
-table ip nat {
+table inet nat {
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
     }
