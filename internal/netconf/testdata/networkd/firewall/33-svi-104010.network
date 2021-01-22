@@ -7,4 +7,4 @@ MTUBytes=9000
 
 [Network]
 VRF=vrf104010
-Address=100.127.129.1/32
+Address=100.127.129.1
