@@ -6,10 +6,10 @@ Name=lo
 Address=127.0.0.1/8
 
 [Address]
-Address=10.0.17.2
+Address=10.0.17.2/32
 
 [Address]
-Address=185.1.2.3
+Address=185.1.2.3/32
 
 [Address]
-Address=100.127.129.1
+Address=100.127.129.1/32

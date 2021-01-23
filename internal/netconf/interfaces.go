@@ -6,6 +6,7 @@ import (
 	"text/template"
 
 	mn "github.com/metal-stack/metal-lib/pkg/net"
+	"inet.af/netaddr"
 )
 
 type (
@@ -40,19 +41,32 @@ func NewIfacesApplier(kind BareMetalType, kb KnowledgeBase) IfacesApplier {
 	case Firewall:
 		underlay := kb.getUnderlayNetwork()
 		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", *underlay.Networkid)
-		d.Loopback.IPs = underlay.Ips
+		d.Loopback.IPs = addBitlen(underlay.Ips)
 		d.EVPNIfaces = getEVPNIfaces(kb)
 	case Machine:
 		private := kb.getPrivatePrimaryNetwork()
 		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", *private.Networkid)
 		// Ensure that the ips of the private network are the first ips at the loopback interface.
 		// The first lo IP is used within network communication and other systems depend on seeing the first private ip.
-		d.Loopback.IPs = append(private.Ips, kb.CollectIPs(mn.External)...)
+		d.Loopback.IPs = addBitlen(append(private.Ips, kb.CollectIPs(mn.External)...))
 	default:
 		log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
 
 	return IfacesApplier{kind: kind, kb: kb, data: d}
+}
+
+func addBitlen(ips []string) []string {
+	ipsWithMask := []string{}
+	for _, ip := range ips {
+		parsedIP, err := netaddr.ParseIP(ip)
+		if err != nil {
+			continue
+		}
+		ipWithMask := fmt.Sprintf("%s/%d", ip, parsedIP.BitLen())
+		ipsWithMask = append(ipsWithMask, ipWithMask)
+	}
+	return ipsWithMask
 }
 
 // Render renders the network interfaces to the given writer using the given template.
