@@ -1,8 +1,11 @@
 package netconf
 
 const (
-	// AllZerosCIDR represents a CIDR notation that matches all addresses in the IPv4 address space.
-	AllZerosCIDR = "0.0.0.0/0"
+	// IPv4ZeroCIDR is the CIDR block for the whole IPv4 address space
+	IPv4ZeroCIDR = "0.0.0.0/0"
+
+	// IPv6ZeroCIDR is the CIDR block for the whole IPv6 address space
+	IPv6ZeroCIDR = "::/0"
 	// Permit defines an access policy that allows access.
 	Permit AccessPolicy = iota
 	// Deny defines an access policy that forbids access.

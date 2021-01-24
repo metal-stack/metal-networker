@@ -13,7 +13,7 @@ func TestChronyServiceEnabler_Enable(t *testing.T) {
 
 	vrf := int64(104009)
 	external := mn.External
-	network := models.V1MachineNetwork{Networktype: &external, Destinationprefixes: []string{AllZerosCIDR}, Vrf: &vrf}
+	network := models.V1MachineNetwork{Networktype: &external, Destinationprefixes: []string{IPv4ZeroCIDR}, Vrf: &vrf}
 	tests := []struct {
 		kb              KnowledgeBase
 		vrf             string

@@ -30,7 +30,7 @@ func getDefaultRouteVRFName(kb KnowledgeBase) (string, error) {
 	networks := kb.GetNetworks(mn.External)
 	for _, network := range networks {
 		for _, prefix := range network.Destinationprefixes {
-			if prefix == AllZerosCIDR {
+			if prefix == IPv4ZeroCIDR || prefix == IPv6ZeroCIDR {
 				vrf := fmt.Sprintf("vrf%d", *network.Vrf)
 				return vrf, nil
 			}
