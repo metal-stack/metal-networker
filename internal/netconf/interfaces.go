@@ -152,7 +152,7 @@ func getEVPNIfaces(kb KnowledgeBase) []EVPNIface {
 		e.Comment = versionHeader(kb.Machineuuid)
 		e.SVI.Comment = fmt.Sprintf("# svi (networkid: %s)", *n.Networkid)
 		e.SVI.VLANID = VLANOffset + i
-		e.SVI.Addresses = n.Ips
+		e.SVI.Addresses = addBitlen(n.Ips)
 		e.VXLAN.Comment = fmt.Sprintf("# vxlan (networkid: %s)", *n.Networkid)
 		e.VXLAN.ID = vrf
 		e.VXLAN.TunnelIP = kb.getUnderlayNetwork().Ips[0]
