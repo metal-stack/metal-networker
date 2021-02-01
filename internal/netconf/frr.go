@@ -9,6 +9,7 @@ import (
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
+	"inet.af/netaddr"
 )
 
 const (
@@ -61,13 +62,25 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 	case Firewall:
 		net := kb.getUnderlayNetwork()
 		data = FirewallFRRData{
-			CommonFRRData: newCommonFRRData(net, kb),
-			VRFs:          assembleVRFs(kb),
+			CommonFRRData: CommonFRRData{
+				FRRVersion: FRRVersion,
+				Hostname:   kb.Hostname,
+				Comment:    versionHeader(kb.Machineuuid),
+				ASN:        *net.Asn,
+				RouterID:   routerID(net),
+			},
+			VRFs: assembleVRFs(kb),
 		}
 	case Machine:
 		net := kb.getPrivatePrimaryNetwork()
 		data = MachineFRRData{
-			CommonFRRData: newCommonFRRData(net, kb),
+			CommonFRRData: CommonFRRData{
+				FRRVersion: FRRVersion,
+				Hostname:   kb.Hostname,
+				Comment:    versionHeader(kb.Machineuuid),
+				ASN:        *net.Asn,
+				RouterID:   routerID(net),
+			},
 		}
 	default:
 		log.Fatalf("unknown kind of bare metal: %v", kind)
@@ -78,9 +91,21 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 	return net.NewNetworkApplier(data, validator, nil)
 }
 
-func newCommonFRRData(net models.V1MachineNetwork, kb KnowledgeBase) CommonFRRData {
-	return CommonFRRData{FRRVersion: FRRVersion, Hostname: kb.Hostname, Comment: versionHeader(kb.Machineuuid),
-		ASN: *net.Asn, RouterID: net.Ips[0]}
+// routerID will calculate the bgp router-id which must only be specified in the ipv6 range.
+// returns 0.0.0.0 for errornous ip addresses and 169.254.255.255 for ipv6
+// TODO prepare machine allocations with ipv6 primary address and tests
+func routerID(net models.V1MachineNetwork) string {
+	if len(net.Ips) < 1 {
+		return "0.0.0.0"
+	}
+	ip, err := netaddr.ParseIP(net.Ips[0])
+	if err != nil {
+		return "0.0.0.0"
+	}
+	if ip.Is4() {
+		return ip.String()
+	}
+	return "169.254.255.255"
 }
 
 // Validate can be used to run validation on FRR configuration using vtysh.

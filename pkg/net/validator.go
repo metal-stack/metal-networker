@@ -21,7 +21,7 @@ type DBusTemplateValidator struct {
 func (v DBusTemplateValidator) Validate() error {
 	dbc, err := dbus.New()
 	if err != nil {
-		return fmt.Errorf("unable to connect to dbus: %v", err)
+		return fmt.Errorf("unable to connect to dbus: %w", err)
 	}
 	defer dbc.Close()
 

@@ -25,7 +25,7 @@ func (v VerboseCmd) Run() error {
 
 	err := v.Cmd.Run()
 	if err != nil {
-		return fmt.Errorf("%v: %s", err, stderr.String())
+		return fmt.Errorf("%w: %s", err, stderr.String())
 	}
 
 	return nil
