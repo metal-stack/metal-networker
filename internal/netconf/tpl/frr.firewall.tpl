@@ -45,6 +45,7 @@ router bgp {{ .ASN }}
  address-family ipv6 unicast
   redistribute connected route-map LOOPBACKS
   neighbor FABRIC route-map only-self-out out
+  neighbor FABRIC activate
  exit-address-family
  !
  address-family l2vpn evpn
