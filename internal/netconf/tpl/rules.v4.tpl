@@ -46,7 +46,7 @@ table inet nat {
         {{- $cmt:=.Comment }}
         {{- $out:=.OutInterface }}
         {{- range .SourceSpecs }}
-        oifname "{{ $out }}" ip saddr {{ . }} counter masquerade comment "{{ $cmt }}"
+        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Source }} counter masquerade comment "{{ $cmt }}"
         {{- end }}
         {{- end }}
     }

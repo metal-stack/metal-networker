@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
+	"inet.af/netaddr"
 
 	"github.com/metal-stack/v"
 
@@ -29,9 +30,13 @@ type (
 	SNAT struct {
 		Comment      string
 		OutInterface string
-		SourceSpecs  []string
+		SourceSpecs  []SourceSpec
 	}
 
+	SourceSpec struct {
+		AddressFamily string
+		Source        string
+	}
 	// NftablesValidator can validate configuration for nftables rules.
 	NftablesValidator struct {
 		path string
@@ -70,11 +75,25 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 			continue
 		}
 
-		var sources []string
-		sources = append(sources, private.Prefixes...)
+		var sources []SourceSpec
 		cmt := fmt.Sprintf("snat (networkid: %s)", *n.Networkid)
 		svi := fmt.Sprintf("vlan%d", *n.Vrf)
 
+		for _, p := range private.Prefixes {
+			ipprefix, err := netaddr.ParseIPPrefix(p)
+			if err != nil {
+				continue
+			}
+			af := "ip"
+			if ipprefix.IP.Is6() {
+				af = "ip6"
+			}
+			sspec := SourceSpec{
+				Source:        p,
+				AddressFamily: af,
+			}
+			sources = append(sources, sspec)
+		}
 		s := SNAT{
 			Comment:      cmt,
 			OutInterface: svi,
