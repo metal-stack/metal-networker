@@ -76,12 +76,13 @@ router bgp {{ $ASN }} vrf vrf{{ .ID }}
  !
  address-family l2vpn evpn
   advertise ipv4 unicast
+  advertise ipv6 unicast
  exit-address-family
 !
 {{- end }}
 {{- range .VRFs }}
  {{- range .IPPrefixLists }}
-ip prefix-list {{ .Name }} {{ .Spec }}
+{{ .AddressFamily }} prefix-list {{ .Name }} {{ .Spec }}
  {{- end}}
  {{- range .RouteMaps }}
 route-map {{ .Name }} {{ .Policy }} {{ .Order }}

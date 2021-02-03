@@ -48,8 +48,9 @@ type (
 
 	// IPPrefixList represents 'ip prefix-list' filtering mechanism to be used in combination with route-maps.
 	IPPrefixList struct {
-		Name string
-		Spec string
+		Name          string
+		Spec          string
+		AddressFamily AddressFamily
 	}
 
 	// SVI represents a switched virtual interface.

@@ -25,6 +25,10 @@ const (
 	IPPrefixListNoExportSuffix = "-no-export"
 	// RouteMapOrderSeed defines the initial value for route-map order.
 	RouteMapOrderSeed = 10
+	// AddressFamilyIPv4 is the name for this address family for the routing daemon.
+	AddressFamilyIPv4 = "ip"
+	// AddressFamilyIPv6 is the name for this address family for the routing daemon.
+	AddressFamilyIPv6 = "ipv6"
 )
 
 type (
@@ -52,6 +56,9 @@ type (
 	FRRValidator struct {
 		path string
 	}
+
+	// AddressFamily is the address family for the routing daemon.
+	AddressFamily string
 )
 
 // NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
@@ -173,7 +180,9 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 		shared := (nt == mn.PrivatePrimaryShared || nt == mn.PrivateSecondaryShared)
 		vrfID := network.Vrf
 		vrfName := "vrf" + strconv.Itoa(int(*vrfID))
-		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb, shared)
+
+		prefixLists := assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb, shared, AddressFamilyIPv4)
+		prefixLists = append(prefixLists, assembleIPPrefixListsFor(vrfName, prefixes, IPPrefixListSeqSeed, kb, shared, AddressFamilyIPv6)...)
 		vrf := VRF{
 			Identity: Identity{
 				ID: int(*network.Vrf),
@@ -189,32 +198,28 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 	return result
 }
 
-func uniqueNames(prefixLists []IPPrefixList) []string {
-	var result []string
-
-	uniqueNames := make(map[string]struct{})
-
+func byName(prefixLists []IPPrefixList) map[string]IPPrefixList {
+	byName := map[string]IPPrefixList{}
 	for _, prefixList := range prefixLists {
-		if _, isPresent := uniqueNames[prefixList.Name]; isPresent {
+		if _, isPresent := byName[prefixList.Name]; isPresent {
 			continue
 		}
 
-		uniqueNames[prefixList.Name] = struct{}{}
-
-		result = append(result, prefixList.Name)
+		byName[prefixList.Name] = prefixList
 	}
 
-	return result
+	return byName
 }
 
 func assembleRouteMapsFor(vrfName string, prefixLists []IPPrefixList) []RouteMap {
 	var result []RouteMap
 
 	order := RouteMapOrderSeed
-	prefListNames := uniqueNames(prefixLists)
+	byName := byName(prefixLists)
 
-	for _, prefListName := range prefListNames {
-		entries := []string{"match ip address prefix-list " + prefListName}
+	for prefListName, prefixList := range byName {
+		match := fmt.Sprintf("match %s address prefix-list %s", prefixList.AddressFamily, prefListName)
+		entries := []string{match}
 		if strings.HasSuffix(prefListName, IPPrefixListNoExportSuffix) {
 			entries = append(entries, "set community additive no-export")
 		}
@@ -256,12 +261,12 @@ func vrfNamesOf(networks ...models.V1MachineNetwork) []string {
 	return result
 }
 
-func buildIPPrefixListSpecs(seq int, prefix string) []string {
+func buildIPPrefixListSpecs(seq int, prefix netaddr.IPPrefix) []string {
 	var result []string
 
 	spec := fmt.Sprintf("seq %d %s %s", seq, Permit, prefix)
-	if !strings.HasSuffix(prefix, "/0") {
-		spec += " le 32"
+	if prefix.Bits != 0 {
+		spec += fmt.Sprintf(" le %d", prefix.IP.BitLen())
 	}
 
 	result = append(result, spec)
@@ -269,7 +274,7 @@ func buildIPPrefixListSpecs(seq int, prefix string) []string {
 	return result
 }
 
-func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb KnowledgeBase, shared bool) []IPPrefixList {
+func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb KnowledgeBase, shared bool, af AddressFamily) []IPPrefixList {
 	var result []IPPrefixList
 
 	private := kb.getPrivatePrimaryNetwork()
@@ -279,13 +284,27 @@ func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb Kn
 			continue
 		}
 
-		specs := buildIPPrefixListSpecs(seed, prefix)
+		p, err := netaddr.ParseIPPrefix(prefix)
+		if err != nil {
+			continue
+		}
+
+		if af == AddressFamilyIPv4 && !p.IP.Is4() {
+			continue
+		}
+
+		if af == AddressFamilyIPv6 && !p.IP.Is6() {
+			continue
+		}
+
+		specs := buildIPPrefixListSpecs(seed, p)
 
 		for _, spec := range specs {
-			name := namePrefixList(vrfName, private, prefix, shared)
+			name := namePrefixList(vrfName, private, p, shared, af)
 			prefixList := IPPrefixList{
-				Name: name,
-				Spec: spec,
+				Name:          name,
+				Spec:          spec,
+				AddressFamily: af,
 			}
 			result = append(result, prefixList)
 		}
@@ -296,11 +315,14 @@ func assembleIPPrefixListsFor(vrfName string, prefixes []string, seed int, kb Kn
 	return result
 }
 
-func namePrefixList(vrfName string, private models.V1MachineNetwork, prefix string, shared bool) string {
-	name := vrfName + "-import-prefixes"
+func namePrefixList(vrfName string, private models.V1MachineNetwork, prefix netaddr.IPPrefix, shared bool, af AddressFamily) string {
+	name := fmt.Sprintf("%s-import-prefixes", vrfName)
+	if af != AddressFamilyIPv4 {
+		name += fmt.Sprintf("-%s", af)
+	}
 
 	for _, privatePrefix := range private.Prefixes {
-		if privatePrefix == prefix && !shared {
+		if privatePrefix == prefix.String() && !shared {
 			// tenant private network ip addresses must not be visible in the public VRFs to avoid blown up routing tables
 			name += IPPrefixListNoExportSuffix
 		}
