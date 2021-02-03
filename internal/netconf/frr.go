@@ -2,6 +2,7 @@ package netconf
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -217,10 +218,17 @@ func assembleRouteMapsFor(vrfName string, prefixLists []IPPrefixList) []RouteMap
 	order := RouteMapOrderSeed
 	byName := byName(prefixLists)
 
-	for prefListName, prefixList := range byName {
-		match := fmt.Sprintf("match %s address prefix-list %s", prefixList.AddressFamily, prefListName)
+	names := []string{}
+	for n := range byName {
+		names = append(names, n)
+	}
+	sort.Sort(sort.Reverse(sort.StringSlice(names)))
+
+	for _, n := range names {
+		prefixList := byName[n]
+		match := fmt.Sprintf("match %s address prefix-list %s", prefixList.AddressFamily, n)
 		entries := []string{match}
-		if strings.HasSuffix(prefListName, IPPrefixListNoExportSuffix) {
+		if strings.HasSuffix(n, IPPrefixListNoExportSuffix) {
 			entries = append(entries, "set community additive no-export")
 		}
 

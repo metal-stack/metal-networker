@@ -70,6 +70,7 @@ router bgp 4200003073 vrf vrf3982
  !
  address-family l2vpn evpn
   advertise ipv4 unicast
+  advertise ipv6 unicast
  exit-address-family
 !
 router bgp 4200003073 vrf vrf104009
@@ -90,6 +91,7 @@ router bgp 4200003073 vrf vrf104009
  !
  address-family l2vpn evpn
   advertise ipv4 unicast
+  advertise ipv6 unicast
  exit-address-family
 !
 ip prefix-list vrf3982-import-prefixes seq 100 permit 0.0.0.0/0
