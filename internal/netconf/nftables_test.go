@@ -15,8 +15,7 @@ func TestCompileNftRules(t *testing.T) {
 		expected string
 		template string
 	}{
-		{expected: "testdata/nftrules.v4", template: TplNftablesV4},
-		{expected: "testdata/nftrules.v6", template: TplNftablesV6},
+		{expected: "testdata/nftrules", template: TplNftables},
 	}
 
 	for _, test := range tests {

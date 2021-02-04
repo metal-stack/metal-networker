@@ -3,13 +3,19 @@
 table inet metal {
     chain input {
         type filter hook input priority 0; policy drop;
-        ct state established,related counter accept comment "stateful input"
+        meta l4proto ipv6-icmp counter accept comment "icmpv6 input required for neighbor discovery"
         iifname "lo" counter accept comment "BGP unnumbered"
+        iifname "lan0" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered input from lan0"
+        iifname "lan1" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered input from lan1"
         iifname "lan0" ip saddr 10.0.0.0/8 udp dport 4789 counter accept comment "incoming VXLAN lan0"
         iifname "lan1" ip saddr 10.0.0.0/8 udp dport 4789 counter accept comment "incoming VXLAN lan1"
+
+        ct state established,related counter accept comment "stateful input"
+
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
         ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
         ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
+        
         ct state invalid counter drop comment "drop invalid packets to prevent malicious activity"
         counter jump refuse
     }
@@ -20,10 +26,15 @@ table inet metal {
     }
     chain output {
         type filter hook output priority 0; policy accept;
+        meta l4proto ipv6-icmp counter accept comment "icmpv6 output required for neighbor discovery"
         oifname "lo" counter accept comment "lo output required e.g. for chrony"
-        ct state established,related counter accept comment "stateful output"
+        oifname "lan0" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered output at lan0"
+        oifname "lan1" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered output at lan1"
+
         ip daddr 10.0.0.0/8 udp dport 4789 counter accept comment "outgoing VXLAN"
-        ct state invalid counter drop comment "drop invalid packets"
+        
+        ct state established,related counter accept comment "stateful output"
+        ct state invalid counter drop comment "drop invalid packets"                
     }
     chain refuse {
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
@@ -42,12 +53,7 @@ table inet nat {
     }
     chain postrouting {
         type nat hook postrouting priority 0; policy accept;
-        {{- range .SNAT }}
-        {{- $cmt:=.Comment }}
-        {{- $out:=.OutInterface }}
-        {{- range .SourceSpecs }}
-        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Source }} counter masquerade comment "{{ $cmt }}"
-        {{- end }}
-        {{- end }}
+        oifname "vlan104009" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
+        oifname "vlan104010" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: mpls-nbg-w8101-test)"
     }
 }

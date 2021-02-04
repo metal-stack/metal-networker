@@ -13,10 +13,9 @@ import (
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 )
 
-// TplNftablesV4 defines the name of the template to render nftables configuration.
 const (
-	TplNftablesV4 = "rules.v4.tpl"
-	TplNftablesV6 = "rules.v6.tpl"
+	// TplNftables defines the name of the template to render nftables configuration.
+	TplNftables = "nftrules.tpl"
 )
 
 type (
@@ -40,16 +39,6 @@ type (
 	// NftablesValidator can validate configuration for nftables rules.
 	NftablesValidator struct {
 		path string
-	}
-
-	// NftablesV4Validator can validate configuration for ipv4 nftables rules.
-	NftablesV4Validator struct {
-		NftablesValidator
-	}
-
-	// NftablesV6Validator can validate configuration for ipv6 nftables rules.
-	NftablesV6Validator struct {
-		NftablesValidator
 	}
 )
 
@@ -106,13 +95,7 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 }
 
 // Validate validates network interfaces configuration.
-func (v NftablesV4Validator) Validate() error {
-	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
-	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
-}
-
-// Validate validates network interfaces configuration.
-func (v NftablesV6Validator) Validate() error {
+func (v NftablesValidator) Validate() error {
 	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
 	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
 }
