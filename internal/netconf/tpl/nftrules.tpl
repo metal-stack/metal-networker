@@ -53,7 +53,12 @@ table inet nat {
     }
     chain postrouting {
         type nat hook postrouting priority 0; policy accept;
-        oifname "vlan104009" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
-        oifname "vlan104010" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: mpls-nbg-w8101-test)"
+        {{- range .SNAT }}
+        {{- $cmt:=.Comment }}
+        {{- $out:=.OutInterface }}
+        {{- range .SourceSpecs }}
+        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Source }} counter masquerade comment "{{ $cmt }}"
+        {{- end }}
+        {{- end }}
     }
 }
