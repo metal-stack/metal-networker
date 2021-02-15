@@ -51,7 +51,16 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 		// reach out from public into private and other public networks
 		i.importVRFs = []string{vrfNameOf(privatePrimaryNet)}
 		i.importPrefixes = prefixesOfNetwork(network)
-		i.importPrefixesNoExport = prefixesOfNetwork(privatePrimaryNet)
+
+		nets := []models.V1MachineNetwork{privatePrimaryNet}
+		if containsDefaultRoute(network.Destinationprefixes) {
+			for _, r := range privateSecondarSharedNets {
+				if containsDefaultRoute(r.Destinationprefixes) {
+					nets = append(nets, r)
+				}
+			}
+		}
+		i.importPrefixesNoExport = prefixesOfNetworks(nets)
 	}
 
 	return &i

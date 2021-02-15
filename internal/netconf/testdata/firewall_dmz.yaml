@@ -1,0 +1,159 @@
+# Note: This is a general-purpose configuration file that contains information not only for this app.
+#
+# This file is considered to be used to configure the tenant firewall!
+#
+###########################################
+# root@firewall:/etc/metal# date
+# Thu May 16 13:48:11 CEST 2019
+# root@firewall:/etc/metal# cat install.yaml
+# hostname: firewall
+# ipaddress: 10.0.12.1
+# asn: "4200003073"
+# networks:
+#   - asn: 4200003073
+#     destinationprefixes: []
+#     ips:
+#       - 10.0.12.1
+#     nat: false
+#     networkid: bc830818-2df1-4904-8c40-4322296d393d
+#     prefixes:
+#       - 10.0.12.0/22
+#     private: true
+#     underlay: false
+#     vrf: 3981
+#   - asn: 4200003073
+#     destinationprefixes:
+#       - 0.0.0.0/0
+#     ips:
+#       - 185.24.0.1
+#     nat: false
+#     networkid: internet-vagrant-lab
+#     prefixes:
+#       - 185.24.0.0/22
+#       - 185.27.0.0/22
+#     private: false
+#     underlay: false
+#     vrf: 104009
+#   - asn: 4200003073
+#     destinationprefixes: []
+#     ips:
+#       - 10.1.0.1
+#     nat: false
+#     networkid: underlay-vagrant-lab
+#     prefixes:
+#       - 10.0.12.0/22
+#     private: false
+#     underlay: true
+#     vrf: 0
+# machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
+# sshpublickey: ""
+# password: KAWT5DugqSPAezMl
+# devmode: false
+# console: ttyS0,115200n8
+###########################################
+---
+# Applies to hostname of the firewall.
+hostname: firewall
+networks:
+  - asn: 4200003073
+    # [IGNORED in case of private network]
+    destinationprefixes: []
+    # Applied to the SVI (as /32)
+    ips:
+      - 10.0.18.2
+    # In case nat equals true, Source NAT via SVI is added.
+    nat: true
+    networkid: storage-net
+    # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
+    prefixes:
+      - 10.0.18.0/22
+    private: true
+    underlay: false
+    privateprimary: true
+    networktype: privateprimaryshared
+    # VRF id considered to define EVPN interfaces.
+    vrf: 3982
+  - asn: 4200003073
+    destinationprefixes:
+      - 0.0.0.0/0
+    # Applied to the SVI (as /32)
+    ips:
+      - 10.0.20.2
+    # In case nat equals true, Source NAT via SVI is added.
+    nat: false
+    networkid: dmz-net
+    # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
+    prefixes:
+      - 10.0.20.0/22
+    private: true
+    underlay: false
+    privateprimary: false
+    networktype: privatesecondaryshared
+    # VRF id considered to define EVPN interfaces.
+    vrf: 3983
+  # === Public networks to route to
+    # [IGNORED]
+  - asn: 4200003073
+    # Considered to establish static route leak to reach out from tenant VRF into the public networks.
+    destinationprefixes:
+      - 0.0.0.0/0
+    # Applied to the SVI (as /32)
+    ips:
+      - 185.1.2.3
+    # In case nat equals true, Source NAT via SVI is added.
+    nat: true
+    networkid: internet-vagrant-lab
+    # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
+    prefixes:
+      - 185.1.2.0/24
+      - 185.27.0.0/22
+    private: false
+    underlay: false
+    networktype: external
+    # VRF id considered to define EVPN interfaces.
+    vrf: 104009
+  # === Underlay Network (underlay=true)
+    # Considered to define the BGP ASN.
+  - asn: 4200003073
+    # Considered to establish static route leak to reach out from tenant VRF into the public networks.
+    destinationprefixes: []
+    # Applied to local loopback as /32.
+    ips:
+      - 10.1.0.1
+    nat: false
+    networkid: underlay-vagrant-lab
+    # [IGNORED in case of UNDERLAY]
+    prefixes:
+      - 10.0.12.0/22
+    private: false
+    underlay: true
+    networktype: underlay
+    # [IGNORED] Underlay runs in default VRF.
+    vrf: 0
+machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
+# [IGNORED]
+sshpublickey: ""
+# [IGNORED]
+password: KAWT5DugqSPAezMl
+# [IGNORED]
+devmode: false
+# [IGNORED]
+console: ttyS1,115200n8
+timestamp: "2019-07-01T09:41:43Z"
+nics:
+  - mac: "00:03:00:11:11:01"
+    name: lan0
+    neighbors:
+      - mac: 44:38:39:00:00:1a
+        name: null
+        neighbors: []
+  - mac: "00:03:00:11:12:01"
+    name: lan1
+    neighbors:
+      - mac: "44:38:39:00:00:04"
+        name: null
+        neighbors: []
+
+
+
+
