@@ -3,6 +3,7 @@ package netconf
 import (
 	"fmt"
 
+	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"inet.af/netaddr"
 
@@ -53,11 +54,22 @@ func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator) net.App
 	return net.NewNetworkApplier(data, validator, nil)
 }
 
+func isDMZNetwork(n models.V1MachineNetwork) bool {
+	return *n.Networktype == mn.PrivateSecondaryShared && containsDefaultRoute(n.Destinationprefixes)
+}
+
 func getSNAT(kb KnowledgeBase) []SNAT {
 	var result []SNAT
 
 	private := kb.getPrivatePrimaryNetwork()
 	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
+
+	privatePfx := private.Prefixes
+	for _, n := range kb.Networks {
+		if isDMZNetwork(n) {
+			privatePfx = append(privatePfx, n.Prefixes...)
+		}
+	}
 
 	for _, n := range networks {
 		if n.Nat != nil && !*n.Nat {
@@ -68,7 +80,7 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 		cmt := fmt.Sprintf("snat (networkid: %s)", *n.Networkid)
 		svi := fmt.Sprintf("vlan%d", *n.Vrf)
 
-		for _, p := range private.Prefixes {
+		for _, p := range privatePfx {
 			ipprefix, err := netaddr.ParseIPPrefix(p)
 			if err != nil {
 				continue

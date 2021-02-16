@@ -128,7 +128,15 @@ func (kb KnowledgeBase) Validate(kind BareMetalType) error {
 }
 
 func (kb KnowledgeBase) containsAnyPublicNetwork() bool {
-	return len(kb.GetNetworks(mn.External)) > 0
+	if len(kb.GetNetworks(mn.External)) > 0 {
+		return true
+	}
+	for _, n := range kb.Networks {
+		if isDMZNetwork(n) {
+			return true
+		}
+	}
+	return false
 }
 
 func (kb KnowledgeBase) containsSinglePrivatePrimary() bool {

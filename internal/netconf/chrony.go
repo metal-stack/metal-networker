@@ -29,13 +29,20 @@ func (c ChronyServiceEnabler) Enable() error {
 func getDefaultRouteVRFName(kb KnowledgeBase) (string, error) {
 	networks := kb.GetNetworks(mn.External)
 	for _, network := range networks {
-		for _, prefix := range network.Destinationprefixes {
-			if prefix == IPv4ZeroCIDR || prefix == IPv6ZeroCIDR {
-				vrf := fmt.Sprintf("vrf%d", *network.Vrf)
-				return vrf, nil
-			}
+		if containsDefaultRoute(network.Destinationprefixes) {
+			vrf := fmt.Sprintf("vrf%d", *network.Vrf)
+			return vrf, nil
 		}
 	}
 
 	return "", fmt.Errorf("there is no network providing a default (0.0.0.0/0) route")
+}
+
+func containsDefaultRoute(prefixes []string) bool {
+	for _, prefix := range prefixes {
+		if prefix == IPv4ZeroCIDR || prefix == IPv6ZeroCIDR {
+			return true
+		}
+	}
+	return false
 }
