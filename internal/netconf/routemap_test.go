@@ -121,7 +121,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 			},
 		},
 		{
-			name:  "firewall of a private network with dmz network (dmz firewall)",
+			name:  "firewall of a private network with dmz network and internet (dmz firewall)",
 			input: "testdata/firewall_dmz.yaml",
 			want: []*importRule{
 				{
@@ -139,6 +139,23 @@ func Test_importRulesForNetwork(t *testing.T) {
 					importVRFs:             []string{private.vrf},
 					importPrefixes:         inet.prefixes,
 					importPrefixesNoExport: concatPfxSlices(private.prefixes, dmz.prefixes),
+				},
+				nil,
+			},
+		},
+		{
+			name:  "firewall of a private network with dmz network (dmz app firewall)",
+			input: "testdata/firewall_dmz_app.yaml",
+			want: []*importRule{
+				{
+					targetVRF:      private.vrf,
+					importVRFs:     []string{dmz.vrf},
+					importPrefixes: concatPfxSlices(dmz.prefixes, dmz.destinations),
+				},
+				{
+					targetVRF:      dmz.vrf,
+					importVRFs:     []string{private.vrf},
+					importPrefixes: concatPfxSlices(private.prefixes, dmz.prefixes),
 				},
 				nil,
 			},
@@ -177,6 +194,11 @@ func Test_importRulesForNetwork(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			kb := NewKnowledgeBase(tt.input)
+			err := kb.Validate(Firewall)
+			if err != nil {
+				t.Errorf("%s is not valid: %v", tt.input, err)
+				return
+			}
 			for i, network := range kb.Networks {
 				got := importRulesForNetwork(kb, network)
 				if !reflect.DeepEqual(got, tt.want[i]) {

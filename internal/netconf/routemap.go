@@ -29,20 +29,36 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 	privatePrimaryNet := kb.getPrivatePrimaryNetwork()
 
 	externalNets := kb.GetNetworks(mn.External)
-	privateSecondarSharedNets := kb.GetNetworks(mn.PrivateSecondaryShared)
+	privateSecondarySharedNets := kb.GetNetworks(mn.PrivateSecondaryShared)
 
 	nt := *network.Networktype
 	switch nt {
 	case mn.PrivatePrimaryUnshared:
 		fallthrough
 	case mn.PrivatePrimaryShared:
-		// reach out from private primary network into public networks
+		// reach out from private network into public networks
 		i.importVRFs = vrfNamesOf(externalNets)
 		i.importPrefixes = getDestinationPrefixes(externalNets)
 
-		// reach out from private primary network into shared private networks
-		i.importVRFs = append(i.importVRFs, vrfNamesOf(privateSecondarSharedNets)...)
-		i.importPrefixes = append(i.importPrefixes, prefixesOfNetworks(privateSecondarSharedNets)...)
+		// reach out from private network into shared private networks
+		i.importVRFs = append(i.importVRFs, vrfNamesOf(privateSecondarySharedNets)...)
+		i.importPrefixes = append(i.importPrefixes, prefixesOfNetworks(privateSecondarySharedNets)...)
+
+		// reach out from private network to destination prefixes of private secondays shared networks
+		for _, n := range privateSecondarySharedNets {
+			for _, pfx := range n.Destinationprefixes {
+				ppfx := netaddr.MustParseIPPrefix(pfx)
+				isThere := false
+				for _, i := range i.importPrefixes {
+					if i == ppfx {
+						isThere = true
+					}
+				}
+				if !isThere {
+					i.importPrefixes = append(i.importPrefixes, ppfx)
+				}
+			}
+		}
 	case mn.PrivateSecondaryShared:
 		// reach out from private shared networks into private primary network
 		i.importVRFs = []string{vrfNameOf(privatePrimaryNet)}
@@ -71,8 +87,9 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 		i.importPrefixes = prefixesOfNetwork(network)
 
 		nets := []models.V1MachineNetwork{privatePrimaryNet}
+
 		if containsDefaultRoute(network.Destinationprefixes) {
-			for _, r := range privateSecondarSharedNets {
+			for _, r := range privateSecondarySharedNets {
 				if containsDefaultRoute(r.Destinationprefixes) {
 					nets = append(nets, r)
 				}
