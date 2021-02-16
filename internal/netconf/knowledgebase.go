@@ -131,8 +131,8 @@ func (kb KnowledgeBase) containsAnyPublicNetwork() bool {
 	if len(kb.GetNetworks(mn.External)) > 0 {
 		return true
 	}
-	for _, n := range kb.GetNetworks(mn.PrivateSecondaryShared) {
-		if containsDefaultRoute(n.Destinationprefixes) {
+	for _, n := range kb.Networks {
+		if isDMZNetwork(n) {
 			return true
 		}
 	}
