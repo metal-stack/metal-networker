@@ -1,6 +1,7 @@
 package netconf
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -120,24 +121,24 @@ func Test_importRulesForNetwork(t *testing.T) {
 			},
 		},
 		{
-			name:  "firewall of a shared private network with default route (dmz firewall)",
+			name:  "firewall of a private network with dmz network (dmz firewall)",
 			input: "testdata/firewall_dmz.yaml",
 			want: []*importRule{
 				{
-					targetVRF:      shared.vrf,
+					targetVRF:      private.vrf,
 					importVRFs:     []string{inet.vrf, dmz.vrf},
 					importPrefixes: concatPfxSlices(inet.destinations, dmz.prefixes),
 				},
 				{
 					targetVRF:      dmz.vrf,
-					importVRFs:     []string{shared.vrf},
-					importPrefixes: concatPfxSlices(shared.prefixes, dmz.prefixes),
+					importVRFs:     []string{private.vrf, inet.vrf},
+					importPrefixes: concatPfxSlices(private.prefixes, dmz.prefixes, dmz.destinations),
 				},
 				{
 					targetVRF:              inet.vrf,
-					importVRFs:             []string{shared.vrf},
+					importVRFs:             []string{private.vrf},
 					importPrefixes:         inet.prefixes,
-					importPrefixesNoExport: concatPfxSlices(shared.prefixes, dmz.prefixes),
+					importPrefixesNoExport: concatPfxSlices(private.prefixes, dmz.prefixes),
 				},
 				nil,
 			},
@@ -179,6 +180,8 @@ func Test_importRulesForNetwork(t *testing.T) {
 			for i, network := range kb.Networks {
 				got := importRulesForNetwork(kb, network)
 				if !reflect.DeepEqual(got, tt.want[i]) {
+					fmt.Printf("g: %v\nw: %v\n", got.importPrefixes, tt.want[i].importPrefixes)
+					fmt.Printf("g: %v\nw: %v\n", got.importPrefixesNoExport, tt.want[i].importPrefixesNoExport)
 					t.Errorf("importRulesForNetwork() got %v, wanted %v", got, tt.want[i])
 				}
 			}

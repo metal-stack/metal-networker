@@ -47,6 +47,24 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 		// reach out from private shared networks into private primary network
 		i.importVRFs = []string{vrfNameOf(privatePrimaryNet)}
 		i.importPrefixes = concatPfxSlices(prefixesOfNetwork(privatePrimaryNet), prefixesOfNetwork(network))
+
+		// import destination prefixes of dmz networks from external networks
+		if len(network.Destinationprefixes) > 0 {
+			for _, pfx := range network.Destinationprefixes {
+				for _, e := range externalNets {
+					importExternalNet := false
+					for _, epfx := range e.Destinationprefixes {
+						if pfx == epfx {
+							importExternalNet = true
+							i.importPrefixes = append(i.importPrefixes, netaddr.MustParseIPPrefix(pfx))
+						}
+					}
+					if importExternalNet {
+						i.importVRFs = append(i.importVRFs, vrfNameOf(e))
+					}
+				}
+			}
+		}
 	case mn.External:
 		// reach out from public into private and other public networks
 		i.importVRFs = []string{vrfNameOf(privatePrimaryNet)}

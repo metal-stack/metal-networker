@@ -55,24 +55,29 @@
 # Applies to hostname of the firewall.
 hostname: firewall
 networks:
+    # === Tenant Network (private=true)
+    # [IGNORED]
   - asn: 4200003073
     # [IGNORED in case of private network]
     destinationprefixes: []
-    # Applied to the SVI (as /32)
+    # For Firewall: Used to consider the set of prefixes that originate the given IP's to establish route leak in public
+    # network VRF's for return traffic. Applied to the SVI (as /32)
+    # For Machine: Used to set the loopback ips.
     ips:
-      - 10.0.18.2
-    # In case nat equals true, Source NAT via SVI is added.
-    nat: true
-    networkid: storage-net
-    # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
+      - 10.0.16.2
+    # [IGNORED in case of private network]
+    nat: false
+    # [IGNORED in case of private network]
+    networkid: bc830818-2df1-4904-8c40-4322296d393d
+    # considered as source range for nat and to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
     prefixes:
-      - 10.0.18.0/22
+      - 10.0.16.0/22
     private: true
     underlay: false
-    privateprimary: true
-    networktype: privateprimaryshared
-    # VRF id considered to define EVPN interfaces.
-    vrf: 3982
+    networktype: privateprimaryunshared
+    # [IGNORED in case of private network]
+    # Defines the tenant VRF id.
+    vrf: 3981
   - asn: 4200003073
     destinationprefixes:
       - 0.0.0.0/0
