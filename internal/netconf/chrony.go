@@ -27,11 +27,17 @@ func (c ChronyServiceEnabler) Enable() error {
 }
 
 func getDefaultRouteVRFName(kb KnowledgeBase) (string, error) {
-	networks := kb.GetNetworks(mn.External)
-	for _, network := range networks {
+	externalNets := kb.GetNetworks(mn.External)
+	for _, network := range externalNets {
 		if containsDefaultRoute(network.Destinationprefixes) {
-			vrf := fmt.Sprintf("vrf%d", *network.Vrf)
-			return vrf, nil
+			return vrfNameOf(network), nil
+		}
+	}
+
+	privateSecondarySharedNets := kb.GetNetworks(mn.PrivateSecondaryShared)
+	for _, network := range privateSecondarySharedNets {
+		if containsDefaultRoute(network.Destinationprefixes) {
+			return vrfNameOf(network), nil
 		}
 	}
 
