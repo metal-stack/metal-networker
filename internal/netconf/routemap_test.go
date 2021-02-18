@@ -136,7 +136,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 				},
 				{
 					targetVRF:              inet.vrf,
-					importVRFs:             []string{private.vrf},
+					importVRFs:             []string{private.vrf, dmz.vrf},
 					importPrefixes:         inet.prefixes,
 					importPrefixesNoExport: concatPfxSlices(private.prefixes, dmz.prefixes),
 				},

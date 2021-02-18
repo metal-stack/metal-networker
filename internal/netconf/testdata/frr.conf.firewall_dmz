@@ -108,12 +108,14 @@ router bgp 4200003073 vrf vrf104009
  address-family ipv4 unicast
   redistribute connected
   import vrf vrf3981
+  import vrf vrf3983
   import vrf route-map vrf104009-import-map
  exit-address-family
  !
  address-family ipv6 unicast
   redistribute connected
   import vrf vrf3981
+  import vrf vrf3983
   import vrf route-map vrf104009-import-map
  exit-address-family
  !

@@ -92,6 +92,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 			for _, r := range privateSecondarySharedNets {
 				if containsDefaultRoute(r.Destinationprefixes) {
 					nets = append(nets, r)
+					i.importVRFs = append(i.importVRFs, vrfNameOf(r))
 				}
 			}
 		}
