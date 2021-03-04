@@ -8,5 +8,5 @@ Address=127.0.0.1/8
 {{- range .Loopback.IPs }}
 
 [Address]
-Address={{ . }}/32
+Address={{ . }}
 {{- end }}

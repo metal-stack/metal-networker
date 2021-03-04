@@ -3,7 +3,9 @@ package netconf
 import (
 	"fmt"
 
+	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-networker/pkg/exec"
+	"inet.af/netaddr"
 
 	"github.com/metal-stack/v"
 
@@ -12,10 +14,9 @@ import (
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 )
 
-// TplNftablesV4 defines the name of the template to render nftables configuration.
 const (
-	TplNftablesV4 = "rules.v4.tpl"
-	TplNftablesV6 = "rules.v6.tpl"
+	// TplNftables defines the name of the template to render nftables configuration.
+	TplNftables = "nftrules.tpl"
 )
 
 type (
@@ -29,22 +30,16 @@ type (
 	SNAT struct {
 		Comment      string
 		OutInterface string
-		SourceSpecs  []string
+		SourceSpecs  []SourceSpec
 	}
 
+	SourceSpec struct {
+		AddressFamily string
+		Source        string
+	}
 	// NftablesValidator can validate configuration for nftables rules.
 	NftablesValidator struct {
 		path string
-	}
-
-	// NftablesV4Validator can validate configuration for ipv4 nftables rules.
-	NftablesV4Validator struct {
-		NftablesValidator
-	}
-
-	// NftablesV6Validator can validate configuration for ipv6 nftables rules.
-	NftablesV6Validator struct {
-		NftablesValidator
 	}
 )
 
@@ -59,22 +54,47 @@ func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator) net.App
 	return net.NewNetworkApplier(data, validator, nil)
 }
 
+func isDMZNetwork(n models.V1MachineNetwork) bool {
+	return *n.Networktype == mn.PrivateSecondaryShared && containsDefaultRoute(n.Destinationprefixes)
+}
+
 func getSNAT(kb KnowledgeBase) []SNAT {
 	var result []SNAT
 
 	private := kb.getPrivatePrimaryNetwork()
 	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
 
+	privatePfx := private.Prefixes
+	for _, n := range kb.Networks {
+		if isDMZNetwork(n) {
+			privatePfx = append(privatePfx, n.Prefixes...)
+		}
+	}
+
 	for _, n := range networks {
 		if n.Nat != nil && !*n.Nat {
 			continue
 		}
 
-		var sources []string
-		sources = append(sources, private.Prefixes...)
+		var sources []SourceSpec
 		cmt := fmt.Sprintf("snat (networkid: %s)", *n.Networkid)
 		svi := fmt.Sprintf("vlan%d", *n.Vrf)
 
+		for _, p := range privatePfx {
+			ipprefix, err := netaddr.ParseIPPrefix(p)
+			if err != nil {
+				continue
+			}
+			af := "ip"
+			if ipprefix.IP.Is6() {
+				af = "ip6"
+			}
+			sspec := SourceSpec{
+				Source:        p,
+				AddressFamily: af,
+			}
+			sources = append(sources, sspec)
+		}
 		s := SNAT{
 			Comment:      cmt,
 			OutInterface: svi,
@@ -87,13 +107,7 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 }
 
 // Validate validates network interfaces configuration.
-func (v NftablesV4Validator) Validate() error {
-	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
-	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
-}
-
-// Validate validates network interfaces configuration.
-func (v NftablesV6Validator) Validate() error {
+func (v NftablesValidator) Validate() error {
 	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
 	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
 }
