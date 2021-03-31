@@ -48,7 +48,7 @@ validate:
 
 .PHONY: .generate
 generate: statik
-	$(STATIK) -src=internal/netconf/tpl -include='*.tpl' -dest=internal/netconf/tpl
+	$(STATIK) -src=pkg/netconf/tpl -include='*.tpl' -dest=pkg/netconf/tpl
 
 # Build the docker image
 docker-build:
