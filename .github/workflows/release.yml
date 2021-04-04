@@ -16,9 +16,9 @@ jobs:
       with:
         go-version: '1.16.x'
     - name: Lint
-      uses: actions-contrib/golangci-lint@master
+      uses: golangci/golangci-lint-action@v2
       with:
-        args: run
+        args: -p bugs
     - name: Build project
       run: make
     - name: Create Release
