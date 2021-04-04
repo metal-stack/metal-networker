@@ -21,7 +21,7 @@ jobs:
     - name: Lint
       uses: golangci/golangci-lint-action@v2
       with:
-        args: run
+        args: -p bugs
     - name: Build project
       run: make
     - name: Docker Login

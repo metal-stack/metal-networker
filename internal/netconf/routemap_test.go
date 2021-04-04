@@ -192,6 +192,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			kb := NewKnowledgeBase(tt.input)
 			err := kb.Validate(Firewall)
