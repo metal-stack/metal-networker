@@ -21,6 +21,7 @@ jobs:
     - name: Lint
       uses: actions-contrib/golangci-lint@master
       with:
+        version: 1.39.0
         args: run
     - name: Build project
       run: make
