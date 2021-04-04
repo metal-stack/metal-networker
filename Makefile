@@ -21,7 +21,7 @@ endif
 all:: release;
 
 .PHONY: test
-test: generate
+test:
 	go test -ldflags "-X 'github.com/metal-stack/v.Version='" -v -cover ./...
 
 .PHONY: all
@@ -46,10 +46,6 @@ release: bin/$(BINARY) validate
 validate:
 	./validate.sh
 
-.PHONY: .generate
-generate: statik
-	$(STATIK) -src=internal/netconf/tpl -include='*.tpl' -dest=internal/netconf/tpl
-
 # Build the docker image
 docker-build:
 	docker build . -t ${DOCKER_IMG}
@@ -57,20 +53,3 @@ docker-build:
 # Push the docker image
 docker-push:
 	docker push ${DOCKER_IMG}
-
-# find or download statik
-.PHONY: statik
-statik:
-ifeq (, $(shell which statik))
-	@{ \
-	set -e ;\
-	STATIK_TMP_DIR=$$(mktemp -d) ;\
-	cd $$STATIK_TMP_DIR ;\
-	go mod init tmp ;\
-	go get github.com/rakyll/statik ;\
-	rm -rf $$STATIK_TMP_DIR ;\
-	}
-STATIK=$(GOBIN)/statik
-else
-STATIK=$(shell which statik)
-endif
