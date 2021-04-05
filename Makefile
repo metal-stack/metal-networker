@@ -22,7 +22,7 @@ all:: release;
 
 .PHONY: test
 test:
-	go test -ldflags "-X 'github.com/metal-stack/v.Version='" -v -cover ./...
+	GO_ENV=testing go test -ldflags -v -cover ./...
 
 .PHONY: all
 bin/$(BINARY): test
