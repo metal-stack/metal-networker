@@ -239,7 +239,7 @@ func mustEnableUnit(unit string) {
 
 func mustApply(applier net.Applier, tpl, src, dest string) {
 	t := template.Must(template.New(src).Parse(tpl))
-	err := applier.Apply(*t, src, dest, false)
+	_, err := applier.Apply(*t, src, dest, false)
 
 	if err != nil {
 		log.Panic(err)

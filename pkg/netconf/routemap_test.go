@@ -132,7 +132,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 				{
 					targetVRF:      dmz.vrf,
 					importVRFs:     []string{private.vrf, inet.vrf},
-					importPrefixes: concatPfxSlices(private.prefixes, dmz.prefixes, dmz.destinations),
+					importPrefixes: concatPfxSlices(private.prefixes, dmz.prefixes, dmz.destinations, inet.prefixes),
 				},
 				{
 					targetVRF:              inet.vrf,

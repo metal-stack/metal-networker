@@ -93,7 +93,7 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 
 	validator := FRRValidator{tmpFile}
 
-	return net.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, net.NewDBusReloader("frr.service"))
 }
 
 // routerID will calculate the bgp router-id which must only be specified in the ipv6 range.

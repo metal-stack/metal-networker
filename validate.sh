@@ -5,7 +5,6 @@ validate () {
     echo "Validating sample artifacts of metal-networker with ${1}:${2} frr:${3}"
     echo "----------------------------------------------------------------"
     docker build \
-        --no-cache \
         --build-arg OS_NAME="${1}" \
         --build-arg OS_VERSION="${2}" \
         --build-arg FRR_VERSION="${3}" \
