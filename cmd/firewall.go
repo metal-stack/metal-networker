@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/metal-stack/metal-networker/internal/netconf"
+	"github.com/metal-stack/metal-networker/pkg/netconf"
 
 	"github.com/spf13/cobra"
 )

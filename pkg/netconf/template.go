@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"text/template"
 
-	_ "github.com/metal-stack/metal-networker/internal/netconf/tpl/statik"
+	_ "github.com/metal-stack/metal-networker/pkg/netconf/tpl/statik"
 	"github.com/rakyll/statik/fs"
 )
 
