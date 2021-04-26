@@ -77,6 +77,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 					}
 					if importExternalNet {
 						i.importVRFs = append(i.importVRFs, vrfNameOf(e))
+						i.importPrefixes = append(i.importPrefixes, prefixesOfNetwork(e)...)
 					}
 				}
 			}
