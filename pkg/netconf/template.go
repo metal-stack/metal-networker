@@ -1,31 +1,20 @@
 package netconf
 
 import (
-	// including template files with statik
-	"io/ioutil"
+	"embed"
+	"path"
 	"text/template"
-
-	_ "github.com/metal-stack/metal-networker/pkg/netconf/tpl/statik"
-	"github.com/rakyll/statik/fs"
 )
 
+//go:embed tpl
+var templates embed.FS
+
 func mustReadTpl(tplName string) string {
-	statikFS, err := fs.New()
+	contents, err := templates.ReadFile(path.Join("tpl", tplName))
 	if err != nil {
 		log.Panic(err)
+		return ""
 	}
-
-	r, err := statikFS.Open("/" + tplName)
-	if err != nil {
-		log.Panic(err)
-	}
-	defer r.Close()
-
-	contents, err := ioutil.ReadAll(r)
-	if err != nil {
-		log.Panic(err)
-	}
-
 	return string(contents)
 }
 

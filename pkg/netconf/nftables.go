@@ -7,8 +7,6 @@ import (
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"inet.af/netaddr"
 
-	"github.com/metal-stack/v"
-
 	"github.com/metal-stack/metal-networker/pkg/net"
 
 	mn "github.com/metal-stack/metal-lib/pkg/net"
@@ -46,9 +44,8 @@ type (
 // NewNftablesConfigApplier constructs a new instance of this type.
 func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator) net.Applier {
 	data := NftablesData{
-		Comment: fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n"+
-			"# Do not edit.", kb.Machineuuid, v.V.String()),
-		SNAT: getSNAT(kb),
+		Comment: versionHeader(kb.Machineuuid),
+		SNAT:    getSNAT(kb),
 	}
 
 	return net.NewNetworkApplier(data, validator, nil)

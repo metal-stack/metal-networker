@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"os"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
@@ -231,6 +232,10 @@ func (kb KnowledgeBase) allNonUnderlayNetworksHaveNonZeroVRF() bool {
 }
 
 func versionHeader(uuid string) string {
+	version := v.V.String()
+	if os.Getenv("GO_ENV") == "testing" {
+		version = ""
+	}
 	return fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n# Do not edit.",
-		uuid, v.V.String())
+		uuid, version)
 }

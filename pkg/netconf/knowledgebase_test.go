@@ -163,7 +163,9 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 	}
 
 	for i, test := range tests {
+		test := test
 		for _, kind := range test.kinds {
+			kind := kind
 			t.Run(fmt.Sprintf("testcase %d - kind %v", i, kind), func(t *testing.T) {
 				actualErr := test.kb.Validate(kind)
 				if test.expectedErrMsg == "" {
