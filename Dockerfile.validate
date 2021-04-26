@@ -4,9 +4,9 @@ ARG FRR_VERSION
 FROM metalstack/frr:${FRR_VERSION}-${OS_NAME}-${OS_VERSION} AS frr-artifacts
 
 FROM ${OS_NAME}:${OS_VERSION}
-
-ENV FRR_FILES="frr.conf.firewall frr.conf.machine" \
-    TESTDATA_DIR="./internal/netconf/testdata"
+ARG OS_NAME
+ARG OS_VERSION
+ARG FRR_VERSION
 
 WORKDIR /tmp
 COPY --from=frr-artifacts /artifacts .
@@ -20,6 +20,6 @@ RUN apt-get update --quiet \
     ./frr-pythontools_*.deb \
     ./libyang*.deb
 
-COPY ${TESTDATA_DIR} /testdata
+COPY ./pkg/netconf/testdata /testdata
 COPY validate_os.sh /
 RUN "/validate_os.sh"

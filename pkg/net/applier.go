@@ -11,7 +11,7 @@ import (
 
 // Applier is an interface to render changes and reload services to apply them.
 type Applier interface {
-	Apply(tpl template.Template, tmpFile, destFile string, reload bool) error
+	Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error)
 	Render(writer io.Writer, tpl template.Template) error
 	Reload() error
 	Validate() error
@@ -31,10 +31,10 @@ func NewNetworkApplier(data interface{}, validator Validator, reloader Reloader)
 }
 
 // Apply applies the current configuration with the given template.
-func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, reload bool) error {
+func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error) {
 	f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	defer func() {
@@ -45,39 +45,39 @@ func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, 
 	err = n.Render(w, tpl)
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	err = w.Flush()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	err = n.Validate()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	equal := n.Compare(tmpFile, destFile)
 	if equal {
-		return nil
+		return false, nil
 	}
 
 	err = os.Rename(tmpFile, destFile)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if !reload {
-		return nil
+		return true, nil
 	}
 
 	err = n.Reload()
 	if err != nil {
-		return err
+		return true, err
 	}
 
-	return nil
+	return true, nil
 }
 
 // Render renders the network interfaces to the given writer using the given template.
