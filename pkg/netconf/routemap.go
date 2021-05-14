@@ -39,6 +39,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 		// reach out from private network into public networks
 		i.importVRFs = vrfNamesOf(externalNets)
 		i.importPrefixes = getDestinationPrefixes(externalNets)
+		i.importPrefixes = append(i.importPrefixes, prefixesOfNetworks(externalNets)...)
 
 		// reach out from private network into shared private networks
 		i.importVRFs = append(i.importVRFs, vrfNamesOf(privateSecondarySharedNets)...)
