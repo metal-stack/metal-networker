@@ -80,7 +80,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 				{
 					targetVRF:      private.vrf,
 					importVRFs:     []string{inet.vrf, external.vrf, shared.vrf},
-					importPrefixes: concatPfxSlices(inet.destinations, external.destinations, shared.prefixes),
+					importPrefixes: concatPfxSlices(inet.destinations, external.destinations, inet.prefixes, external.prefixes, shared.prefixes),
 				},
 				{
 					targetVRF:      shared.vrf,
@@ -109,7 +109,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 				{
 					targetVRF:      shared.vrf,
 					importVRFs:     []string{inet.vrf},
-					importPrefixes: concatPfxSlices(inet.destinations),
+					importPrefixes: concatPfxSlices(inet.destinations, inet.prefixes),
 				},
 				{
 					targetVRF:              inet.vrf,
@@ -127,7 +127,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 				{
 					targetVRF:      private.vrf,
 					importVRFs:     []string{inet.vrf, dmz.vrf},
-					importPrefixes: concatPfxSlices(inet.destinations, dmz.prefixes),
+					importPrefixes: concatPfxSlices(inet.destinations, inet.prefixes, dmz.prefixes),
 				},
 				{
 					targetVRF:      dmz.vrf,
@@ -167,7 +167,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 				{
 					targetVRF:      private6.vrf,
 					importVRFs:     []string{inet.vrf, external.vrf, shared.vrf},
-					importPrefixes: concatPfxSlices(inet6.destinations, external.destinations, shared.prefixes),
+					importPrefixes: concatPfxSlices(inet6.destinations, external.destinations, inet6.prefixes, external.prefixes, shared.prefixes),
 				},
 				{
 					targetVRF:      shared.vrf,

@@ -147,8 +147,10 @@ router bgp 4200003073 vrf vrf104010
  exit-address-family
 !
 ip prefix-list vrf3981-import-prefixes seq 100 permit 100.127.1.0/24 le 32
-ip prefix-list vrf3981-import-prefixes seq 101 permit 10.0.18.0/22 le 32
+ip prefix-list vrf3981-import-prefixes seq 101 permit 100.127.129.0/24 le 32
+ip prefix-list vrf3981-import-prefixes seq 102 permit 10.0.18.0/22 le 32
 ipv6 prefix-list vrf3981-import-prefixes-ipv6 seq 100 permit ::/0
+ipv6 prefix-list vrf3981-import-prefixes-ipv6 seq 101 permit 2a02:c00:20::/45 le 128
 route-map vrf3981-import-map permit 10
  match ipv6 address prefix-list vrf3981-import-prefixes-ipv6
 route-map vrf3981-import-map permit 20
