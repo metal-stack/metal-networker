@@ -94,14 +94,14 @@ router bgp 4200003073 vrf vrf3983
   advertise ipv6 unicast
  exit-address-family
 !
-ip prefix-list vrf3981-import-prefixes seq 100 permit 10.0.20.0/22 le 32
-ip prefix-list vrf3981-import-prefixes seq 101 permit 0.0.0.0/0
+ip prefix-list vrf3981-import-prefixes seq 105 permit 10.0.20.0/22 le 32
+ip prefix-list vrf3981-import-prefixes seq 106 permit 0.0.0.0/0
 route-map vrf3981-import-map permit 10
  match ip address prefix-list vrf3981-import-prefixes
 route-map vrf3981-import-map deny 20
 !
-ip prefix-list vrf3983-import-prefixes seq 100 permit 10.0.16.0/22 le 32
-ip prefix-list vrf3983-import-prefixes seq 101 permit 10.0.20.0/22 le 32
+ip prefix-list vrf3983-import-prefixes seq 105 permit 10.0.16.0/22 le 32
+ip prefix-list vrf3983-import-prefixes seq 106 permit 10.0.20.0/22 le 32
 route-map vrf3983-import-map permit 10
  match ip address prefix-list vrf3983-import-prefixes
 route-map vrf3983-import-map deny 20

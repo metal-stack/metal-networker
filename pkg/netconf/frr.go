@@ -18,7 +18,7 @@ const (
 	// TplMachineFRR defines the name of the template to render FRR configuration to a 'machine'.
 	TplMachineFRR = "frr.machine.tpl"
 	// IPPrefixListSeqSeed specifies the initial value for prefix lists sequence number.
-	IPPrefixListSeqSeed = 100
+	IPPrefixListSeqSeed = 105
 	// IPPrefixListNoExportSuffix defines the suffix to use for private IP ranges that must not be exported.
 	IPPrefixListNoExportSuffix = "-no-export"
 	// RouteMapOrderSeed defines the initial value for route-map order.
