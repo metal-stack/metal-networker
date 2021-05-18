@@ -15,12 +15,15 @@ debug bgp zebra
 !
 vrf vrf3981
  vni 3981
+ exit-vrf
 !
 vrf vrf3983
  vni 3983
+ exit-vrf
 !
 vrf vrf104009
  vni 104009
+ exit-vrf
 !
 interface lan0
  ipv6 nd ra-interval 6

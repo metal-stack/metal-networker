@@ -18,6 +18,7 @@ debug bgp zebra
 !
 vrf vrf{{ .ID}}
  vni {{ .VNI }}
+ exit-vrf
 {{ end -}}
 !
 interface lan0
