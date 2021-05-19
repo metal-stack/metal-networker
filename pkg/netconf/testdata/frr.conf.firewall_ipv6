@@ -150,27 +150,27 @@ router bgp 4200003073 vrf vrf104010
   advertise ipv6 unicast
  exit-address-family
 !
-ip prefix-list vrf3981-import-prefixes seq 100 permit 100.127.1.0/24 le 32
-ip prefix-list vrf3981-import-prefixes seq 101 permit 100.127.129.0/24 le 32
-ip prefix-list vrf3981-import-prefixes seq 102 permit 10.0.18.0/22 le 32
-ipv6 prefix-list vrf3981-import-prefixes-ipv6 seq 100 permit ::/0
-ipv6 prefix-list vrf3981-import-prefixes-ipv6 seq 101 permit 2a02:c00:20::/45 le 128
+ip prefix-list vrf3981-import-prefixes seq 368 permit 100.127.1.0/24 le 32
+ip prefix-list vrf3981-import-prefixes seq 819 permit 100.127.129.0/24 le 32
+ip prefix-list vrf3981-import-prefixes seq 504 permit 10.0.18.0/22 le 32
+ipv6 prefix-list vrf3981-import-prefixes-ipv6 seq 834 permit ::/0
+ipv6 prefix-list vrf3981-import-prefixes-ipv6 seq 711 permit 2a02:c00:20::/45 le 128
 route-map vrf3981-import-map permit 10
  match ipv6 address prefix-list vrf3981-import-prefixes-ipv6
 route-map vrf3981-import-map permit 20
  match ip address prefix-list vrf3981-import-prefixes
 route-map vrf3981-import-map deny 30
 !
-ip prefix-list vrf3982-import-prefixes seq 100 permit 10.0.18.0/22 le 32
-ipv6 prefix-list vrf3982-import-prefixes-ipv6 seq 100 permit 2002::/64 le 128
+ip prefix-list vrf3982-import-prefixes seq 504 permit 10.0.18.0/22 le 32
+ipv6 prefix-list vrf3982-import-prefixes-ipv6 seq 892 permit 2002::/64 le 128
 route-map vrf3982-import-map permit 10
  match ipv6 address prefix-list vrf3982-import-prefixes-ipv6
 route-map vrf3982-import-map permit 20
  match ip address prefix-list vrf3982-import-prefixes
 route-map vrf3982-import-map deny 30
 !
-ipv6 prefix-list vrf104009-import-prefixes-ipv6-no-export seq 100 permit 2002::/64 le 128
-ipv6 prefix-list vrf104009-import-prefixes-ipv6 seq 101 permit 2a02:c00:20::/45 le 128
+ipv6 prefix-list vrf104009-import-prefixes-ipv6-no-export seq 892 permit 2002::/64 le 128
+ipv6 prefix-list vrf104009-import-prefixes-ipv6 seq 711 permit 2a02:c00:20::/45 le 128
 route-map vrf104009-import-map permit 10
  match ipv6 address prefix-list vrf104009-import-prefixes-ipv6-no-export
  set community additive no-export
@@ -178,8 +178,8 @@ route-map vrf104009-import-map permit 20
  match ipv6 address prefix-list vrf104009-import-prefixes-ipv6
 route-map vrf104009-import-map deny 30
 !
-ip prefix-list vrf104010-import-prefixes seq 100 permit 100.127.129.0/24 le 32
-ipv6 prefix-list vrf104010-import-prefixes-ipv6-no-export seq 100 permit 2002::/64 le 128
+ip prefix-list vrf104010-import-prefixes seq 819 permit 100.127.129.0/24 le 32
+ipv6 prefix-list vrf104010-import-prefixes-ipv6-no-export seq 892 permit 2002::/64 le 128
 route-map vrf104010-import-map permit 10
  match ipv6 address prefix-list vrf104010-import-prefixes-ipv6-no-export
  set community additive no-export

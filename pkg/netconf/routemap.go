@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"hash/fnv"
+
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"inet.af/netaddr"
@@ -106,20 +108,17 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 
 func (i *importRule) prefixLists() []IPPrefixList {
 	var result []IPPrefixList
-	seed := IPPrefixListSeqSeed
 	afs := []AddressFamily{AddressFamilyIPv4, AddressFamilyIPv6}
 	for _, af := range afs {
-		pfxList := prefixLists(i.importPrefixesNoExport, af, false, seed, i.targetVRF)
+		pfxList := prefixLists(i.importPrefixesNoExport, af, false, i.targetVRF)
 		result = append(result, pfxList...)
-		seed = IPPrefixListSeqSeed + len(pfxList)
-		result = append(result, prefixLists(i.importPrefixes, af, true, seed, i.targetVRF)...)
-		seed = IPPrefixListSeqSeed
+		result = append(result, prefixLists(i.importPrefixes, af, true, i.targetVRF)...)
 	}
 
 	return result
 }
 
-func prefixLists(prefixes []netaddr.IPPrefix, af AddressFamily, isExported bool, seed int, vrf string) []IPPrefixList {
+func prefixLists(prefixes []netaddr.IPPrefix, af AddressFamily, isExported bool, vrf string) []IPPrefixList {
 	var result []IPPrefixList
 	for _, prefix := range prefixes {
 		if af == AddressFamilyIPv4 && !prefix.IP.Is4() {
@@ -130,7 +129,7 @@ func prefixLists(prefixes []netaddr.IPPrefix, af AddressFamily, isExported bool,
 			continue
 		}
 
-		specs := buildIPPrefixListSpecs(seed, prefix)
+		specs := buildIPPrefixListSpecs(prefix)
 		for _, spec := range specs {
 			name := namePrefixList(vrf, prefix, isExported)
 			prefixList := IPPrefixList{
@@ -140,7 +139,6 @@ func prefixLists(prefixes []netaddr.IPPrefix, af AddressFamily, isExported bool,
 			}
 			result = append(result, prefixList)
 		}
-		seed++
 	}
 	return result
 }
@@ -257,8 +255,12 @@ func routeMapName(vrfName string) string {
 	return vrfName + "-import-map"
 }
 
-func buildIPPrefixListSpecs(seq int, prefix netaddr.IPPrefix) []string {
+func buildIPPrefixListSpecs(prefix netaddr.IPPrefix) []string {
 	var result []string
+
+	h := fnv.New32a()
+	h.Write([]byte(prefix.String()))
+	seq := h.Sum32() % 1000
 
 	spec := fmt.Sprintf("seq %d %s %s", seq, Permit, prefix)
 	if prefix.Bits != 0 {
