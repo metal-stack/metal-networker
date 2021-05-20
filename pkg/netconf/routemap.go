@@ -259,10 +259,13 @@ func routeMapName(vrfName string) string {
 
 func buildIPPrefixListSpecs(seq int, prefix netaddr.IPPrefix) []string {
 	var result []string
+	var spec string
 
-	spec := fmt.Sprintf("seq %d %s %s", seq, Permit, prefix)
-	if prefix.Bits != 0 {
-		spec += fmt.Sprintf(" le %d", prefix.IP.BitLen())
+	if prefix.Bits == 0 {
+		spec = fmt.Sprintf("%s %s", Permit, prefix)
+
+	} else {
+		spec = fmt.Sprintf("seq %d %s %s le %d", seq, Permit, prefix, prefix.IP.BitLen())
 	}
 
 	result = append(result, spec)
