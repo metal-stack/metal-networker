@@ -26,6 +26,9 @@ var (
 	inetNet1               = netaddr.MustParseIPPrefix("185.1.2.0/24")
 	inetNet2               = netaddr.MustParseIPPrefix("185.27.0.0/22")
 	inetNet6               = netaddr.MustParseIPPrefix("2a02:c00:20::/45")
+	publicDefaultNet       = netaddr.MustParseIPPrefix("185.1.2.3/32")
+	publicDefaultNet2      = netaddr.MustParseIPPrefix("10.0.20.2/32")
+	publicDefaultNetIPv6   = netaddr.MustParseIPPrefix("2a02:c00:20::1/32")
 
 	private = network{
 		vrf:      "vrf3981",
@@ -78,9 +81,10 @@ func Test_importRulesForNetwork(t *testing.T) {
 			input: "testdata/firewall.yaml",
 			want: []*importRule{
 				{
-					targetVRF:      private.vrf,
-					importVRFs:     []string{inet.vrf, external.vrf, shared.vrf},
-					importPrefixes: concatPfxSlices(inet.destinations, external.destinations, inet.prefixes, external.prefixes, shared.prefixes),
+					targetVRF:            private.vrf,
+					importVRFs:           []string{inet.vrf, external.vrf, shared.vrf},
+					importPrefixes:       concatPfxSlices(inet.destinations, external.destinations, inet.prefixes, external.prefixes, shared.prefixes),
+					importPrefixesToDeny: []netaddr.IPPrefix{publicDefaultNet},
 				},
 				{
 					targetVRF:      shared.vrf,
@@ -107,9 +111,10 @@ func Test_importRulesForNetwork(t *testing.T) {
 			input: "testdata/firewall_shared.yaml",
 			want: []*importRule{
 				{
-					targetVRF:      shared.vrf,
-					importVRFs:     []string{inet.vrf},
-					importPrefixes: concatPfxSlices(inet.destinations, inet.prefixes),
+					targetVRF:            shared.vrf,
+					importVRFs:           []string{inet.vrf},
+					importPrefixes:       concatPfxSlices(inet.destinations, inet.prefixes),
+					importPrefixesToDeny: []netaddr.IPPrefix{publicDefaultNet},
 				},
 				{
 					targetVRF:              inet.vrf,
@@ -125,9 +130,10 @@ func Test_importRulesForNetwork(t *testing.T) {
 			input: "testdata/firewall_dmz.yaml",
 			want: []*importRule{
 				{
-					targetVRF:      private.vrf,
-					importVRFs:     []string{inet.vrf, dmz.vrf},
-					importPrefixes: concatPfxSlices(inet.destinations, inet.prefixes, dmz.prefixes),
+					targetVRF:            private.vrf,
+					importVRFs:           []string{inet.vrf, dmz.vrf},
+					importPrefixes:       concatPfxSlices(inet.destinations, inet.prefixes, dmz.prefixes),
+					importPrefixesToDeny: []netaddr.IPPrefix{publicDefaultNet},
 				},
 				{
 					targetVRF:      dmz.vrf,
@@ -148,9 +154,10 @@ func Test_importRulesForNetwork(t *testing.T) {
 			input: "testdata/firewall_dmz_app.yaml",
 			want: []*importRule{
 				{
-					targetVRF:      private.vrf,
-					importVRFs:     []string{dmz.vrf},
-					importPrefixes: concatPfxSlices(dmz.prefixes, dmz.destinations),
+					targetVRF:            private.vrf,
+					importVRFs:           []string{dmz.vrf},
+					importPrefixes:       concatPfxSlices(dmz.prefixes, dmz.destinations),
+					importPrefixesToDeny: []netaddr.IPPrefix{publicDefaultNet2},
 				},
 				{
 					targetVRF:      dmz.vrf,
@@ -165,9 +172,10 @@ func Test_importRulesForNetwork(t *testing.T) {
 			input: "testdata/firewall_ipv6.yaml",
 			want: []*importRule{
 				{
-					targetVRF:      private6.vrf,
-					importVRFs:     []string{inet.vrf, external.vrf, shared.vrf},
-					importPrefixes: concatPfxSlices(inet6.destinations, external.destinations, inet6.prefixes, external.prefixes, shared.prefixes),
+					targetVRF:            private6.vrf,
+					importVRFs:           []string{inet.vrf, external.vrf, shared.vrf},
+					importPrefixes:       concatPfxSlices(inet6.destinations, external.destinations, inet6.prefixes, external.prefixes, shared.prefixes),
+					importPrefixesToDeny: []netaddr.IPPrefix{publicDefaultNetIPv6},
 				},
 				{
 					targetVRF:      shared.vrf,
@@ -203,8 +211,9 @@ func Test_importRulesForNetwork(t *testing.T) {
 			for i, network := range kb.Networks {
 				got := importRulesForNetwork(kb, network)
 				if !reflect.DeepEqual(got, tt.want[i]) {
-					fmt.Printf("g: %v\nw: %v\n", got.importPrefixes, tt.want[i].importPrefixes)
-					fmt.Printf("g: %v\nw: %v\n", got.importPrefixesNoExport, tt.want[i].importPrefixesNoExport)
+					fmt.Printf("import prefixes: g: %v\nw: %v\n", got.importPrefixes, tt.want[i].importPrefixes)
+					fmt.Printf("no export: g: %v\nw: %v\n", got.importPrefixesNoExport, tt.want[i].importPrefixesNoExport)
+					fmt.Printf("deny: g: %v\nw: %v\n", got.importPrefixesToDeny, tt.want[i].importPrefixesToDeny)
 					t.Errorf("importRulesForNetwork() got %v, wanted %v", got, tt.want[i])
 				}
 			}

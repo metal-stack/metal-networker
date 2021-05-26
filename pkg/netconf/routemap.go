@@ -14,6 +14,7 @@ type importRule struct {
 	targetVRF              string
 	importVRFs             []string
 	importPrefixes         []netaddr.IPPrefix
+	importPrefixesToDeny   []netaddr.IPPrefix
 	importPrefixesNoExport []netaddr.IPPrefix
 }
 
@@ -44,6 +45,15 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 		// reach out from private network into shared private networks
 		i.importVRFs = append(i.importVRFs, vrfNamesOf(privateSecondarySharedNets)...)
 		i.importPrefixes = append(i.importPrefixes, prefixesOfNetworks(privateSecondarySharedNets)...)
+
+		// deny public address of default network
+		defaultNet := kb.getDefaultRouteNetwork()
+		if ip, err := netaddr.ParseIP(defaultNet.Ips[0]); err == nil {
+			i.importPrefixesToDeny = append(i.importPrefixesToDeny, netaddr.IPPrefix{
+				IP:   ip,
+				Bits: 32,
+			})
+		}
 
 		// reach out from private network to destination prefixes of private secondays shared networks
 		for _, n := range privateSecondarySharedNets {
@@ -109,17 +119,27 @@ func (i *importRule) prefixLists() []IPPrefixList {
 	seed := IPPrefixListSeqSeed
 	afs := []AddressFamily{AddressFamilyIPv4, AddressFamilyIPv6}
 	for _, af := range afs {
-		pfxList := prefixLists(i.importPrefixesNoExport, af, false, seed, i.targetVRF)
+		pfxList := prefixLists(i.importPrefixesNoExport, af, Permit, false, seed, i.targetVRF)
 		result = append(result, pfxList...)
-		seed = IPPrefixListSeqSeed + len(pfxList)
-		result = append(result, prefixLists(i.importPrefixes, af, true, seed, i.targetVRF)...)
-		seed = IPPrefixListSeqSeed
+
+		seed = IPPrefixListSeqSeed + len(result)
+		result = append(result, prefixLists(i.importPrefixesToDeny, af, Deny, true, seed, i.targetVRF)...)
+
+		seed = IPPrefixListSeqSeed + len(result)
+		result = append(result, prefixLists(i.importPrefixes, af, Permit, true, seed, i.targetVRF)...)
 	}
 
 	return result
 }
 
-func prefixLists(prefixes []netaddr.IPPrefix, af AddressFamily, isExported bool, seed int, vrf string) []IPPrefixList {
+func prefixLists(
+	prefixes []netaddr.IPPrefix,
+	af AddressFamily,
+	policy AccessPolicy,
+	isExported bool,
+	seed int,
+	vrf string,
+) []IPPrefixList {
 	var result []IPPrefixList
 	for _, prefix := range prefixes {
 		if af == AddressFamilyIPv4 && !prefix.IP.Is4() {
@@ -130,9 +150,9 @@ func prefixLists(prefixes []netaddr.IPPrefix, af AddressFamily, isExported bool,
 			continue
 		}
 
-		specs := buildIPPrefixListSpecs(seed, prefix)
+		specs := buildIPPrefixListSpecs(seed, policy, prefix)
 		for _, spec := range specs {
-			name := namePrefixList(vrf, prefix, isExported)
+			name := namePrefixList(vrf, prefix, policy, isExported)
 			prefixList := IPPrefixList{
 				Name:          name,
 				Spec:          spec,
@@ -257,15 +277,15 @@ func routeMapName(vrfName string) string {
 	return vrfName + "-import-map"
 }
 
-func buildIPPrefixListSpecs(seq int, prefix netaddr.IPPrefix) []string {
+func buildIPPrefixListSpecs(seq int, policy AccessPolicy, prefix netaddr.IPPrefix) []string {
 	var result []string
 	var spec string
 
 	if prefix.Bits == 0 {
-		spec = fmt.Sprintf("%s %s", Permit, prefix)
+		spec = fmt.Sprintf("%s %s", policy, prefix)
 
 	} else {
-		spec = fmt.Sprintf("seq %d %s %s le %d", seq, Permit, prefix, prefix.IP.BitLen())
+		spec = fmt.Sprintf("seq %d %s %s le %d", seq, policy, prefix, prefix.IP.BitLen())
 	}
 
 	result = append(result, spec)
@@ -273,15 +293,18 @@ func buildIPPrefixListSpecs(seq int, prefix netaddr.IPPrefix) []string {
 	return result
 }
 
-func namePrefixList(vrfName string, prefix netaddr.IPPrefix, isExported bool) string {
-	af := ""
+func namePrefixList(vrfName string, prefix netaddr.IPPrefix, policy AccessPolicy, isExported bool) string {
+	suffix := ""
+
 	if prefix.IP.Is6() {
-		af = "-ipv6"
+		suffix = "-ipv6"
 	}
-	export := ""
 	if !isExported {
-		export = IPPrefixListNoExportSuffix
+		suffix += IPPrefixListNoExportSuffix
+	}
+	if policy == Deny {
+		suffix += "-deny"
 	}
 
-	return fmt.Sprintf("%s-import-prefixes%s%s", vrfName, af, export)
+	return fmt.Sprintf("%s-import-prefixes%s", vrfName, suffix)
 }

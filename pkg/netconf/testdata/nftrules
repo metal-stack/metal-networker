@@ -12,6 +12,9 @@ table inet metal {
 
         ct state established,related counter accept comment "stateful input"
 
+        tcp dport domain ip daddr 185.1.2.3 accept comment "dnat to dns proxy"
+        udp dport domain ip daddr 185.1.2.3 accept comment "dnat to dns proxy"
+
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
         ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
         ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
@@ -53,7 +56,7 @@ table inet nat {
     }
     chain postrouting {
         type nat hook postrouting priority 0; policy accept;
-        oifname "vlan104009" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
+        oifname "vlan104009" ip saddr 10.0.16.0/22 ip daddr != 185.1.2.3 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
         oifname "vlan104010" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: mpls-nbg-w8101-test)"
     }
 }

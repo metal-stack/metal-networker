@@ -202,6 +202,32 @@ func (kb KnowledgeBase) getUnderlayNetwork() models.V1MachineNetwork {
 	return kb.GetNetworks(mn.Underlay)[0]
 }
 
+func (kb KnowledgeBase) getDefaultRouteNetwork() *models.V1MachineNetwork {
+	externalNets := kb.GetNetworks(mn.External)
+	for _, network := range externalNets {
+		if containsDefaultRoute(network.Destinationprefixes) {
+			return &network
+		}
+	}
+
+	privateSecondarySharedNets := kb.GetNetworks(mn.PrivateSecondaryShared)
+	for _, network := range privateSecondarySharedNets {
+		if containsDefaultRoute(network.Destinationprefixes) {
+			return &network
+		}
+	}
+
+	return nil
+}
+
+func (kb KnowledgeBase) getDefaultRouteVRFName() (string, error) {
+	if network := kb.getDefaultRouteNetwork(); network != nil {
+		return vrfNameOf(*network), nil
+	}
+
+	return "", fmt.Errorf("there is no network providing a default (0.0.0.0/0) route")
+}
+
 func (kb KnowledgeBase) nicsContainValidMACs() bool {
 	for _, nic := range kb.Nics {
 		if nic.Mac == "" {

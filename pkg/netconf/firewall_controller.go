@@ -22,7 +22,7 @@ type FirewallControllerData struct {
 
 // NewFirewallControllerServiceApplier constructs a new instance of this type.
 func NewFirewallControllerServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
-	defaultRouteVrf, err := getDefaultRouteVRFName(kb)
+	defaultRouteVrf, err := kb.getDefaultRouteVRFName()
 	if err != nil {
 		return nil, err
 	}
