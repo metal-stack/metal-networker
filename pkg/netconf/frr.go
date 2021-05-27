@@ -126,6 +126,10 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 
 	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
 	for _, network := range networks {
+		if network.Networktype == nil {
+			continue
+		}
+
 		i := importRulesForNetwork(kb, network)
 		vrf := VRF{
 			Identity: Identity{

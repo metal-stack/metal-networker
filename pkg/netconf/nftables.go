@@ -140,10 +140,6 @@ func getDNSProxyDNAT(kb KnowledgeBase, port string) DNAT {
 	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
 	svis := []string{}
 	for _, n := range networks {
-		if n.Nat != nil && !*n.Nat {
-			continue
-		}
-
 		svi := fmt.Sprintf("vlan%d", *n.Vrf)
 		svis = append(svis, svi)
 	}

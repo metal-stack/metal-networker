@@ -10,63 +10,63 @@ import (
 
 type network struct {
 	vrf          string
-	prefixes     []netaddr.IPPrefix
-	destinations []netaddr.IPPrefix
+	prefixes     []importPrefix
+	destinations []importPrefix
 }
 
 var (
-	defaultRoute           = netaddr.MustParseIPPrefix("0.0.0.0/0")
-	defaultRoute6          = netaddr.MustParseIPPrefix("::/0")
-	externalNet            = netaddr.MustParseIPPrefix("100.127.129.0/24")
-	externalDestinationNet = netaddr.MustParseIPPrefix("100.127.1.0/24")
-	privateNet             = netaddr.MustParseIPPrefix("10.0.16.0/22")
-	privateNet6            = netaddr.MustParseIPPrefix("2002::/64")
-	sharedNet              = netaddr.MustParseIPPrefix("10.0.18.0/22")
-	dmzNet                 = netaddr.MustParseIPPrefix("10.0.20.0/22")
-	inetNet1               = netaddr.MustParseIPPrefix("185.1.2.0/24")
-	inetNet2               = netaddr.MustParseIPPrefix("185.27.0.0/22")
-	inetNet6               = netaddr.MustParseIPPrefix("2a02:c00:20::/45")
-	publicDefaultNet       = netaddr.MustParseIPPrefix("185.1.2.3/32")
-	publicDefaultNet2      = netaddr.MustParseIPPrefix("10.0.20.2/32")
-	publicDefaultNetIPv6   = netaddr.MustParseIPPrefix("2a02:c00:20::1/32")
+	defaultRoute           = importPrefix{prefix: netaddr.MustParseIPPrefix("0.0.0.0/0"), policy: Permit}
+	defaultRoute6          = importPrefix{prefix: netaddr.MustParseIPPrefix("::/0"), policy: Permit}
+	externalNet            = importPrefix{prefix: netaddr.MustParseIPPrefix("100.127.129.0/24"), policy: Permit}
+	externalDestinationNet = importPrefix{prefix: netaddr.MustParseIPPrefix("100.127.1.0/24"), policy: Permit}
+	privateNet             = importPrefix{prefix: netaddr.MustParseIPPrefix("10.0.16.0/22"), policy: Permit}
+	privateNet6            = importPrefix{prefix: netaddr.MustParseIPPrefix("2002::/64"), policy: Permit}
+	sharedNet              = importPrefix{prefix: netaddr.MustParseIPPrefix("10.0.18.0/22"), policy: Permit}
+	dmzNet                 = importPrefix{prefix: netaddr.MustParseIPPrefix("10.0.20.0/22"), policy: Permit}
+	inetNet1               = importPrefix{prefix: netaddr.MustParseIPPrefix("185.1.2.0/24"), policy: Permit}
+	inetNet2               = importPrefix{prefix: netaddr.MustParseIPPrefix("185.27.0.0/22"), policy: Permit}
+	inetNet6               = importPrefix{prefix: netaddr.MustParseIPPrefix("2a02:c00:20::/45"), policy: Permit}
+	publicDefaultNet       = importPrefix{prefix: netaddr.MustParseIPPrefix("185.1.2.3/32"), policy: Deny}
+	publicDefaultNet2      = importPrefix{prefix: netaddr.MustParseIPPrefix("10.0.20.2/32"), policy: Deny}
+	publicDefaultNetIPv6   = importPrefix{prefix: netaddr.MustParseIPPrefix("2a02:c00:20::1/128"), policy: Deny}
 
 	private = network{
 		vrf:      "vrf3981",
-		prefixes: []netaddr.IPPrefix{privateNet},
+		prefixes: []importPrefix{privateNet},
 	}
 
 	private6 = network{
 		vrf:      "vrf3981",
-		prefixes: []netaddr.IPPrefix{privateNet6},
+		prefixes: []importPrefix{privateNet6},
 	}
 
 	inet = network{
 		vrf:          "vrf104009",
-		prefixes:     []netaddr.IPPrefix{inetNet1, inetNet2},
-		destinations: []netaddr.IPPrefix{defaultRoute},
+		prefixes:     []importPrefix{inetNet1, inetNet2},
+		destinations: []importPrefix{defaultRoute},
 	}
 
 	inet6 = network{
 		vrf:          "vrf104009",
-		prefixes:     []netaddr.IPPrefix{inetNet6},
-		destinations: []netaddr.IPPrefix{defaultRoute6},
+		prefixes:     []importPrefix{inetNet6},
+		destinations: []importPrefix{defaultRoute6},
 	}
 
 	external = network{
 		vrf:          "vrf104010",
-		destinations: []netaddr.IPPrefix{externalDestinationNet},
-		prefixes:     []netaddr.IPPrefix{externalNet},
+		destinations: []importPrefix{externalDestinationNet},
+		prefixes:     []importPrefix{externalNet},
 	}
 
 	shared = network{
 		vrf:      "vrf3982",
-		prefixes: []netaddr.IPPrefix{sharedNet},
+		prefixes: []importPrefix{sharedNet},
 	}
 
 	dmz = network{
 		vrf:          "vrf3983",
-		prefixes:     []netaddr.IPPrefix{dmzNet},
-		destinations: []netaddr.IPPrefix{defaultRoute},
+		prefixes:     []importPrefix{dmzNet},
+		destinations: []importPrefix{defaultRoute},
 	}
 )
 
@@ -81,10 +81,9 @@ func Test_importRulesForNetwork(t *testing.T) {
 			input: "testdata/firewall.yaml",
 			want: []*importRule{
 				{
-					targetVRF:            private.vrf,
-					importVRFs:           []string{inet.vrf, external.vrf, shared.vrf},
-					importPrefixes:       concatPfxSlices(inet.destinations, external.destinations, inet.prefixes, external.prefixes, shared.prefixes),
-					importPrefixesToDeny: []netaddr.IPPrefix{publicDefaultNet},
+					targetVRF:      private.vrf,
+					importVRFs:     []string{inet.vrf, external.vrf, shared.vrf},
+					importPrefixes: concatPfxSlices(inet.destinations, external.destinations, []importPrefix{publicDefaultNet}, inet.prefixes, external.prefixes, shared.prefixes),
 				},
 				{
 					targetVRF:      shared.vrf,
@@ -111,10 +110,9 @@ func Test_importRulesForNetwork(t *testing.T) {
 			input: "testdata/firewall_shared.yaml",
 			want: []*importRule{
 				{
-					targetVRF:            shared.vrf,
-					importVRFs:           []string{inet.vrf},
-					importPrefixes:       concatPfxSlices(inet.destinations, inet.prefixes),
-					importPrefixesToDeny: []netaddr.IPPrefix{publicDefaultNet},
+					targetVRF:      shared.vrf,
+					importVRFs:     []string{inet.vrf},
+					importPrefixes: concatPfxSlices(inet.destinations, []importPrefix{publicDefaultNet}, inet.prefixes),
 				},
 				{
 					targetVRF:              inet.vrf,
@@ -130,10 +128,9 @@ func Test_importRulesForNetwork(t *testing.T) {
 			input: "testdata/firewall_dmz.yaml",
 			want: []*importRule{
 				{
-					targetVRF:            private.vrf,
-					importVRFs:           []string{inet.vrf, dmz.vrf},
-					importPrefixes:       concatPfxSlices(inet.destinations, inet.prefixes, dmz.prefixes),
-					importPrefixesToDeny: []netaddr.IPPrefix{publicDefaultNet},
+					targetVRF:      private.vrf,
+					importVRFs:     []string{inet.vrf, dmz.vrf},
+					importPrefixes: concatPfxSlices(inet.destinations, []importPrefix{publicDefaultNet}, inet.prefixes, dmz.prefixes),
 				},
 				{
 					targetVRF:      dmz.vrf,
@@ -154,10 +151,9 @@ func Test_importRulesForNetwork(t *testing.T) {
 			input: "testdata/firewall_dmz_app.yaml",
 			want: []*importRule{
 				{
-					targetVRF:            private.vrf,
-					importVRFs:           []string{dmz.vrf},
-					importPrefixes:       concatPfxSlices(dmz.prefixes, dmz.destinations),
-					importPrefixesToDeny: []netaddr.IPPrefix{publicDefaultNet2},
+					targetVRF:      private.vrf,
+					importVRFs:     []string{dmz.vrf},
+					importPrefixes: concatPfxSlices([]importPrefix{publicDefaultNet2}, dmz.prefixes, dmz.destinations),
 				},
 				{
 					targetVRF:      dmz.vrf,
@@ -172,10 +168,9 @@ func Test_importRulesForNetwork(t *testing.T) {
 			input: "testdata/firewall_ipv6.yaml",
 			want: []*importRule{
 				{
-					targetVRF:            private6.vrf,
-					importVRFs:           []string{inet.vrf, external.vrf, shared.vrf},
-					importPrefixes:       concatPfxSlices(inet6.destinations, external.destinations, inet6.prefixes, external.prefixes, shared.prefixes),
-					importPrefixesToDeny: []netaddr.IPPrefix{publicDefaultNetIPv6},
+					targetVRF:      private6.vrf,
+					importVRFs:     []string{inet.vrf, external.vrf, shared.vrf},
+					importPrefixes: concatPfxSlices(inet6.destinations, external.destinations, []importPrefix{publicDefaultNetIPv6}, inet6.prefixes, external.prefixes, shared.prefixes),
 				},
 				{
 					targetVRF:      shared.vrf,
@@ -213,7 +208,6 @@ func Test_importRulesForNetwork(t *testing.T) {
 				if !reflect.DeepEqual(got, tt.want[i]) {
 					fmt.Printf("import prefixes: g: %v\nw: %v\n", got.importPrefixes, tt.want[i].importPrefixes)
 					fmt.Printf("no export: g: %v\nw: %v\n", got.importPrefixesNoExport, tt.want[i].importPrefixesNoExport)
-					fmt.Printf("deny: g: %v\nw: %v\n", got.importPrefixesToDeny, tt.want[i].importPrefixesToDeny)
 					t.Errorf("importRulesForNetwork() got %v, wanted %v", got, tt.want[i])
 				}
 			}

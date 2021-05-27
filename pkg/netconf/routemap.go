@@ -10,12 +10,16 @@ import (
 	"inet.af/netaddr"
 )
 
+type importPrefix struct {
+	prefix netaddr.IPPrefix
+	policy AccessPolicy
+}
+
 type importRule struct {
 	targetVRF              string
 	importVRFs             []string
-	importPrefixes         []netaddr.IPPrefix
-	importPrefixesToDeny   []netaddr.IPPrefix
-	importPrefixesNoExport []netaddr.IPPrefix
+	importPrefixes         []importPrefix
+	importPrefixesNoExport []importPrefix
 }
 
 func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *importRule {
@@ -40,20 +44,29 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 		// reach out from private network into public networks
 		i.importVRFs = vrfNamesOf(externalNets)
 		i.importPrefixes = getDestinationPrefixes(externalNets)
+
+		// deny public address of default network
+		defaultNet := kb.getDefaultRouteNetwork()
+		if ip, err := netaddr.ParseIP(defaultNet.Ips[0]); err == nil {
+			var bl uint8 = 32
+			if ip.Is6() {
+				bl = 128
+			}
+			i.importPrefixes = append(i.importPrefixes, importPrefix{
+				prefix: netaddr.IPPrefix{
+					IP:   ip,
+					Bits: bl,
+				},
+				policy: Deny,
+			})
+		}
+
+		// permit external routes
 		i.importPrefixes = append(i.importPrefixes, prefixesOfNetworks(externalNets)...)
 
 		// reach out from private network into shared private networks
 		i.importVRFs = append(i.importVRFs, vrfNamesOf(privateSecondarySharedNets)...)
 		i.importPrefixes = append(i.importPrefixes, prefixesOfNetworks(privateSecondarySharedNets)...)
-
-		// deny public address of default network
-		defaultNet := kb.getDefaultRouteNetwork()
-		if ip, err := netaddr.ParseIP(defaultNet.Ips[0]); err == nil {
-			i.importPrefixesToDeny = append(i.importPrefixesToDeny, netaddr.IPPrefix{
-				IP:   ip,
-				Bits: 32,
-			})
-		}
 
 		// reach out from private network to destination prefixes of private secondays shared networks
 		for _, n := range privateSecondarySharedNets {
@@ -61,12 +74,15 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 				ppfx := netaddr.MustParseIPPrefix(pfx)
 				isThere := false
 				for _, i := range i.importPrefixes {
-					if i == ppfx {
+					if i.prefix == ppfx {
 						isThere = true
 					}
 				}
 				if !isThere {
-					i.importPrefixes = append(i.importPrefixes, ppfx)
+					i.importPrefixes = append(i.importPrefixes, importPrefix{
+						prefix: ppfx,
+						policy: Permit,
+					})
 				}
 			}
 		}
@@ -83,7 +99,10 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 					for _, epfx := range e.Destinationprefixes {
 						if pfx == epfx {
 							importExternalNet = true
-							i.importPrefixes = append(i.importPrefixes, netaddr.MustParseIPPrefix(pfx))
+							i.importPrefixes = append(i.importPrefixes, importPrefix{
+								prefix: netaddr.MustParseIPPrefix(pfx),
+								policy: Permit,
+							})
 						}
 					}
 					if importExternalNet {
@@ -119,40 +138,36 @@ func (i *importRule) prefixLists() []IPPrefixList {
 	seed := IPPrefixListSeqSeed
 	afs := []AddressFamily{AddressFamilyIPv4, AddressFamilyIPv6}
 	for _, af := range afs {
-		pfxList := prefixLists(i.importPrefixesNoExport, af, Permit, false, seed, i.targetVRF)
+		pfxList := prefixLists(i.importPrefixesNoExport, af, false, seed, i.targetVRF)
 		result = append(result, pfxList...)
 
 		seed = IPPrefixListSeqSeed + len(result)
-		result = append(result, prefixLists(i.importPrefixesToDeny, af, Deny, true, seed, i.targetVRF)...)
-
-		seed = IPPrefixListSeqSeed + len(result)
-		result = append(result, prefixLists(i.importPrefixes, af, Permit, true, seed, i.targetVRF)...)
+		result = append(result, prefixLists(i.importPrefixes, af, true, seed, i.targetVRF)...)
 	}
 
 	return result
 }
 
 func prefixLists(
-	prefixes []netaddr.IPPrefix,
+	prefixes []importPrefix,
 	af AddressFamily,
-	policy AccessPolicy,
 	isExported bool,
 	seed int,
 	vrf string,
 ) []IPPrefixList {
 	var result []IPPrefixList
-	for _, prefix := range prefixes {
-		if af == AddressFamilyIPv4 && !prefix.IP.Is4() {
+	for _, p := range prefixes {
+		if af == AddressFamilyIPv4 && !p.prefix.IP.Is4() {
 			continue
 		}
 
-		if af == AddressFamilyIPv6 && !prefix.IP.Is6() {
+		if af == AddressFamilyIPv6 && !p.prefix.IP.Is6() {
 			continue
 		}
 
-		specs := buildIPPrefixListSpecs(seed, policy, prefix)
+		specs := buildIPPrefixListSpecs(seed, p.policy, p.prefix)
 		for _, spec := range specs {
-			name := namePrefixList(vrf, prefix, policy, isExported)
+			name := namePrefixList(vrf, p.prefix, isExported)
 			prefixList := IPPrefixList{
 				Name:          name,
 				Spec:          spec,
@@ -165,43 +180,46 @@ func prefixLists(
 	return result
 }
 
-func concatPfxSlices(pfxSlices ...[]netaddr.IPPrefix) []netaddr.IPPrefix {
-	res := []netaddr.IPPrefix{}
+func concatPfxSlices(pfxSlices ...[]importPrefix) []importPrefix {
+	res := []importPrefix{}
 	for _, pfxSlice := range pfxSlices {
 		res = append(res, pfxSlice...)
 	}
 	return res
 }
 
-func stringSliceToIPPrefix(s []string) []netaddr.IPPrefix {
-	var result []netaddr.IPPrefix
+func stringSliceToIPPrefix(s []string) []importPrefix {
+	var result []importPrefix
 	for _, e := range s {
 		ipp, err := netaddr.ParseIPPrefix(e)
 		if err != nil {
 			continue
 		}
-		result = append(result, ipp)
+		result = append(result, importPrefix{
+			prefix: ipp,
+			policy: Permit,
+		})
 	}
 	return result
 }
 
-func getDestinationPrefixes(networks []models.V1MachineNetwork) []netaddr.IPPrefix {
-	var result []netaddr.IPPrefix
+func getDestinationPrefixes(networks []models.V1MachineNetwork) []importPrefix {
+	var result []importPrefix
 	for _, network := range networks {
 		result = append(result, stringSliceToIPPrefix(network.Destinationprefixes)...)
 	}
 	return result
 }
 
-func prefixesOfNetworks(networks []models.V1MachineNetwork) []netaddr.IPPrefix {
-	var result []netaddr.IPPrefix
+func prefixesOfNetworks(networks []models.V1MachineNetwork) []importPrefix {
+	var result []importPrefix
 	for _, network := range networks {
 		result = append(result, prefixesOfNetwork(network)...)
 	}
 	return result
 }
 
-func prefixesOfNetwork(network models.V1MachineNetwork) []netaddr.IPPrefix {
+func prefixesOfNetwork(network models.V1MachineNetwork) []importPrefix {
 	return stringSliceToIPPrefix(network.Prefixes)
 }
 
@@ -293,7 +311,7 @@ func buildIPPrefixListSpecs(seq int, policy AccessPolicy, prefix netaddr.IPPrefi
 	return result
 }
 
-func namePrefixList(vrfName string, prefix netaddr.IPPrefix, policy AccessPolicy, isExported bool) string {
+func namePrefixList(vrfName string, prefix netaddr.IPPrefix, isExported bool) string {
 	suffix := ""
 
 	if prefix.IP.Is6() {
@@ -301,9 +319,6 @@ func namePrefixList(vrfName string, prefix netaddr.IPPrefix, policy AccessPolicy
 	}
 	if !isExported {
 		suffix += IPPrefixListNoExportSuffix
-	}
-	if policy == Deny {
-		suffix += "-deny"
 	}
 
 	return fmt.Sprintf("%s-import-prefixes%s", vrfName, suffix)

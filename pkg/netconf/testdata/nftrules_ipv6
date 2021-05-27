@@ -12,8 +12,8 @@ table inet metal {
 
         ct state established,related counter accept comment "stateful input"
 
-        tcp dport domain ip6 daddr 2a02:c00:20::1 accept comment "dnat to dns proxy"
-        udp dport domain ip6 daddr 2a02:c00:20::1 accept comment "dnat to dns proxy"
+        ip saddr 10.0.0.0/8 tcp dport domain ip6 daddr 2a02:c00:20::1 accept comment "dnat to dns proxy"
+        ip saddr 10.0.0.0/8 udp dport domain ip6 daddr 2a02:c00:20::1 accept comment "dnat to dns proxy"
 
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
         ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
@@ -47,6 +47,10 @@ table inet metal {
 table inet nat {
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
+        iifname "vlan3981" tcp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        iifname "vlan3981" udp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        iifname "vlan3982" tcp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        iifname "vlan3982" udp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
     }
     chain input {
         type nat hook input priority 0; policy accept;
