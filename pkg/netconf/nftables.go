@@ -54,11 +54,14 @@ type (
 )
 
 // NewNftablesConfigApplier constructs a new instance of this type.
-func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator) net.Applier {
+func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator, enableDNSProxy bool) net.Applier {
 	data := NftablesData{
-		Comment:      versionHeader(kb.Machineuuid),
-		SNAT:         getSNAT(kb),
-		DNSProxyDNAT: getDNSProxyDNAT(kb, dnsPort),
+		Comment: versionHeader(kb.Machineuuid),
+		SNAT:    getSNAT(kb, enableDNSProxy),
+	}
+
+	if enableDNSProxy {
+		data.DNSProxyDNAT = getDNSProxyDNAT(kb, dnsPort)
 	}
 
 	return net.NewNetworkApplier(data, validator, nil)
@@ -68,7 +71,7 @@ func isDMZNetwork(n models.V1MachineNetwork) bool {
 	return *n.Networktype == mn.PrivateSecondaryShared && containsDefaultRoute(n.Destinationprefixes)
 }
 
-func getSNAT(kb KnowledgeBase) []SNAT {
+func getSNAT(kb KnowledgeBase, enableDNSProxy bool) []SNAT {
 	var result []SNAT
 
 	private := kb.getPrivatePrimaryNetwork()
@@ -124,7 +127,7 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 			SourceSpecs:  sources,
 		}
 
-		if vrfNameOf(n) == defaultNetworkName {
+		if enableDNSProxy && (vrfNameOf(n) == defaultNetworkName) {
 			s.OutIntSpec = AddrSpec{
 				AddressFamily: defaultAF,
 				Address:       defaultNetwork.Ips[0],

@@ -12,28 +12,34 @@ func TestCompileNftRules(t *testing.T) {
 	assert := assert.New(t)
 
 	tests := []struct {
-		input    string
-		expected string
+		input          string
+		expected       string
+		enableDNSProxy bool
 	}{
 		{
-			input:    "testdata/firewall.yaml",
-			expected: "testdata/nftrules",
+			input:          "testdata/firewall.yaml",
+			expected:       "testdata/nftrules",
+			enableDNSProxy: false,
 		},
 		{
-			input:    "testdata/firewall_dmz.yaml",
-			expected: "testdata/nftrules_dmz",
+			input:          "testdata/firewall_dmz.yaml",
+			expected:       "testdata/nftrules_dmz",
+			enableDNSProxy: true,
 		},
 		{
-			input:    "testdata/firewall_dmz_app.yaml",
-			expected: "testdata/nftrules_dmz_app",
+			input:          "testdata/firewall_dmz_app.yaml",
+			expected:       "testdata/nftrules_dmz_app",
+			enableDNSProxy: true,
 		},
 		{
-			input:    "testdata/firewall_ipv6.yaml",
-			expected: "testdata/nftrules_ipv6",
+			input:          "testdata/firewall_ipv6.yaml",
+			expected:       "testdata/nftrules_ipv6",
+			enableDNSProxy: true,
 		},
 		{
-			input:    "testdata/firewall_shared.yaml",
-			expected: "testdata/nftrules_shared",
+			input:          "testdata/firewall_shared.yaml",
+			expected:       "testdata/nftrules_shared",
+			enableDNSProxy: true,
 		},
 	}
 	for _, tt := range tests {
@@ -45,7 +51,7 @@ func TestCompileNftRules(t *testing.T) {
 			kb := NewKnowledgeBase(tt.input)
 			assert.NoError(err)
 
-			a := NewNftablesConfigApplier(kb, nil)
+			a := NewNftablesConfigApplier(kb, nil, tt.enableDNSProxy)
 			b := bytes.Buffer{}
 
 			tpl := mustParseTpl(TplNftables)
