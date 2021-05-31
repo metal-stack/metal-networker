@@ -55,6 +55,7 @@ type (
 	// FirewallConfigurator is a configurator that configures a bare metal server as 'firewall'.
 	FirewallConfigurator struct {
 		CommonConfigurator
+		EnableDNSProxy bool
 	}
 )
 
@@ -95,10 +96,7 @@ func (configurator FirewallConfigurator) Configure() {
 	kb := configurator.Kb
 	applyCommonConfiguration(Firewall, kb)
 
-	src := mustTmpFile("nftrules_")
-	validator := NftablesValidator{src}
-	applier := NewNftablesConfigApplier(configurator.Kb, validator)
-	applyAndCleanUp(applier, TplNftables, src, "/etc/nftables/rules", FileModeDefault)
+	configurator.ConfugureNftables()
 
 	chrony, err := NewChronyServiceEnabler(configurator.Kb)
 	if err != nil {
@@ -111,7 +109,7 @@ func (configurator FirewallConfigurator) Configure() {
 	}
 
 	for _, u := range configurator.getUnits() {
-		src = mustTmpFile(u.unit)
+		src := mustTmpFile(u.unit)
 		validatorService := ServiceValidator{src}
 		nfe, err := u.constructApplier(configurator.Kb, validatorService)
 
@@ -126,8 +124,8 @@ func (configurator FirewallConfigurator) Configure() {
 		}
 	}
 
-	src = mustTmpFile("suricata_")
-	applier, err = NewSuricataDefaultsApplier(kb, src)
+	src := mustTmpFile("suricata_")
+	applier, err := NewSuricataDefaultsApplier(kb, src)
 
 	if err != nil {
 		log.Warnf("failed to configure suricata defaults: %v", err)
@@ -143,6 +141,13 @@ func (configurator FirewallConfigurator) Configure() {
 	}
 
 	applyAndCleanUp(applier, TplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
+}
+
+func (configurator FirewallConfigurator) ConfugureNftables() {
+	src := mustTmpFile("nftrules_")
+	validator := NftablesValidator{src}
+	applier := NewNftablesConfigApplier(configurator.Kb, validator, configurator.EnableDNSProxy)
+	applyAndCleanUp(applier, TplNftables, src, "/etc/nftables/rules", FileModeDefault)
 }
 
 func (configurator FirewallConfigurator) getUnits() []unitConfiguration {

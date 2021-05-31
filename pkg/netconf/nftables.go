@@ -15,26 +15,38 @@ import (
 const (
 	// TplNftables defines the name of the template to render nftables configuration.
 	TplNftables = "nftrules.tpl"
+	dnsPort     = "domain"
 )
 
 type (
 	// NftablesData represents the information required to render nftables configuration.
 	NftablesData struct {
-		Comment string
-		SNAT    []SNAT
+		Comment      string
+		SNAT         []SNAT
+		DNSProxyDNAT DNAT
 	}
 
 	// SNAT holds the information required to configure Source NAT.
 	SNAT struct {
 		Comment      string
 		OutInterface string
-		SourceSpecs  []SourceSpec
+		OutIntSpec   AddrSpec
+		SourceSpecs  []AddrSpec
 	}
 
-	SourceSpec struct {
-		AddressFamily string
-		Source        string
+	// DNAT holds the information required to configure DNAT.
+	DNAT struct {
+		Comment      string
+		InInterfaces []string
+		Port         string
+		DestSpec     AddrSpec
 	}
+
+	AddrSpec struct {
+		AddressFamily string
+		Address       string
+	}
+
 	// NftablesValidator can validate configuration for nftables rules.
 	NftablesValidator struct {
 		path string
@@ -42,10 +54,14 @@ type (
 )
 
 // NewNftablesConfigApplier constructs a new instance of this type.
-func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator) net.Applier {
+func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator, enableDNSProxy bool) net.Applier {
 	data := NftablesData{
 		Comment: versionHeader(kb.Machineuuid),
-		SNAT:    getSNAT(kb),
+		SNAT:    getSNAT(kb, enableDNSProxy),
+	}
+
+	if enableDNSProxy {
+		data.DNSProxyDNAT = getDNSProxyDNAT(kb, dnsPort)
 	}
 
 	return net.NewNetworkApplier(data, validator, nil)
@@ -55,7 +71,7 @@ func isDMZNetwork(n models.V1MachineNetwork) bool {
 	return *n.Networktype == mn.PrivateSecondaryShared && containsDefaultRoute(n.Destinationprefixes)
 }
 
-func getSNAT(kb KnowledgeBase) []SNAT {
+func getSNAT(kb KnowledgeBase, enableDNSProxy bool) []SNAT {
 	var result []SNAT
 
 	private := kb.getPrivatePrimaryNetwork()
@@ -68,12 +84,25 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 		}
 	}
 
+	var (
+		defaultNetwork models.V1MachineNetwork
+		defaultAF      string
+	)
+	defaultNetworkName, err := kb.getDefaultRouteVRFName()
+	if err == nil {
+		defaultNetwork = *kb.getDefaultRouteNetwork()
+		ip, _ := netaddr.ParseIP(defaultNetwork.Ips[0])
+		defaultAF = "ip"
+		if ip.Is6() {
+			defaultAF = "ip6"
+		}
+	}
 	for _, n := range networks {
 		if n.Nat != nil && !*n.Nat {
 			continue
 		}
 
-		var sources []SourceSpec
+		var sources []AddrSpec
 		cmt := fmt.Sprintf("snat (networkid: %s)", *n.Networkid)
 		svi := fmt.Sprintf("vlan%d", *n.Vrf)
 
@@ -86,8 +115,8 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 			if ipprefix.IP.Is6() {
 				af = "ip6"
 			}
-			sspec := SourceSpec{
-				Source:        p,
+			sspec := AddrSpec{
+				Address:       p,
 				AddressFamily: af,
 			}
 			sources = append(sources, sspec)
@@ -97,10 +126,46 @@ func getSNAT(kb KnowledgeBase) []SNAT {
 			OutInterface: svi,
 			SourceSpecs:  sources,
 		}
+
+		if enableDNSProxy && (vrfNameOf(n) == defaultNetworkName) {
+			s.OutIntSpec = AddrSpec{
+				AddressFamily: defaultAF,
+				Address:       defaultNetwork.Ips[0],
+			}
+		}
 		result = append(result, s)
 	}
 
 	return result
+}
+
+func getDNSProxyDNAT(kb KnowledgeBase, port string) DNAT {
+	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
+	svis := []string{}
+	for _, n := range networks {
+		svi := fmt.Sprintf("vlan%d", *n.Vrf)
+		svis = append(svis, svi)
+	}
+
+	n := kb.getDefaultRouteNetwork()
+	if n == nil {
+		return DNAT{}
+	}
+
+	ip, _ := netaddr.ParseIP(n.Ips[0])
+	af := "ip"
+	if ip.Is6() {
+		af = "ip6"
+	}
+	return DNAT{
+		Comment:      "dnat to dns proxy",
+		InInterfaces: svis,
+		Port:         port,
+		DestSpec: AddrSpec{
+			AddressFamily: af,
+			Address:       n.Ips[0],
+		},
+	}
 }
 
 // Validate validates network interfaces configuration.

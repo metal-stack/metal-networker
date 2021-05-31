@@ -11,6 +11,11 @@ table inet metal {
         iifname "lan1" ip saddr 10.0.0.0/8 udp dport 4789 counter accept comment "incoming VXLAN lan1"
 
         ct state established,related counter accept comment "stateful input"
+        {{- if .DNSProxyDNAT.DestSpec.Address }}
+
+        ip saddr 10.0.0.0/8 tcp dport {{ .DNSProxyDNAT.Port }} {{ .DNSProxyDNAT.DestSpec.AddressFamily }} daddr {{ .DNSProxyDNAT.DestSpec.Address }} accept comment "{{ .DNSProxyDNAT.Comment }}"
+        ip saddr 10.0.0.0/8 udp dport {{ .DNSProxyDNAT.Port }} {{ .DNSProxyDNAT.DestSpec.AddressFamily }} daddr {{ .DNSProxyDNAT.DestSpec.Address }} accept comment "{{ .DNSProxyDNAT.Comment }}"
+        {{- end }}
 
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
         ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
@@ -44,6 +49,13 @@ table inet metal {
 table inet nat {
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
+        {{-  $port:=.DNSProxyDNAT.Port }}
+        {{-  $dst:=.DNSProxyDNAT.DestSpec }}
+        {{-  $cmt:=.DNSProxyDNAT.Comment }}
+        {{- range .DNSProxyDNAT.InInterfaces }}
+        iifname "{{ . }}" tcp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
+        iifname "{{ . }}" udp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
+        {{- end }}
     }
     chain input {
         type nat hook input priority 0; policy accept;
@@ -56,8 +68,12 @@ table inet nat {
         {{- range .SNAT }}
         {{- $cmt:=.Comment }}
         {{- $out:=.OutInterface }}
+        {{- $outspec:=.OutIntSpec }}
         {{- range .SourceSpecs }}
-        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Source }} counter masquerade comment "{{ $cmt }}"
+        {{- if and $outspec.Address (eq $outspec.AddressFamily .AddressFamily) }}
+        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} {{ .AddressFamily }} daddr != {{ $outspec.Address }} counter masquerade comment "{{ $cmt }}"{{ else }}
+        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} counter masquerade comment "{{ $cmt }}"
+        {{- end }}
         {{- end }}
         {{- end }}
     }

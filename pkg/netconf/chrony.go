@@ -3,7 +3,6 @@ package netconf
 import (
 	"fmt"
 
-	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/metal-networker/pkg/exec"
 )
 
@@ -14,7 +13,7 @@ type ChronyServiceEnabler struct {
 
 // NewChronyServiceEnabler constructs a new instance of this type.
 func NewChronyServiceEnabler(kb KnowledgeBase) (ChronyServiceEnabler, error) {
-	vrf, err := getDefaultRouteVRFName(kb)
+	vrf, err := kb.getDefaultRouteVRFName()
 	return ChronyServiceEnabler{VRF: vrf}, err
 }
 
@@ -24,24 +23,6 @@ func (c ChronyServiceEnabler) Enable() error {
 	log.Infof("running '%s' to enable chrony.'", cmd)
 
 	return exec.NewVerboseCmd("bash", "-c", cmd).Run()
-}
-
-func getDefaultRouteVRFName(kb KnowledgeBase) (string, error) {
-	externalNets := kb.GetNetworks(mn.External)
-	for _, network := range externalNets {
-		if containsDefaultRoute(network.Destinationprefixes) {
-			return vrfNameOf(network), nil
-		}
-	}
-
-	privateSecondarySharedNets := kb.GetNetworks(mn.PrivateSecondaryShared)
-	for _, network := range privateSecondarySharedNets {
-		if containsDefaultRoute(network.Destinationprefixes) {
-			return vrfNameOf(network), nil
-		}
-	}
-
-	return "", fmt.Errorf("there is no network providing a default (0.0.0.0/0) route")
 }
 
 func containsDefaultRoute(prefixes []string) bool {
