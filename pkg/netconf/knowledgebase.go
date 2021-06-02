@@ -202,7 +202,7 @@ func (kb KnowledgeBase) getUnderlayNetwork() models.V1MachineNetwork {
 	return kb.GetNetworks(mn.Underlay)[0]
 }
 
-func (kb KnowledgeBase) getDefaultRouteNetwork() *models.V1MachineNetwork {
+func (kb KnowledgeBase) GetDefaultRouteNetwork() *models.V1MachineNetwork {
 	externalNets := kb.GetNetworks(mn.External)
 	for _, network := range externalNets {
 		if containsDefaultRoute(network.Destinationprefixes) {
@@ -221,7 +221,7 @@ func (kb KnowledgeBase) getDefaultRouteNetwork() *models.V1MachineNetwork {
 }
 
 func (kb KnowledgeBase) getDefaultRouteVRFName() (string, error) {
-	if network := kb.getDefaultRouteNetwork(); network != nil {
+	if network := kb.GetDefaultRouteNetwork(); network != nil {
 		return vrfNameOf(*network), nil
 	}
 
