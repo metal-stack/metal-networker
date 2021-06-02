@@ -90,7 +90,7 @@ func getSNAT(kb KnowledgeBase, enableDNSProxy bool) []SNAT {
 	)
 	defaultNetworkName, err := kb.getDefaultRouteVRFName()
 	if err == nil {
-		defaultNetwork = *kb.getDefaultRouteNetwork()
+		defaultNetwork = *kb.GetDefaultRouteNetwork()
 		ip, _ := netaddr.ParseIP(defaultNetwork.Ips[0])
 		defaultAF = "ip"
 		if ip.Is6() {
@@ -147,7 +147,7 @@ func getDNSProxyDNAT(kb KnowledgeBase, port string) DNAT {
 		svis = append(svis, svi)
 	}
 
-	n := kb.getDefaultRouteNetwork()
+	n := kb.GetDefaultRouteNetwork()
 	if n == nil {
 		return DNAT{}
 	}
