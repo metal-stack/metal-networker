@@ -46,7 +46,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 		i.importPrefixes = getDestinationPrefixes(externalNets)
 
 		// deny public address of default network
-		defaultNet := kb.getDefaultRouteNetwork()
+		defaultNet := kb.GetDefaultRouteNetwork()
 		if ip, err := netaddr.ParseIP(defaultNet.Ips[0]); err == nil {
 			var bl uint8 = 32
 			if ip.Is6() {
