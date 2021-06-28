@@ -56,6 +56,7 @@ type (
 	FirewallConfigurator struct {
 		CommonConfigurator
 		EnableDNSProxy bool
+		EnableIDS      bool
 	}
 )
 
@@ -96,7 +97,7 @@ func (configurator FirewallConfigurator) Configure() {
 	kb := configurator.Kb
 	applyCommonConfiguration(Firewall, kb)
 
-	configurator.ConfugureNftables()
+	configurator.ConfigureNftables()
 
 	chrony, err := NewChronyServiceEnabler(configurator.Kb)
 	if err != nil {
@@ -124,30 +125,33 @@ func (configurator FirewallConfigurator) Configure() {
 		}
 	}
 
-	src := mustTmpFile("suricata_")
-	applier, err := NewSuricataDefaultsApplier(kb, src)
-
-	if err != nil {
-		log.Warnf("failed to configure suricata defaults: %v", err)
-	}
-
-	applyAndCleanUp(applier, tplSuricataDefaults, src, "/etc/default/suricata", FileModeSixFourFour)
-
-	src = mustTmpFile("suricata.yaml_")
-	applier, err = NewSuricataConfigApplier(kb, src)
-
-	if err != nil {
-		log.Warnf("failed to configure suricata: %v", err)
-	}
-
-	applyAndCleanUp(applier, TplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
+	configurator.ConfigureSuricataDefaults()
+	configurator.ConfigureSuricata()
 }
 
-func (configurator FirewallConfigurator) ConfugureNftables() {
+func (configurator FirewallConfigurator) ConfigureNftables() {
 	src := mustTmpFile("nftrules_")
 	validator := NftablesValidator{src}
 	applier := NewNftablesConfigApplier(configurator.Kb, validator, configurator.EnableDNSProxy)
 	applyAndCleanUp(applier, TplNftables, src, "/etc/nftables/rules", FileModeDefault)
+}
+
+func (configurator FirewallConfigurator) ConfigureSuricataDefaults() {
+	src := mustTmpFile("suricata_")
+	applier, err := NewSuricataDefaultsApplier(configurator.Kb, src)
+	if err != nil {
+		log.Warnf("failed to configure suricata defaults: %v", err)
+	}
+	applyAndCleanUp(applier, tplSuricataDefaults, src, "/etc/default/suricata", FileModeSixFourFour)
+}
+
+func (configurator FirewallConfigurator) ConfigureSuricata() {
+	src := mustTmpFile("suricata.yaml_")
+	applier, err := NewSuricataConfigApplier(configurator.Kb, src, configurator.EnableIDS)
+	if err != nil {
+		log.Warnf("failed to configure suricata: %v", err)
+	}
+	applyAndCleanUp(applier, TplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
 }
 
 func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
