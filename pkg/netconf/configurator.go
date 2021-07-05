@@ -57,10 +57,11 @@ type (
 		CommonConfigurator
 		EnableDNSProxy bool
 		EnableIDS      bool
+		EnableIPS      bool
 	}
 )
 
-type unitConfiguration struct {
+type UnitConfiguration struct {
 	unit             string
 	templateFile     string
 	constructApplier func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error)
@@ -110,19 +111,7 @@ func (configurator FirewallConfigurator) Configure() {
 	}
 
 	for _, u := range configurator.getUnits() {
-		src := mustTmpFile(u.unit)
-		validatorService := ServiceValidator{src}
-		nfe, err := u.constructApplier(configurator.Kb, validatorService)
-
-		if err != nil {
-			log.Warnf("failed to deploy %s service : %v", u.unit, err)
-		}
-
-		applyAndCleanUp(nfe, u.templateFile, src, path.Join(SystemdUnitPath, u.unit), FileModeSystemd)
-
-		if u.enabled {
-			mustEnableUnit(u.unit)
-		}
+		configurator.ApplySystemdUnit(u)
 	}
 
 	configurator.ConfigureSuricataDefaults()
@@ -152,10 +141,29 @@ func (configurator FirewallConfigurator) ConfigureSuricata() {
 		log.Warnf("failed to configure suricata: %v", err)
 	}
 	applyAndCleanUp(applier, TplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
+
+	// update systemd unit file to run suricata in correct mode(IDS/IPS)
+	configurator.ApplySystemdUnit(GetSystemdUnitConfig(configurator.EnableIPS))
 }
 
-func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
-	return []unitConfiguration{
+func (configurator FirewallConfigurator) ApplySystemdUnit(u UnitConfiguration) {
+	src := mustTmpFile(u.unit)
+	validatorService := ServiceValidator{src}
+	nfe, err := u.constructApplier(configurator.Kb, validatorService)
+
+	if err != nil {
+		log.Warnf("failed to deploy %s service : %v", u.unit, err)
+	}
+
+	applyAndCleanUp(nfe, u.templateFile, src, path.Join(SystemdUnitPath, u.unit), FileModeSystemd)
+
+	if u.enabled {
+		mustEnableUnit(u.unit)
+	}
+}
+
+func (configurator FirewallConfigurator) getUnits() []UnitConfiguration {
+	return []UnitConfiguration{
 		{
 			unit:         systemdUnitDroptailer,
 			templateFile: tplDroptailer,
