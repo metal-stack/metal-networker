@@ -83,8 +83,8 @@ outputs:
   - eve-log:
       {{- if .EnableIDS }}
       enabled: yes
-      filetype: regular
-      filename: eve.json
+      filetype: unix_dgram
+      filename: /var/log/suricata/eve.socket
       #prefix: "@cee: " # prefix to prepend to each log entry
       # the following are valid when type: syslog above
       #identity: "suricata"
