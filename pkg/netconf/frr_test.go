@@ -3,6 +3,7 @@ package netconf
 import (
 	"bytes"
 	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,16 +32,23 @@ func TestFrrConfigApplier(t *testing.T) {
 			tpl:              TplFirewallFRR,
 		},
 		{
-			name:             "standard firewall with private primary unshared network, private secondary shared dmz network, internet and mpls",
+			name:             "dmz firewall with private primary unshared network, private secondary shared dmz network, internet and mpls",
 			input:            "testdata/firewall_dmz.yaml",
 			expectedOutput:   "testdata/frr.conf.firewall_dmz",
 			configuratorType: Firewall,
 			tpl:              TplFirewallFRR,
 		},
 		{
-			name:             "standard firewall with private primary unshared network, private secondary shared dmz network",
+			name:             "dmz firewall with private primary unshared network, private secondary shared dmz network",
 			input:            "testdata/firewall_dmz_app.yaml",
 			expectedOutput:   "testdata/frr.conf.firewall_dmz_app",
+			configuratorType: Firewall,
+			tpl:              TplFirewallFRR,
+		},
+		{
+			name:             "firewall with private primary unshared network, private secondary shared dmz network and private secondary shared storage network",
+			input:            "testdata/firewall_dmz_app_storage.yaml",
+			expectedOutput:   "testdata/frr.conf.firewall_dmz_app_storage",
 			configuratorType: Firewall,
 			tpl:              TplFirewallFRR,
 		},
@@ -62,16 +70,24 @@ func TestFrrConfigApplier(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
-			expected, err := ioutil.ReadFile(test.expectedOutput)
-			assert.NoError(t, err)
-
 			kb := NewKnowledgeBase(test.input)
-			assert.NoError(t, err)
 			a := NewFrrConfigApplier(test.configuratorType, kb, "")
 			b := bytes.Buffer{}
 
 			tpl := mustParseTpl(test.tpl)
-			err = a.Render(&b, *tpl)
+			err := a.Render(&b, *tpl)
+
+			// eases adjustment of test fixtures
+			// just remove old test fixture after a code change
+			// let the new fixtures get generated
+			// check them manually before commit
+			if _, err := os.Stat(test.expectedOutput); os.IsNotExist(err) {
+				err = ioutil.WriteFile(test.expectedOutput, b.Bytes(), FileModeDefault)
+				assert.NoError(t, err)
+				return
+			}
+
+			expected, err := ioutil.ReadFile(test.expectedOutput)
 			assert.NoError(t, err)
 			assert.Equal(t, string(expected), b.String())
 		})

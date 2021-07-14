@@ -51,6 +51,7 @@ type (
 		Name          string
 		Spec          string
 		AddressFamily AddressFamily
+		SourceVRF     string
 	}
 
 	// SVI represents a switched virtual interface.

@@ -22,5 +22,5 @@ require (
 	golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	inet.af/netaddr v0.0.0-20210403172118-1e1430f727e0
+	inet.af/netaddr v0.0.0-20210707202901-70468d781e6c
 )
