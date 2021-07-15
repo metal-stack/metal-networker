@@ -76,6 +76,7 @@ func TestFrrConfigApplier(t *testing.T) {
 
 			tpl := mustParseTpl(test.tpl)
 			err := a.Render(&b, *tpl)
+			assert.NoError(t, err)
 
 			// eases adjustment of test fixtures
 			// just remove old test fixture after a code change

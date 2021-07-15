@@ -169,28 +169,28 @@ func Test_importRulesForNetwork(t *testing.T) {
 				nil,
 			},
 		},
-		// {
-		// 	name:  "firewall of a private network with dmz network and storage (dmz app firewall)",
-		// 	input: "testdata/firewall_dmz_app_storage.yaml",
-		// 	want: []*importRule{
-		// 		{
-		// 			targetVRF:      private.vrf,
-		// 			importVRFs:     []string{dmz.vrf},
-		// 			importPrefixes: concatPfxSlices([]importPrefix{publicDefaultNet2}, dmz.prefixes, dmz.destinations),
-		// 		},
-		// 		{
-		// 			targetVRF:      dmz.vrf,
-		// 			importVRFs:     []string{private.vrf},
-		// 			importPrefixes: concatPfxSlices(private.prefixes, dmz.prefixes),
-		// 		},
-		// 		{
-		// 			targetVRF:      shared.vrf,
-		// 			importVRFs:     []string{private.vrf},
-		// 			importPrefixes: concatPfxSlices(private.prefixes, shared.prefixes),
-		// 		},
-		// 		nil,
-		// 	},
-		// },
+		{
+			name:  "firewall of a private network with dmz network and storage (dmz app firewall)",
+			input: "testdata/firewall_dmz_app_storage.yaml",
+			want: []*importRule{
+				{
+					TargetVRF:      private.vrf,
+					ImportVRFs:     []string{dmz.vrf, shared.vrf},
+					ImportPrefixes: concatPfxSlices([]importPrefix{publicDefaultNet2}, dmz.prefixes, shared.prefixes, dmz.destinations),
+				},
+				{
+					TargetVRF:      dmz.vrf,
+					ImportVRFs:     []string{private.vrf},
+					ImportPrefixes: concatPfxSlices(private.prefixes, dmz.prefixes),
+				},
+				{
+					TargetVRF:      shared.vrf,
+					ImportVRFs:     []string{private.vrf},
+					ImportPrefixes: concatPfxSlices(private.prefixes, shared.prefixes),
+				},
+				nil,
+			},
+		},
 		{
 			name:  "firewall with ipv6 private network and ipv6 internet network",
 			input: "testdata/firewall_ipv6.yaml",
