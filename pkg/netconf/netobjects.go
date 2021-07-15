@@ -51,7 +51,8 @@ type (
 		Name          string
 		Spec          string
 		AddressFamily AddressFamily
-		SourceVRF     string
+		// SourceVRF specifies from which VRF the given prefix list should be imported
+		SourceVRF string
 	}
 
 	// SVI represents a switched virtual interface.
