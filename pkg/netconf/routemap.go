@@ -23,6 +23,32 @@ type importRule struct {
 	ImportPrefixesNoExport []importPrefix
 }
 
+type ImportSettings struct {
+	ImportPrefixes         []importPrefix
+	ImportPrefixesNoExport []importPrefix
+}
+
+func (i *importRule) bySourceVrf() map[string]ImportSettings {
+	r := map[string]ImportSettings{}
+	for _, vrf := range i.ImportVRFs {
+		r[vrf] = ImportSettings{}
+	}
+
+	for _, pfx := range i.ImportPrefixes {
+		e := r[pfx.SourceVRF]
+		e.ImportPrefixes = append(e.ImportPrefixes, pfx)
+		r[pfx.SourceVRF] = e
+	}
+
+	for _, pfx := range i.ImportPrefixesNoExport {
+		e := r[pfx.SourceVRF]
+		e.ImportPrefixesNoExport = append(e.ImportPrefixesNoExport, pfx)
+		r[pfx.SourceVRF] = e
+	}
+
+	return r
+}
+
 func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *importRule {
 	vrfName := vrfNameOf(network)
 
@@ -89,7 +115,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 	case mn.PrivateSecondaryShared:
 		// reach out from private shared networks into private primary network
 		i.ImportVRFs = []string{vrfNameOf(privatePrimaryNet)}
-		i.ImportPrefixes = concatPfxSlices(prefixesOfNetwork(privatePrimaryNet), prefixesOfNetwork(network))
+		i.ImportPrefixes = concatPfxSlices(prefixesOfNetwork(privatePrimaryNet, vrfNameOf(privatePrimaryNet)), prefixesOfNetwork(network, vrfNameOf(privatePrimaryNet)))
 
 		// import destination prefixes of dmz networks from external networks
 		if len(network.Destinationprefixes) > 0 {
@@ -108,7 +134,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 					}
 					if importExternalNet {
 						i.ImportVRFs = append(i.ImportVRFs, vrfNameOf(e))
-						i.ImportPrefixes = append(i.ImportPrefixes, prefixesOfNetwork(e)...)
+						i.ImportPrefixes = append(i.ImportPrefixes, prefixesOfNetwork(e, vrfNameOf(e))...)
 					}
 				}
 			}
@@ -116,7 +142,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 	case mn.External:
 		// reach out from public into private and other public networks
 		i.ImportVRFs = []string{vrfNameOf(privatePrimaryNet)}
-		i.ImportPrefixes = prefixesOfNetwork(network)
+		i.ImportPrefixes = prefixesOfNetwork(network, vrfNameOf(privatePrimaryNet))
 
 		nets := []models.V1MachineNetwork{privatePrimaryNet}
 
@@ -221,13 +247,13 @@ func getDestinationPrefixes(networks []models.V1MachineNetwork) []importPrefix {
 func prefixesOfNetworks(networks []models.V1MachineNetwork) []importPrefix {
 	var result []importPrefix
 	for _, network := range networks {
-		result = append(result, prefixesOfNetwork(network)...)
+		result = append(result, prefixesOfNetwork(network, vrfNameOf(network))...)
 	}
 	return result
 }
 
-func prefixesOfNetwork(network models.V1MachineNetwork) []importPrefix {
-	return stringSliceToIPPrefix(network.Prefixes, vrfNameOf(network))
+func prefixesOfNetwork(network models.V1MachineNetwork, sourceVrf string) []importPrefix {
+	return stringSliceToIPPrefix(network.Prefixes, sourceVrf)
 }
 
 func vrfNameOf(n models.V1MachineNetwork) string {

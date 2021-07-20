@@ -141,6 +141,7 @@ route-map vrf3981-import-map permit 20
 route-map vrf3981-import-map deny 30
 !
 ip prefix-list vrf3983-import-from-vrf3981 seq 100 permit 10.0.16.0/22 le 32
+ip prefix-list vrf3983-import-from-vrf3981 seq 101 permit 10.0.20.0/22 le 32
 ip prefix-list vrf3983-import-from-vrf104009 permit 0.0.0.0/0
 ip prefix-list vrf3983-import-from-vrf104009 seq 103 permit 185.1.2.0/24 le 32
 ip prefix-list vrf3983-import-from-vrf104009 seq 104 permit 185.27.0.0/22 le 32
@@ -154,6 +155,8 @@ route-map vrf3983-import-map deny 30
 !
 ip prefix-list vrf104009-import-from-vrf3981-no-export seq 100 permit 10.0.16.0/22 le 32
 ip prefix-list vrf104009-import-from-vrf3983-no-export seq 101 permit 10.0.20.0/22 le 32
+ip prefix-list vrf104009-import-from-vrf3981 seq 102 permit 185.1.2.0/24 le 32
+ip prefix-list vrf104009-import-from-vrf3981 seq 103 permit 185.27.0.0/22 le 32
 route-map vrf104009-import-map permit 10
  match source-vrf vrf3983
  match ip address prefix-list vrf104009-import-from-vrf3983-no-export
@@ -162,7 +165,10 @@ route-map vrf104009-import-map permit 20
  match source-vrf vrf3981
  match ip address prefix-list vrf104009-import-from-vrf3981-no-export
  set community additive no-export
-route-map vrf104009-import-map deny 30
+route-map vrf104009-import-map permit 30
+ match source-vrf vrf3981
+ match ip address prefix-list vrf104009-import-from-vrf3981
+route-map vrf104009-import-map deny 40
 !
 route-map only-self-out permit 10
  match as-path SELF
