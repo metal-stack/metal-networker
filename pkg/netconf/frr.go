@@ -136,7 +136,7 @@ func assembleVRFs(kb KnowledgeBase) []VRF {
 				ID: int(*network.Vrf),
 			},
 			VNI:            int(*network.Vrf),
-			ImportVRFNames: i.importVRFs,
+			ImportVRFNames: i.ImportVRFs,
 			IPPrefixLists:  i.prefixLists(),
 			RouteMaps:      i.routeMaps(),
 		}

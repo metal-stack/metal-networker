@@ -112,7 +112,7 @@ func getSNAT(kb KnowledgeBase, enableDNSProxy bool) []SNAT {
 				continue
 			}
 			af := "ip"
-			if ipprefix.IP.Is6() {
+			if ipprefix.IP().Is6() {
 				af = "ip6"
 			}
 			sspec := AddrSpec{
