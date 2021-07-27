@@ -1,6 +1,7 @@
 package net
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/coreos/go-systemd/v22/dbus"
@@ -25,14 +26,14 @@ type DBusReloader struct {
 
 // Reload reloads a systemd unit.
 func (r DBusReloader) Reload() error {
-	dbc, err := dbus.New()
+	dbc, err := dbus.NewWithContext(context.Background())
 	if err != nil {
 		return fmt.Errorf("unable to connect to dbus: %w", err)
 	}
 	defer dbc.Close()
 
 	c := make(chan string)
-	_, err = dbc.ReloadUnit(r.ServiceFilename, "replace", c)
+	_, err = dbc.ReloadUnitContext(context.Background(), r.ServiceFilename, "replace", c)
 
 	if err != nil {
 		return err
@@ -53,7 +54,7 @@ type DBusStartReloader struct {
 
 // Reload starts a systemd unit.
 func (r DBusStartReloader) Reload() error {
-	dbc, err := dbus.New()
+	dbc, err := dbus.NewWithContext(context.Background())
 	if err != nil {
 		return fmt.Errorf("unable to connect to dbus: %w", err)
 	}
@@ -61,7 +62,7 @@ func (r DBusStartReloader) Reload() error {
 
 	c := make(chan string)
 
-	_, err = dbc.StartUnit(r.ServiceFilename, "replace", c)
+	_, err = dbc.StartUnitContext(context.Background(), r.ServiceFilename, "replace", c)
 	if err != nil {
 		return err
 	}
