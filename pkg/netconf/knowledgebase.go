@@ -3,7 +3,6 @@ package netconf
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 
@@ -51,7 +50,7 @@ type (
 func NewKnowledgeBase(path string) KnowledgeBase {
 	log.Infof("loading: %s", path)
 
-	f, err := ioutil.ReadFile(path)
+	f, err := os.ReadFile(path)
 	if err != nil {
 		log.Panic(err)
 	}

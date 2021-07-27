@@ -1,6 +1,7 @@
 package net
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/coreos/go-systemd/v22/dbus"
@@ -19,7 +20,7 @@ type DBusTemplateValidator struct {
 
 // Validate applies validation by starting a dbus templated instance.
 func (v DBusTemplateValidator) Validate() error {
-	dbc, err := dbus.New()
+	dbc, err := dbus.NewWithContext(context.Background())
 	if err != nil {
 		return fmt.Errorf("unable to connect to dbus: %w", err)
 	}
@@ -27,7 +28,7 @@ func (v DBusTemplateValidator) Validate() error {
 
 	c := make(chan string)
 	u := fmt.Sprintf("%s@%s.service", v.TemplateName, unit.UnitNamePathEscape(v.InstanceName))
-	_, err = dbc.StartUnit(u, "replace", c)
+	_, err = dbc.StartUnitContext(context.Background(), u, "replace", c)
 
 	if err != nil {
 		return err
