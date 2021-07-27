@@ -2,7 +2,7 @@ package netconf
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -45,7 +45,7 @@ func TestCompileNftRules(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.input, func(t *testing.T) {
-			expected, err := ioutil.ReadFile(tt.expected)
+			expected, err := os.ReadFile(tt.expected)
 			assert.NoError(err)
 
 			kb := NewKnowledgeBase(tt.input)

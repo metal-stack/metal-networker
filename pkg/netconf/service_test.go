@@ -2,7 +2,7 @@ package netconf
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/metal-stack/metal-networker/pkg/net"
@@ -58,7 +58,7 @@ func TestServices(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		expected, err := ioutil.ReadFile(test.expected)
+		expected, err := os.ReadFile(test.expected)
 		assert.NoError(err)
 
 		b := bytes.Buffer{}

@@ -2,7 +2,6 @@ package netconf
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 	"testing"
@@ -32,7 +31,7 @@ func TestIfacesApplier(t *testing.T) {
 	for _, tc := range tests {
 		func() {
 			old := systemdNetworkPath
-			tempdir, err := ioutil.TempDir(os.TempDir(), "networkd*")
+			tempdir, err := os.MkdirTemp(os.TempDir(), "networkd*")
 			systemdNetworkPath = tempdir
 			if err != nil {
 				log.Fatal(err)
@@ -59,11 +58,11 @@ func equalDirs(dir1, dir2 string) (bool, string) {
 	}
 
 	for _, f := range files1 {
-		f1, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", dir1, f))
+		f1, err := os.ReadFile(fmt.Sprintf("%s/%s", dir1, f))
 		if err != nil {
 			panic(err)
 		}
-		f2, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", dir2, f))
+		f2, err := os.ReadFile(fmt.Sprintf("%s/%s", dir2, f))
 		if err != nil {
 			panic(err)
 		}

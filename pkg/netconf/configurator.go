@@ -2,7 +2,6 @@ package netconf
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"text/template"
@@ -252,7 +251,7 @@ func mustApply(applier net.Applier, tpl, src, dest string) {
 }
 
 func mustTmpFile(prefix string) string {
-	f, err := ioutil.TempFile(tmpPath, prefix)
+	f, err := os.CreateTemp(tmpPath, prefix)
 	if err != nil {
 		log.Panic(err)
 	}

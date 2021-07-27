@@ -2,7 +2,6 @@ package netconf
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -83,12 +82,12 @@ func TestFrrConfigApplier(t *testing.T) {
 			// let the new fixtures get generated
 			// check them manually before commit
 			if _, err := os.Stat(test.expectedOutput); os.IsNotExist(err) {
-				err = ioutil.WriteFile(test.expectedOutput, b.Bytes(), FileModeDefault)
+				err = os.WriteFile(test.expectedOutput, b.Bytes(), FileModeDefault)
 				assert.NoError(t, err)
 				return
 			}
 
-			expected, err := ioutil.ReadFile(test.expectedOutput)
+			expected, err := os.ReadFile(test.expectedOutput)
 			assert.NoError(t, err)
 			assert.Equal(t, string(expected), b.String())
 		})

@@ -2,7 +2,7 @@ package netconf
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,7 +11,7 @@ import (
 func TestNewHostsApplier(t *testing.T) {
 	assert := assert.New(t)
 
-	expected, err := ioutil.ReadFile("testdata/hosts")
+	expected, err := os.ReadFile("testdata/hosts")
 	assert.NoError(err)
 
 	kb := NewKnowledgeBase("testdata/firewall.yaml")
