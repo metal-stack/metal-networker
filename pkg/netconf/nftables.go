@@ -3,19 +3,21 @@ package netconf
 import (
 	"fmt"
 
-	"github.com/metal-stack/metal-go/api/models"
-	"github.com/metal-stack/metal-networker/pkg/exec"
 	"inet.af/netaddr"
 
-	"github.com/metal-stack/metal-networker/pkg/net"
-
+	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
+
+	"github.com/metal-stack/metal-networker/pkg/exec"
+	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
 const (
 	// TplNftables defines the name of the template to render nftables configuration.
-	TplNftables = "nftrules.tpl"
-	dnsPort     = "domain"
+	TplNftables     = "nftrules.tpl"
+	dnsPort         = "domain"
+	nftablesService = "nftables.service"
+	systemctlBin    = "/bin/systemctl"
 )
 
 type (
@@ -51,6 +53,8 @@ type (
 	NftablesValidator struct {
 		path string
 	}
+
+	NftablesReloader struct{}
 )
 
 // NewNftablesConfigApplier constructs a new instance of this type.
@@ -64,7 +68,11 @@ func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator, enableD
 		data.DNSProxyDNAT = getDNSProxyDNAT(kb, dnsPort)
 	}
 
-	return net.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, &NftablesReloader{})
+}
+
+func (*NftablesReloader) Reload() error {
+	return exec.NewVerboseCmd(systemctlBin, "reload", nftablesService).Run()
 }
 
 func isDMZNetwork(n models.V1MachineNetwork) bool {
