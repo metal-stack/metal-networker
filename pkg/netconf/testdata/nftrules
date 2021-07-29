@@ -42,6 +42,13 @@ table inet metal {
     }
 }
 table inet nat {
+    set public_dns_servers {
+    	type ipv4_addr
+    	flags interval
+    	auto-merge
+    	elements = { 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1 }
+    }
+
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
     }

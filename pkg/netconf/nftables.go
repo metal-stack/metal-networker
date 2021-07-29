@@ -41,6 +41,7 @@ type (
 	DNAT struct {
 		Comment      string
 		InInterfaces []string
+		DAddr        string
 		Port         string
 		DestSpec     AddrSpec
 	}
@@ -174,6 +175,7 @@ func getDNSProxyDNAT(c config, port string) DNAT {
 	return DNAT{
 		Comment:      "dnat to dns proxy",
 		InInterfaces: svis,
+		DAddr:        "@public_dns_servers",
 		Port:         port,
 		DestSpec: AddrSpec{
 			AddressFamily: af,

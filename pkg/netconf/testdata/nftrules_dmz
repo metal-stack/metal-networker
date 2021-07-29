@@ -45,12 +45,19 @@ table inet metal {
     }
 }
 table inet nat {
+    set public_dns_servers {
+    	type ipv4_addr
+    	flags interval
+    	auto-merge
+    	elements = { 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1 }
+    }
+
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
-        iifname "vlan3981" tcp dport domain dnat ip to 185.1.2.3 comment "dnat to dns proxy"
-        iifname "vlan3981" udp dport domain dnat ip to 185.1.2.3 comment "dnat to dns proxy"
-        iifname "vlan3983" tcp dport domain dnat ip to 185.1.2.3 comment "dnat to dns proxy"
-        iifname "vlan3983" udp dport domain dnat ip to 185.1.2.3 comment "dnat to dns proxy"
+        iifname "vlan3981" tcp dport domain dnat ip daddr @public_dns_servers to 185.1.2.3 comment "dnat to dns proxy"
+        iifname "vlan3981" udp dport domain dnat ip daddr @public_dns_servers to 185.1.2.3 comment "dnat to dns proxy"
+        iifname "vlan3983" tcp dport domain dnat ip daddr @public_dns_servers to 185.1.2.3 comment "dnat to dns proxy"
+        iifname "vlan3983" udp dport domain dnat ip daddr @public_dns_servers to 185.1.2.3 comment "dnat to dns proxy"
     }
     chain input {
         type nat hook input priority 0; policy accept;

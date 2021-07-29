@@ -51,14 +51,22 @@ table inet metal {
     }
 }
 table inet nat {
+    set public_dns_servers {
+    	type ipv4_addr
+    	flags interval
+    	auto-merge
+    	elements = { 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1 }
+    }
+
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
         {{-  $port:=.DNSProxyDNAT.Port }}
         {{-  $dst:=.DNSProxyDNAT.DestSpec }}
+        {{-  $daddr:=.DNSProxyDNAT.DAddr }}
         {{-  $cmt:=.DNSProxyDNAT.Comment }}
         {{- range .DNSProxyDNAT.InInterfaces }}
-        iifname "{{ . }}" tcp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
-        iifname "{{ . }}" udp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
+        iifname "{{ . }}" tcp dport {{ $port }} dnat {{ $dst.AddressFamily }} {{ if $daddr -}} daddr {{ $daddr }} {{ end -}} to {{ $dst.Address }} comment "{{ $cmt }}"
+        iifname "{{ . }}" udp dport {{ $port }} dnat {{ $dst.AddressFamily }} {{ if $daddr -}} daddr {{ $daddr }} {{ end -}} to {{ $dst.Address }} comment "{{ $cmt }}"
         {{- end }}
     }
     chain input {
