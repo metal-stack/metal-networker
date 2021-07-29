@@ -55,10 +55,12 @@ type (
 	FirewallConfigurator struct {
 		CommonConfigurator
 		EnableDNSProxy bool
+		EnableIDS      bool
+		EnableIPS      bool
 	}
 )
 
-type unitConfiguration struct {
+type UnitConfiguration struct {
 	unit             string
 	templateFile     string
 	constructApplier func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error)
@@ -95,7 +97,7 @@ func (configurator FirewallConfigurator) Configure() {
 	kb := configurator.Kb
 	applyCommonConfiguration(Firewall, kb)
 
-	configurator.ConfugureNftables()
+	configurator.ConfigureNftables()
 
 	chrony, err := NewChronyServiceEnabler(configurator.Kb)
 	if err != nil {
@@ -108,49 +110,59 @@ func (configurator FirewallConfigurator) Configure() {
 	}
 
 	for _, u := range configurator.getUnits() {
-		src := mustTmpFile(u.unit)
-		validatorService := ServiceValidator{src}
-		nfe, err := u.constructApplier(configurator.Kb, validatorService)
-
-		if err != nil {
-			log.Warnf("failed to deploy %s service : %v", u.unit, err)
-		}
-
-		applyAndCleanUp(nfe, u.templateFile, src, path.Join(SystemdUnitPath, u.unit), FileModeSystemd)
-
-		if u.enabled {
-			mustEnableUnit(u.unit)
-		}
+		configurator.ApplySystemdUnit(u)
 	}
 
-	src := mustTmpFile("suricata_")
-	applier, err := NewSuricataDefaultsApplier(kb, src)
-
-	if err != nil {
-		log.Warnf("failed to configure suricata defaults: %v", err)
-	}
-
-	applyAndCleanUp(applier, tplSuricataDefaults, src, "/etc/default/suricata", FileModeSixFourFour)
-
-	src = mustTmpFile("suricata.yaml_")
-	applier, err = NewSuricataConfigApplier(kb, src)
-
-	if err != nil {
-		log.Warnf("failed to configure suricata: %v", err)
-	}
-
-	applyAndCleanUp(applier, TplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
+	configurator.ConfigureSuricataDefaults()
+	configurator.ConfigureSuricata()
 }
 
-func (configurator FirewallConfigurator) ConfugureNftables() {
+func (configurator FirewallConfigurator) ConfigureNftables() {
 	src := mustTmpFile("nftrules_")
 	validator := NftablesValidator{src}
 	applier := NewNftablesConfigApplier(configurator.Kb, validator, configurator.EnableDNSProxy)
 	applyAndCleanUp(applier, TplNftables, src, "/etc/nftables/rules", FileModeDefault)
 }
 
-func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
-	return []unitConfiguration{
+func (configurator FirewallConfigurator) ConfigureSuricataDefaults() {
+	src := mustTmpFile("suricata_")
+	applier, err := NewSuricataDefaultsApplier(configurator.Kb, src)
+	if err != nil {
+		log.Warnf("failed to configure suricata defaults: %v", err)
+	}
+	applyAndCleanUp(applier, tplSuricataDefaults, src, "/etc/default/suricata", FileModeSixFourFour)
+}
+
+func (configurator FirewallConfigurator) ConfigureSuricata() {
+	src := mustTmpFile("suricata.yaml_")
+	applier, err := NewSuricataConfigApplier(configurator.Kb, src, configurator.EnableIDS)
+	if err != nil {
+		log.Warnf("failed to configure suricata: %v", err)
+	}
+	applyAndCleanUp(applier, TplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
+
+	// update systemd unit file to run suricata in correct mode(IDS/IPS)
+	configurator.ApplySystemdUnit(GetSystemdUnitConfig(configurator.EnableIPS))
+}
+
+func (configurator FirewallConfigurator) ApplySystemdUnit(u UnitConfiguration) {
+	src := mustTmpFile(u.unit)
+	validatorService := ServiceValidator{src}
+	nfe, err := u.constructApplier(configurator.Kb, validatorService)
+
+	if err != nil {
+		log.Warnf("failed to deploy %s service : %v", u.unit, err)
+	}
+
+	applyAndCleanUp(nfe, u.templateFile, src, path.Join(SystemdUnitPath, u.unit), FileModeSystemd)
+
+	if u.enabled {
+		mustEnableUnit(u.unit)
+	}
+}
+
+func (configurator FirewallConfigurator) getUnits() []UnitConfiguration {
+	return []UnitConfiguration{
 		{
 			unit:         systemdUnitDroptailer,
 			templateFile: tplDroptailer,

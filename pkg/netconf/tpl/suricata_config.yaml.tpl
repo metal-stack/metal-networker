@@ -81,6 +81,7 @@ outputs:
 
   # Extensible Event Format (nicknamed EVE) event log in JSON format
   - eve-log:
+      {{- if .EnableIDS }}
       enabled: yes
       filetype: regular
       filename: eve.json
@@ -239,8 +240,8 @@ outputs:
             # force logging of checksums, available hash functions are md5,
             # sha1 and sha256
             #force-hash: [md5]
-        #- drop:
-        #    alerts: yes      # log alerts that caused drops
+        - drop:
+            alerts: yes      # log alerts that caused drops
         #    flows: all       # start or all: 'start' logs only a single drop
         #                     # per flow direction. All logs each dropped pkt.
         - smtp:
@@ -287,6 +288,9 @@ outputs:
         # and will include the pktvars, flowvars, flowbits and
         # flowints.
         #- metadata
+      {{- else }}
+      enabled: no
+      {{- end }}
 
   # deprecated - unified2 alert format for use with Barnyard2
   - unified2-alert:

@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/metal-stack/metal-go/api/models"
-	"github.com/metal-stack/metal-networker/pkg/exec"
 	"inet.af/netaddr"
+
+	"github.com/metal-stack/metal-networker/pkg/exec"
 
 	"github.com/metal-stack/metal-networker/pkg/net"
 
