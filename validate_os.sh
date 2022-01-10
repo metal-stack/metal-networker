@@ -2,7 +2,7 @@
 
 testcases="/testdata/frr.conf.*"
 for tc in $testcases; do
-    printf "Testing FRR ${FRR_VERSION} on ${OS_NAME}:${OS_VERSION} with input ${tc}: "
+    print "Testing FRR ${FRR_VERSION} on ${OS_NAME}:${OS_VERSION} with input ${tc}: "
     vtysh --dryrun --inputfile "${tc}"
     if [ $? -eq 0 ]
     then
