@@ -1,7 +1,5 @@
 ARG OS_NAME
 ARG OS_VERSION
-ARG FRR_VERSION
-FROM metalstack/frr:${FRR_VERSION}-${OS_NAME}-${OS_VERSION} AS frr-artifacts
 
 FROM ${OS_NAME}:${OS_VERSION}
 ARG OS_NAME
@@ -9,16 +7,24 @@ ARG OS_VERSION
 ARG FRR_VERSION
 
 WORKDIR /tmp
-COPY --from=frr-artifacts /artifacts .
 
 RUN apt-get update --quiet \
  && apt-get install \
     --yes \
     --no-install-recommends \
     --quiet \
-    ./frr_*.deb \
-    ./frr-pythontools_*.deb \
-    ./libyang*.deb
+    apt-transport-https \
+    apt-utils \
+    ca-certificates \
+    curl \
+    gnupg2 \
+    software-properties-common \
+ # install frr from frrouting debian package repo
+ && curl -fLsS https://deb.frrouting.org/frr/keys.asc | apt-key add - \
+ && add-apt-repository "deb [arch=amd64] https://deb.frrouting.org/frr $(lsb_release -s -c) ${FRR_VERSION}" \
+ && apt update \
+ && apt install --yes --no-install-recommends frr frr-pythontools
+
 
 COPY ./pkg/netconf/testdata /testdata
 COPY validate_os.sh /

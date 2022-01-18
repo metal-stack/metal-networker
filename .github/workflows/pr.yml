@@ -23,7 +23,9 @@ jobs:
       with:
         args: -p bugs -p unused
     - name: Build project
-      run: make
+      run: |
+        make
+        make validate
     - name: Docker Login
       uses: docker/login-action@v1
       with:
