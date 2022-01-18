@@ -11,7 +11,7 @@ require (
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/zap v1.19.1
+	go.uber.org/zap v1.20.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
 )
