@@ -3,8 +3,7 @@
 testcases="/testdata/frr.conf.*"
 for tc in $testcases; do
     print "Testing FRR ${FRR_VERSION} on ${OS_NAME}:${OS_VERSION} with input ${tc}: "
-    vtysh --dryrun --inputfile "${tc}"
-    if [ $? -eq 0 ]
+    if ! vtysh --dryrun --inputfile "${tc}";
     then
         printf "\e[32m\xE2\x9C\x94\e[0m\n"
     else
