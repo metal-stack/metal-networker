@@ -3,10 +3,10 @@ package netconf
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"text/template"
 
-	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
@@ -67,37 +67,38 @@ type unitConfiguration struct {
 
 // NewConfigurator creates a new configurator.
 func NewConfigurator(kind BareMetalType, kb KnowledgeBase) Configurator {
-	var result Configurator
+	var c Configurator
+	cc := CommonConfigurator{kb}
 
 	switch kind {
 	case Firewall:
-		fw := FirewallConfigurator{}
-		fw.CommonConfigurator = CommonConfigurator{kb}
-		result = fw
+		c = FirewallConfigurator{
+			CommonConfigurator: cc,
+		}
 	case Machine:
-		m := MachineConfigurator{}
-		m.CommonConfigurator = CommonConfigurator{kb}
-		result = m
+		c = MachineConfigurator{
+			CommonConfigurator: cc,
+		}
 	default:
 		log.Fatalf("Unknown kind of configurator: %v", kind)
 	}
 
-	return result
+	return c
 }
 
 // Configure applies configuration to a bare metal server to function as 'machine'.
-func (configurator MachineConfigurator) Configure() {
-	applyCommonConfiguration(Machine, configurator.Kb)
+func (mc MachineConfigurator) Configure() {
+	applyCommonConfiguration(Machine, mc.Kb)
 }
 
 // Configure applies configuration to a bare metal server to function as 'firewall'.
-func (configurator FirewallConfigurator) Configure() {
-	kb := configurator.Kb
+func (fc FirewallConfigurator) Configure() {
+	kb := fc.Kb
 	applyCommonConfiguration(Firewall, kb)
 
-	configurator.ConfugureNftables()
+	fc.ConfugureNftables()
 
-	chrony, err := NewChronyServiceEnabler(configurator.Kb)
+	chrony, err := NewChronyServiceEnabler(fc.Kb)
 	if err != nil {
 		log.Warnf("failed to configure Chrony: %v", err)
 	} else {
@@ -107,10 +108,10 @@ func (configurator FirewallConfigurator) Configure() {
 		}
 	}
 
-	for _, u := range configurator.getUnits() {
+	for _, u := range fc.getUnits() {
 		src := mustTmpFile(u.unit)
 		validatorService := ServiceValidator{src}
-		nfe, err := u.constructApplier(configurator.Kb, validatorService)
+		nfe, err := u.constructApplier(fc.Kb, validatorService)
 
 		if err != nil {
 			log.Warnf("failed to deploy %s service : %v", u.unit, err)
@@ -142,14 +143,14 @@ func (configurator FirewallConfigurator) Configure() {
 	applyAndCleanUp(applier, TplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
 }
 
-func (configurator FirewallConfigurator) ConfugureNftables() {
+func (fc FirewallConfigurator) ConfugureNftables() {
 	src := mustTmpFile("nftrules_")
 	validator := NftablesValidator{src}
-	applier := NewNftablesConfigApplier(configurator.Kb, validator, configurator.EnableDNSProxy)
+	applier := NewNftablesConfigApplier(fc.Kb, validator, fc.EnableDNSProxy)
 	applyAndCleanUp(applier, TplNftables, src, "/etc/nftables/rules", FileModeDefault)
 }
 
-func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
+func (fc FirewallConfigurator) getUnits() []unitConfiguration {
 	return []unitConfiguration{
 		{
 			unit:         systemdUnitDroptailer,
@@ -234,8 +235,7 @@ func mustEnableUnit(unit string) {
 	cmd := fmt.Sprintf("systemctl enable %s", unit)
 	log.Infof("running '%s' to enable unit.'", cmd)
 
-	err := exec.NewVerboseCmd("bash", "-c", cmd).Run()
-
+	_, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	if err != nil {
 		log.Panic(err)
 	}

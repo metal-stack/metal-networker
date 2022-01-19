@@ -5,7 +5,7 @@ Description=Nftables exporter - provides prometheus metrics for nftables
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/nftables_exporter --config=/etc/nftables_exporter.yaml
+ExecStart=/usr/bin/nftables_exporter --config=/etc/nftables_exporter.yaml
 Restart=always
 RestartSec=30
 

@@ -2,13 +2,13 @@ package netconf
 
 import (
 	"fmt"
+	"os/exec"
 
 	"inet.af/netaddr"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 
-	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
@@ -72,7 +72,8 @@ func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator, enableD
 }
 
 func (*NftablesReloader) Reload() error {
-	return exec.NewVerboseCmd(systemctlBin, "reload", nftablesService).Run()
+	_, err := exec.Command(systemctlBin, "reload", nftablesService).CombinedOutput()
+	return err
 }
 
 func isDMZNetwork(n models.V1MachineNetwork) bool {
@@ -178,6 +179,10 @@ func getDNSProxyDNAT(kb KnowledgeBase, port string) DNAT {
 
 // Validate validates network interfaces configuration.
 func (v NftablesValidator) Validate() error {
-	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
-	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
+	// nolint:gosec
+	cmd := exec.Command("nft", "--check", "--file", v.path)
+	log.Infof("running to validate changes: %q", cmd.String())
+
+	_, err := cmd.CombinedOutput()
+	return err
 }

@@ -1,11 +1,10 @@
 package netconf
 
 import (
-	"fmt"
+	"os/exec"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
-	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
 	"inet.af/netaddr"
 )
@@ -115,10 +114,12 @@ func routerID(net models.V1MachineNetwork) string {
 
 // Validate can be used to run validation on FRR configuration using vtysh.
 func (v FRRValidator) Validate() error {
-	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
-	log.Infof("running '%s' to validate changes.'", vtysh)
+	// nolint:gosec
+	cmd := exec.Command("vtysh", "--dryrun", "--inputfile", v.path)
+	log.Infof("running to validate changes: %q", cmd.String())
 
-	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
+	_, err := cmd.CombinedOutput()
+	return err
 }
 
 func assembleVRFs(kb KnowledgeBase) []VRF {

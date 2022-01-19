@@ -2,8 +2,7 @@ package netconf
 
 import (
 	"fmt"
-
-	"github.com/metal-stack/metal-networker/pkg/exec"
+	"os/exec"
 )
 
 // ChronyServiceEnabler can enable chrony systemd service for the given VRF.
@@ -22,7 +21,8 @@ func (c ChronyServiceEnabler) Enable() error {
 	cmd := fmt.Sprintf("systemctl enable chrony@%s", c.VRF)
 	log.Infof("running '%s' to enable chrony.'", cmd)
 
-	return exec.NewVerboseCmd("bash", "-c", cmd).Run()
+	_, err := exec.Command("bash", "-c", cmd).CombinedOutput()
+	return err
 }
 
 func containsDefaultRoute(prefixes []string) bool {
