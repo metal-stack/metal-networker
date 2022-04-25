@@ -30,12 +30,12 @@ router bgp {{ .ASN }}
  bgp bestpath as-path multipath-relax
  neighbor TOR peer-group
  neighbor TOR remote-as external
- neighbor TOR timers 1 3
+ neighbor TOR timers 2 8
  neighbor lan0 interface peer-group TOR
  neighbor lan1 interface peer-group TOR
  neighbor LOCAL peer-group
  neighbor LOCAL remote-as internal
- neighbor LOCAL timers 1 3
+ neighbor LOCAL timers 2 8
  neighbor LOCAL route-map local-in in
  bgp listen range 10.244.0.0/16 peer-group LOCAL
  !
