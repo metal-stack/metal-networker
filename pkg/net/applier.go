@@ -31,6 +31,7 @@ func NewNetworkApplier(data interface{}, validator Validator, reloader Reloader)
 }
 
 // Apply applies the current configuration with the given template.
+// 
 func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error) {
 	f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
