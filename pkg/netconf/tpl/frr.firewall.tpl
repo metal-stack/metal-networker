@@ -34,7 +34,7 @@ router bgp {{ .ASN }}
  bgp bestpath as-path multipath-relax
  neighbor FABRIC peer-group
  neighbor FABRIC remote-as external
- neighbor FABRIC timers 1 3
+ neighbor FABRIC timers 2 8
  neighbor lan0 interface peer-group FABRIC
  neighbor lan1 interface peer-group FABRIC
  !
