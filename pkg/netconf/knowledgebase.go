@@ -36,13 +36,8 @@ type (
 
 	// NIC is a representation of network interfaces attributes.
 	NIC struct {
-		Mac       string `yaml:"mac"`
-		Name      string `yaml:"name"`
-		Neighbors []struct {
-			Mac       string        `yaml:"mac"`
-			Name      interface{}   `yaml:"name"`
-			Neighbors []interface{} `yaml:"neighbors"`
-		} `yaml:"neighbors"`
+		Mac  string `yaml:"mac"`
+		Name string `yaml:"name"`
 	}
 )
 
