@@ -39,6 +39,13 @@ table inet metal {
         ct state established,related counter accept comment "stateful output"
         ct state invalid counter drop comment "drop invalid packets"
     }
+    chain output_ct {
+        type filter hook output priority raw; policy accept;
+        oifname "vlan3981" tcp sport domain ct zone set 3
+        oifname "vlan3981" udp sport domain ct zone set 3
+        oifname "vlan3983" tcp sport domain ct zone set 3
+        oifname "vlan3983" udp sport domain ct zone set 3
+    }
     chain refuse {
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
         counter drop
@@ -58,6 +65,13 @@ table inet nat {
         iifname "vlan3981" udp dport domain dnat ip daddr @public_dns_servers to 10.0.20.2 comment "dnat to dns proxy"
         iifname "vlan3983" tcp dport domain dnat ip daddr @public_dns_servers to 10.0.20.2 comment "dnat to dns proxy"
         iifname "vlan3983" udp dport domain dnat ip daddr @public_dns_servers to 10.0.20.2 comment "dnat to dns proxy"
+    }
+    chain prerouting_ct {
+        type filter hook prerouting priority raw; policy accept;
+        iifname "vlan3981" tcp dport domain ct zone set 3
+        iifname "vlan3981" udp dport domain ct zone set 3
+        iifname "vlan3983" tcp dport domain ct zone set 3
+        iifname "vlan3983" udp dport domain ct zone set 3
     }
     chain input {
         type nat hook input priority 0; policy accept;

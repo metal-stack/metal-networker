@@ -16,6 +16,7 @@ const (
 	// TplNftables defines the name of the template to render nftables configuration.
 	TplNftables     = "nftrules.tpl"
 	dnsPort         = "domain"
+	dnsProxyZone    = "3"
 	nftablesService = "nftables.service"
 	systemctlBin    = "/bin/systemctl"
 )
@@ -43,6 +44,7 @@ type (
 		InInterfaces []string
 		DAddr        string
 		Port         string
+		Zone         string
 		DestSpec     AddrSpec
 	}
 
@@ -68,7 +70,7 @@ func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy 
 	}
 
 	if enableDNSProxy {
-		data.DNSProxyDNAT = getDNSProxyDNAT(c, dnsPort)
+		data.DNSProxyDNAT = getDNSProxyDNAT(c, dnsPort, dnsProxyZone)
 	}
 
 	if c.VPN != nil {
@@ -154,7 +156,7 @@ func getSNAT(c config, enableDNSProxy bool) []SNAT {
 	return result
 }
 
-func getDNSProxyDNAT(c config, port string) DNAT {
+func getDNSProxyDNAT(c config, port, zone string) DNAT {
 	networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
 	svis := []string{}
 	for _, n := range networks {
@@ -177,6 +179,7 @@ func getDNSProxyDNAT(c config, port string) DNAT {
 		InInterfaces: svis,
 		DAddr:        "@public_dns_servers",
 		Port:         port,
+		Zone:         zone,
 		DestSpec: AddrSpec{
 			AddressFamily: af,
 			Address:       n.Ips[0],
