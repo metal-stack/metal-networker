@@ -61,10 +61,10 @@ table inet nat {
 
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
-        iifname "vlan3981" tcp dport domain dnat ip daddr @public_dns_servers to 10.0.20.2 comment "dnat to dns proxy"
-        iifname "vlan3981" udp dport domain dnat ip daddr @public_dns_servers to 10.0.20.2 comment "dnat to dns proxy"
-        iifname "vlan3983" tcp dport domain dnat ip daddr @public_dns_servers to 10.0.20.2 comment "dnat to dns proxy"
-        iifname "vlan3983" udp dport domain dnat ip daddr @public_dns_servers to 10.0.20.2 comment "dnat to dns proxy"
+        ip daddr @public_dns_servers iifname "vlan3981" tcp dport domain dnat ip to 10.0.20.2 comment "dnat to dns proxy"
+        ip daddr @public_dns_servers iifname "vlan3981" udp dport domain dnat ip to 10.0.20.2 comment "dnat to dns proxy"
+        ip daddr @public_dns_servers iifname "vlan3983" tcp dport domain dnat ip to 10.0.20.2 comment "dnat to dns proxy"
+        ip daddr @public_dns_servers iifname "vlan3983" udp dport domain dnat ip to 10.0.20.2 comment "dnat to dns proxy"
     }
     chain prerouting_ct {
         type filter hook prerouting priority raw; policy accept;

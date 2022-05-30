@@ -74,8 +74,8 @@ table inet nat {
         {{-  $daddr:=.DNSProxyDNAT.DAddr }}
         {{-  $cmt:=.DNSProxyDNAT.Comment }}
         {{- range .DNSProxyDNAT.InInterfaces }}
-        iifname "{{ . }}" tcp dport {{ $port }} dnat {{ $dst.AddressFamily }} {{ if $daddr -}} daddr {{ $daddr }} {{ end -}} to {{ $dst.Address }} comment "{{ $cmt }}"
-        iifname "{{ . }}" udp dport {{ $port }} dnat {{ $dst.AddressFamily }} {{ if $daddr -}} daddr {{ $daddr }} {{ end -}} to {{ $dst.Address }} comment "{{ $cmt }}"
+        {{ if $daddr -}} {{ $dst.AddressFamily }} daddr {{ $daddr }} {{ end -}} iifname "{{ . }}" tcp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
+        {{ if $daddr -}} {{ $dst.AddressFamily }} daddr {{ $daddr }} {{ end -}} iifname "{{ . }}" udp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
         {{- end }}
     }
     chain prerouting_ct {
