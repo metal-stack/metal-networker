@@ -14,6 +14,7 @@ type SuricataConfigData struct {
 	Comment         string
 	DefaultRouteVrf string
 	Interface       string
+	EnableIDS       bool
 }
 
 // SuricataConfigValidator can validate configuration for suricata.
@@ -22,14 +23,19 @@ type SuricataConfigValidator struct {
 }
 
 // NewSuricataConfigApplier constructs a new instance of this type.
-func NewSuricataConfigApplier(kb KnowledgeBase, tmpFile string) (net.Applier, error) {
+func NewSuricataConfigApplier(kb KnowledgeBase, tmpFile string, enableIDS bool) (net.Applier, error) {
 	defaultRouteVrf, err := kb.getDefaultRouteVRFName()
 	if err != nil {
 		return nil, err
 	}
 
 	i := strings.Replace(defaultRouteVrf, "vrf", "vlan", 1)
-	data := SuricataConfigData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf, Interface: i}
+	data := SuricataConfigData{
+		Comment:         versionHeader(kb.Machineuuid),
+		DefaultRouteVrf: defaultRouteVrf,
+		Interface:       i,
+		EnableIDS:       enableIDS,
+	}
 	validator := SuricataConfigValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil), nil

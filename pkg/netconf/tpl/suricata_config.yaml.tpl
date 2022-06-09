@@ -81,9 +81,10 @@ outputs:
 
   # Extensible Event Format (nicknamed EVE) event log in JSON format
   - eve-log:
+      {{- if .EnableIDS }}
       enabled: yes
-      filetype: regular
-      filename: eve.json
+      filetype: unix_dgram
+      filename: /var/log/suricata/eve.socket
       #prefix: "@cee: " # prefix to prepend to each log entry
       # the following are valid when type: syslog above
       #identity: "suricata"
@@ -287,6 +288,9 @@ outputs:
         # and will include the pktvars, flowvars, flowbits and
         # flowints.
         #- metadata
+      {{- else }}
+      enabled: no
+      {{- end }}
 
   # deprecated - unified2 alert format for use with Barnyard2
   - unified2-alert:
