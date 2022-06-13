@@ -60,7 +60,7 @@ type (
 )
 
 // NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
-func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) net.Applier {
+func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) *net.NetworkApplier {
 	var data interface{}
 
 	switch kind {

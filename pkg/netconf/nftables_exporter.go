@@ -17,7 +17,7 @@ type NftablesExporterData struct {
 }
 
 // NewNftablesExporterServiceApplier constructs a new instance of this type.
-func NewNftablesExporterServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
+func NewNftablesExporterServiceApplier(kb KnowledgeBase, v net.Validator) (*net.NetworkApplier, error) {
 	tenantVrf, err := getTenantVRFName(kb)
 	if err != nil {
 		return nil, err

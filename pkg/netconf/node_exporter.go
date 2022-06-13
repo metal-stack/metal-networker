@@ -17,7 +17,7 @@ type NodeExporterData struct {
 }
 
 // NewNodeExporterServiceApplier constructs a new instance of this type.
-func NewNodeExporterServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
+func NewNodeExporterServiceApplier(kb KnowledgeBase, v net.Validator) (*net.NetworkApplier, error) {
 	tenantVrf, err := getTenantVRFName(kb)
 	if err != nil {
 		return nil, err

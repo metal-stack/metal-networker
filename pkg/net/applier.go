@@ -9,15 +9,6 @@ import (
 	"text/template"
 )
 
-// Applier is an interface to render changes and reload services to apply them.
-type Applier interface {
-	Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error)
-	Render(writer io.Writer, tpl template.Template) error
-	Reload() error
-	Validate() error
-	Compare(tmpFile, destFile string) bool
-}
-
 // NetworkApplier holds the toolset for applying network configuration changes.
 type NetworkApplier struct {
 	Data      interface{}
@@ -26,12 +17,12 @@ type NetworkApplier struct {
 }
 
 // NewNetworkApplier creates a new NewNetworkApplier.
-func NewNetworkApplier(data interface{}, validator Validator, reloader Reloader) Applier {
+func NewNetworkApplier(data interface{}, validator Validator, reloader Reloader) *NetworkApplier {
 	return &NetworkApplier{Data: data, Validator: validator, Reloader: reloader}
 }
 
 // Apply applies the current configuration with the given template.
-// 
+//
 func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error) {
 	f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {

@@ -36,6 +36,10 @@ var (
 )
 
 type (
+	Applier interface {
+		Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error)
+	}
+
 	// Configurator is an interface to configure bare metal servers.
 	Configurator interface {
 		Configure()
@@ -61,7 +65,7 @@ type (
 type unitConfiguration struct {
 	unit             string
 	templateFile     string
-	constructApplier func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error)
+	constructApplier func(kb KnowledgeBase, v ServiceValidator) (*net.NetworkApplier, error)
 	enabled          bool
 }
 
@@ -154,7 +158,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 		{
 			unit:         systemdUnitDroptailer,
 			templateFile: tplDroptailer,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (*net.NetworkApplier, error) {
 				return NewDroptailerServiceApplier(kb, v)
 			},
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
@@ -162,7 +166,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 		{
 			unit:         systemdUnitFirewallController,
 			templateFile: tplFirewallController,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (*net.NetworkApplier, error) {
 				return NewFirewallControllerServiceApplier(kb, v)
 			},
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
@@ -170,7 +174,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 		{
 			unit:         systemdUnitNftablesExporter,
 			templateFile: tplNftablesExporter,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (*net.NetworkApplier, error) {
 				return NewNftablesExporterServiceApplier(kb, v)
 			},
 			enabled: true,
@@ -178,7 +182,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 		{
 			unit:         systemdUnitNodeExporter,
 			templateFile: tplNodeExporter,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (*net.NetworkApplier, error) {
 				return NewNodeExporterServiceApplier(kb, v)
 			},
 			enabled: true,
@@ -186,7 +190,7 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 		{
 			unit:         systemdUnitSuricataUpdate,
 			templateFile: tplSuricataUpdate,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (*net.NetworkApplier, error) {
 				return NewSuricataUpdateServiceApplier(kb, v)
 			},
 			enabled: true,
@@ -217,7 +221,7 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 	applyAndCleanUp(applier, tpl, src, "/etc/frr/frr.conf", FileModeDefault)
 }
 
-func applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMode) {
+func applyAndCleanUp(applier Applier, tpl, src, dest string, mode os.FileMode) {
 	log.Infof("rendering %s to %s (mode: %s)", tpl, dest, mode)
 	file := mustReadTpl(tpl)
 	mustApply(applier, file, src, dest)
@@ -241,7 +245,7 @@ func mustEnableUnit(unit string) {
 	}
 }
 
-func mustApply(applier net.Applier, tpl, src, dest string) {
+func mustApply(applier Applier, tpl, src, dest string) {
 	t := template.Must(template.New(src).Parse(tpl))
 	_, err := applier.Apply(*t, src, dest, false)
 

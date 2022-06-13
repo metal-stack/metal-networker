@@ -39,7 +39,7 @@ type (
 )
 
 // NewSystemdNetworkdApplier creates a new Applier to configure systemd.network.
-func NewSystemdNetworkdApplier(tmpFile string, data interface{}) net.Applier {
+func NewSystemdNetworkdApplier(tmpFile string, data interface{}) *net.NetworkApplier {
 	validator := SystemdValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)
@@ -47,7 +47,7 @@ func NewSystemdNetworkdApplier(tmpFile string, data interface{}) net.Applier {
 
 // NewSystemdLinkApplier creates a new Applier to configure systemd.link.
 func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic NIC,
-	tmpFile string, evpnIfaces []EVPNIface) net.Applier {
+	tmpFile string, evpnIfaces []EVPNIface) *net.NetworkApplier {
 	var mtu int
 
 	switch kind {
