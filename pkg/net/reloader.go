@@ -9,11 +9,6 @@ import (
 
 const done = "done"
 
-// Reloader triggers the reload to carry out the changes of an applier.
-type Reloader interface {
-	Reload() error
-}
-
 // NewDBusReloader is a reloader for systemd units with dbus.
 func NewDBusReloader(service string) DBusReloader {
 	return DBusReloader{service}
