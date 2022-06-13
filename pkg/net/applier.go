@@ -39,18 +39,21 @@ func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, 
 		return false, err
 	}
 
-	defer func() {
-		_ = f.Close()
-	}()
-
 	w := bufio.NewWriter(f)
 	err = n.Render(w, tpl)
 
 	if err != nil {
+		_ = f.Close()
 		return false, err
 	}
 
 	err = w.Flush()
+	if err != nil {
+		_ = f.Close()
+		return false, err
+	}
+
+	err = f.Close()
 	if err != nil {
 		return false, err
 	}
