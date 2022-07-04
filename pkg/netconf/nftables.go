@@ -2,7 +2,6 @@ package netconf
 
 import (
 	"fmt"
-
 	"net/netip"
 
 	"github.com/metal-stack/metal-go/api/models"
