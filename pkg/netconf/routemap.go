@@ -2,16 +2,17 @@ package netconf
 
 import (
 	"fmt"
+	"net/netip"
 	"sort"
+
 	"strings"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
-	"inet.af/netaddr"
 )
 
 type importPrefix struct {
-	Prefix    netaddr.IPPrefix
+	Prefix    netip.Prefix
 	Policy    AccessPolicy
 	SourceVRF string
 }
@@ -74,13 +75,13 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 
 		// deny public address of default network
 		defaultNet := kb.GetDefaultRouteNetwork()
-		if ip, err := netaddr.ParseIP(defaultNet.Ips[0]); err == nil {
-			var bl uint8 = 32
+		if ip, err := netip.ParseAddr(defaultNet.Ips[0]); err == nil {
+			var bl = 32
 			if ip.Is6() {
 				bl = 128
 			}
 			i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
-				Prefix:    netaddr.IPPrefixFrom(ip, bl),
+				Prefix:    netip.PrefixFrom(ip, bl),
 				Policy:    Deny,
 				SourceVRF: vrfNameOf(*defaultNet),
 			})
@@ -96,7 +97,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 		// reach out from private network to destination prefixes of private secondays shared networks
 		for _, n := range privateSecondarySharedNets {
 			for _, pfx := range n.Destinationprefixes {
-				ppfx := netaddr.MustParseIPPrefix(pfx)
+				ppfx := netip.MustParsePrefix(pfx)
 				isThere := false
 				for _, i := range i.ImportPrefixes {
 					if i.Prefix == ppfx {
@@ -126,7 +127,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 						if pfx == epfx {
 							importExternalNet = true
 							i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
-								Prefix:    netaddr.MustParseIPPrefix(pfx),
+								Prefix:    netip.MustParsePrefix(pfx),
 								Policy:    Permit,
 								SourceVRF: vrfNameOf(e),
 							})
@@ -184,11 +185,11 @@ func prefixLists(
 ) []IPPrefixList {
 	var result []IPPrefixList
 	for _, p := range prefixes {
-		if af == AddressFamilyIPv4 && !p.Prefix.IP().Is4() {
+		if af == AddressFamilyIPv4 && !p.Prefix.Addr().Is4() {
 			continue
 		}
 
-		if af == AddressFamilyIPv6 && !p.Prefix.IP().Is6() {
+		if af == AddressFamilyIPv6 && !p.Prefix.Addr().Is6() {
 			continue
 		}
 
@@ -223,7 +224,7 @@ func concatPfxSlices(pfxSlices ...[]importPrefix) []importPrefix {
 func stringSliceToIPPrefix(s []string, sourceVrf string) []importPrefix {
 	var result []importPrefix
 	for _, e := range s {
-		ipp, err := netaddr.ParseIPPrefix(e)
+		ipp, err := netip.ParsePrefix(e)
 		if err != nil {
 			continue
 		}
@@ -338,7 +339,7 @@ func (i *importPrefix) buildSpecs(seq int) []string {
 		spec = fmt.Sprintf("%s %s", i.Policy, i.Prefix)
 
 	} else {
-		spec = fmt.Sprintf("seq %d %s %s le %d", seq, i.Policy, i.Prefix, i.Prefix.IP().BitLen())
+		spec = fmt.Sprintf("seq %d %s %s le %d", seq, i.Policy, i.Prefix, i.Prefix.Addr().BitLen())
 	}
 
 	result = append(result, spec)
@@ -349,7 +350,7 @@ func (i *importPrefix) buildSpecs(seq int) []string {
 func (i *importPrefix) name(targetVrf string, isExported bool) string {
 	suffix := ""
 
-	if i.Prefix.IP().Is6() {
+	if i.Prefix.Addr().Is6() {
 		suffix = "-ipv6"
 	}
 	if !isExported {

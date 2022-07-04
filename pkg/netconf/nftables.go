@@ -3,7 +3,7 @@ package netconf
 import (
 	"fmt"
 
-	"inet.af/netaddr"
+	"net/netip"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
@@ -99,7 +99,7 @@ func getSNAT(kb KnowledgeBase, enableDNSProxy bool) []SNAT {
 	defaultNetworkName, err := kb.getDefaultRouteVRFName()
 	if err == nil {
 		defaultNetwork = *kb.GetDefaultRouteNetwork()
-		ip, _ := netaddr.ParseIP(defaultNetwork.Ips[0])
+		ip, _ := netip.ParseAddr(defaultNetwork.Ips[0])
 		defaultAF = "ip"
 		if ip.Is6() {
 			defaultAF = "ip6"
@@ -115,12 +115,12 @@ func getSNAT(kb KnowledgeBase, enableDNSProxy bool) []SNAT {
 		svi := fmt.Sprintf("vlan%d", *n.Vrf)
 
 		for _, p := range privatePfx {
-			ipprefix, err := netaddr.ParseIPPrefix(p)
+			ipprefix, err := netip.ParsePrefix(p)
 			if err != nil {
 				continue
 			}
 			af := "ip"
-			if ipprefix.IP().Is6() {
+			if ipprefix.Addr().Is6() {
 				af = "ip6"
 			}
 			sspec := AddrSpec{
@@ -160,7 +160,7 @@ func getDNSProxyDNAT(kb KnowledgeBase, port string) DNAT {
 		return DNAT{}
 	}
 
-	ip, _ := netaddr.ParseIP(n.Ips[0])
+	ip, _ := netip.ParseAddr(n.Ips[0])
 	af := "ip"
 	if ip.Is6() {
 		af = "ip6"

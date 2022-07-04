@@ -3,10 +3,10 @@ package netconf
 import (
 	"fmt"
 	"io"
+	"net/netip"
 	"text/template"
 
 	mn "github.com/metal-stack/metal-lib/pkg/net"
-	"inet.af/netaddr"
 )
 
 type (
@@ -59,7 +59,7 @@ func NewIfacesApplier(kind BareMetalType, kb KnowledgeBase) IfacesApplier {
 func addBitlen(ips []string) []string {
 	ipsWithMask := []string{}
 	for _, ip := range ips {
-		parsedIP, err := netaddr.ParseIP(ip)
+		parsedIP, err := netip.ParseAddr(ip)
 		if err != nil {
 			continue
 		}
