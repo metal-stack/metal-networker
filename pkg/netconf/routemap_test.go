@@ -2,10 +2,9 @@ package netconf
 
 import (
 	"fmt"
+	"net/netip"
 	"reflect"
 	"testing"
-
-	"inet.af/netaddr"
 )
 
 type network struct {
@@ -15,26 +14,26 @@ type network struct {
 }
 
 var (
-	defaultRoute           = importPrefix{Prefix: netaddr.MustParseIPPrefix("0.0.0.0/0"), Policy: Permit, SourceVRF: inetVrf}
-	defaultRoute6          = importPrefix{Prefix: netaddr.MustParseIPPrefix("::/0"), Policy: Permit, SourceVRF: inetVrf}
-	defaultRouteFromDMZ    = importPrefix{Prefix: netaddr.MustParseIPPrefix("0.0.0.0/0"), Policy: Permit, SourceVRF: dmzVrf}
+	defaultRoute           = importPrefix{Prefix: netip.MustParsePrefix("0.0.0.0/0"), Policy: Permit, SourceVRF: inetVrf}
+	defaultRoute6          = importPrefix{Prefix: netip.MustParsePrefix("::/0"), Policy: Permit, SourceVRF: inetVrf}
+	defaultRouteFromDMZ    = importPrefix{Prefix: netip.MustParsePrefix("0.0.0.0/0"), Policy: Permit, SourceVRF: dmzVrf}
 	externalVrf            = "vrf104010"
-	externalNet            = importPrefix{Prefix: netaddr.MustParseIPPrefix("100.127.129.0/24"), Policy: Permit, SourceVRF: externalVrf}
-	externalDestinationNet = importPrefix{Prefix: netaddr.MustParseIPPrefix("100.127.1.0/24"), Policy: Permit, SourceVRF: externalVrf}
+	externalNet            = importPrefix{Prefix: netip.MustParsePrefix("100.127.129.0/24"), Policy: Permit, SourceVRF: externalVrf}
+	externalDestinationNet = importPrefix{Prefix: netip.MustParsePrefix("100.127.1.0/24"), Policy: Permit, SourceVRF: externalVrf}
 	privateVrf             = "vrf3981"
-	privateNet             = importPrefix{Prefix: netaddr.MustParseIPPrefix("10.0.16.0/22"), Policy: Permit, SourceVRF: privateVrf}
-	privateNet6            = importPrefix{Prefix: netaddr.MustParseIPPrefix("2002::/64"), Policy: Permit, SourceVRF: privateVrf}
+	privateNet             = importPrefix{Prefix: netip.MustParsePrefix("10.0.16.0/22"), Policy: Permit, SourceVRF: privateVrf}
+	privateNet6            = importPrefix{Prefix: netip.MustParsePrefix("2002::/64"), Policy: Permit, SourceVRF: privateVrf}
 	sharedVrf              = "vrf3982"
-	sharedNet              = importPrefix{Prefix: netaddr.MustParseIPPrefix("10.0.18.0/22"), Policy: Permit, SourceVRF: sharedVrf}
+	sharedNet              = importPrefix{Prefix: netip.MustParsePrefix("10.0.18.0/22"), Policy: Permit, SourceVRF: sharedVrf}
 	dmzVrf                 = "vrf3983"
-	dmzNet                 = importPrefix{Prefix: netaddr.MustParseIPPrefix("10.0.20.0/22"), Policy: Permit, SourceVRF: dmzVrf}
+	dmzNet                 = importPrefix{Prefix: netip.MustParsePrefix("10.0.20.0/22"), Policy: Permit, SourceVRF: dmzVrf}
 	inetVrf                = "vrf104009"
-	inetNet1               = importPrefix{Prefix: netaddr.MustParseIPPrefix("185.1.2.0/24"), Policy: Permit, SourceVRF: inetVrf}
-	inetNet2               = importPrefix{Prefix: netaddr.MustParseIPPrefix("185.27.0.0/22"), Policy: Permit, SourceVRF: inetVrf}
-	inetNet6               = importPrefix{Prefix: netaddr.MustParseIPPrefix("2a02:c00:20::/45"), Policy: Permit, SourceVRF: inetVrf}
-	publicDefaultNet       = importPrefix{Prefix: netaddr.MustParseIPPrefix("185.1.2.3/32"), Policy: Deny, SourceVRF: inetVrf}
-	publicDefaultNet2      = importPrefix{Prefix: netaddr.MustParseIPPrefix("10.0.20.2/32"), Policy: Deny, SourceVRF: dmzVrf}
-	publicDefaultNetIPv6   = importPrefix{Prefix: netaddr.MustParseIPPrefix("2a02:c00:20::1/128"), Policy: Deny, SourceVRF: inetVrf}
+	inetNet1               = importPrefix{Prefix: netip.MustParsePrefix("185.1.2.0/24"), Policy: Permit, SourceVRF: inetVrf}
+	inetNet2               = importPrefix{Prefix: netip.MustParsePrefix("185.27.0.0/22"), Policy: Permit, SourceVRF: inetVrf}
+	inetNet6               = importPrefix{Prefix: netip.MustParsePrefix("2a02:c00:20::/45"), Policy: Permit, SourceVRF: inetVrf}
+	publicDefaultNet       = importPrefix{Prefix: netip.MustParsePrefix("185.1.2.3/32"), Policy: Deny, SourceVRF: inetVrf}
+	publicDefaultNet2      = importPrefix{Prefix: netip.MustParsePrefix("10.0.20.2/32"), Policy: Deny, SourceVRF: dmzVrf}
+	publicDefaultNetIPv6   = importPrefix{Prefix: netip.MustParsePrefix("2a02:c00:20::1/128"), Policy: Deny, SourceVRF: inetVrf}
 
 	private = network{
 		vrf:      privateVrf,

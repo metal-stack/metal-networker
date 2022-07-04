@@ -2,12 +2,12 @@ package netconf
 
 import (
 	"fmt"
+	"net/netip"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
-	"inet.af/netaddr"
 )
 
 const (
@@ -103,7 +103,7 @@ func routerID(net models.V1MachineNetwork) string {
 	if len(net.Ips) < 1 {
 		return "0.0.0.0"
 	}
-	ip, err := netaddr.ParseIP(net.Ips[0])
+	ip, err := netip.ParseAddr(net.Ips[0])
 	if err != nil {
 		return "0.0.0.0"
 	}
