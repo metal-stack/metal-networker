@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/netip"
 	"sort"
-
 	"strings"
 
 	"github.com/metal-stack/metal-go/api/models"
