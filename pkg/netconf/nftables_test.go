@@ -41,6 +41,11 @@ func TestCompileNftRules(t *testing.T) {
 			expected:       "testdata/nftrules_shared",
 			enableDNSProxy: true,
 		},
+		{
+			input:          "testdata/firewall_vpn.yaml",
+			expected:       "testdata/nftrules_vpn",
+			enableDNSProxy: false,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
