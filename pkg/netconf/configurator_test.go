@@ -22,7 +22,7 @@ func TestNewConfigurator(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		actual, err := NewConfigurator(test.kind, config{})
+		actual, err := NewConfigurator(test.kind, config{}, false)
 		assert.NoError(t, err)
 		assert.IsType(t, test.expected, actual)
 	}

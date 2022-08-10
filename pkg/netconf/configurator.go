@@ -6,9 +6,10 @@ import (
 	"path"
 	"text/template"
 
+	"go.uber.org/zap"
+
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
-	"go.uber.org/zap"
 )
 
 // BareMetalType defines the type of configuration to apply.
@@ -42,6 +43,7 @@ type (
 	// Configurator is an interface to configure bare metal servers.
 	Configurator interface {
 		Configure()
+		ConfigureNftables()
 	}
 
 	// machineConfigurator is a configurator that configures a bare metal server as 'machine'.
@@ -64,11 +66,12 @@ type unitConfiguration struct {
 }
 
 // NewConfigurator creates a new configurator.
-func NewConfigurator(kind BareMetalType, c config) (Configurator, error) {
+func NewConfigurator(kind BareMetalType, c config, enableDNS bool) (Configurator, error) {
 	switch kind {
 	case Firewall:
 		return firewallConfigurator{
-			c: c,
+			c:              c,
+			enableDNSProxy: enableDNS,
 		}, nil
 	case Machine:
 		return machineConfigurator{
@@ -84,12 +87,15 @@ func (mc machineConfigurator) Configure() {
 	applyCommonConfiguration(mc.c.log, Machine, mc.c)
 }
 
+// ConfigureNftables is empty function that exists just to satisfy the Configurator interface
+func (mc machineConfigurator) ConfigureNftables() {}
+
 // Configure applies configuration to a bare metal server to function as 'firewall'.
 func (fc firewallConfigurator) Configure() {
 	kb := fc.c
 	applyCommonConfiguration(fc.c.log, Firewall, kb)
 
-	fc.configureNftables()
+	fc.ConfigureNftables()
 
 	chrony, err := newChronyServiceEnabler(fc.c)
 	if err != nil {
@@ -136,7 +142,7 @@ func (fc firewallConfigurator) Configure() {
 	applyAndCleanUp(fc.c.log, applier, tplSuricataConfig, src, "/etc/suricata/suricata.yaml", fileModeSixFourFour)
 }
 
-func (fc firewallConfigurator) configureNftables() {
+func (fc firewallConfigurator) ConfigureNftables() {
 	src := mustTmpFile("nftrules_")
 	validator := NftablesValidator{
 		path: src,
