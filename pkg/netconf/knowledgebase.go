@@ -32,6 +32,7 @@ type (
 		Devmode      bool                      `yaml:"devmode"`
 		Console      string                    `yaml:"console"`
 		Nics         []NIC                     `yaml:"nics"`
+		VPN          *models.V1MachineVPN      `yaml:"vpn"`
 	}
 
 	// NIC is a representation of network interfaces attributes.

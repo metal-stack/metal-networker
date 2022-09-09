@@ -37,7 +37,7 @@ table inet metal {
         ip daddr 10.0.0.0/8 udp dport 4789 counter accept comment "outgoing VXLAN"
         
         ct state established,related counter accept comment "stateful output"
-        ct state invalid counter drop comment "drop invalid packets"                
+        ct state invalid counter drop comment "drop invalid packets"
     }
     chain refuse {
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "

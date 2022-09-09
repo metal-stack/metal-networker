@@ -95,7 +95,7 @@ func (configurator FirewallConfigurator) Configure() {
 	kb := configurator.Kb
 	applyCommonConfiguration(Firewall, kb)
 
-	configurator.ConfugureNftables()
+	configurator.ConfigureNftables()
 
 	chrony, err := NewChronyServiceEnabler(configurator.Kb)
 	if err != nil {
@@ -142,15 +142,15 @@ func (configurator FirewallConfigurator) Configure() {
 	applyAndCleanUp(applier, TplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
 }
 
-func (configurator FirewallConfigurator) ConfugureNftables() {
+func (configurator FirewallConfigurator) ConfigureNftables() {
 	src := mustTmpFile("nftrules_")
 	validator := NftablesValidator{src}
 	applier := NewNftablesConfigApplier(configurator.Kb, validator, configurator.EnableDNSProxy)
 	applyAndCleanUp(applier, TplNftables, src, "/etc/nftables/rules", FileModeDefault)
 }
 
-func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
-	return []unitConfiguration{
+func (configurator FirewallConfigurator) getUnits() (units []unitConfiguration) {
+	units = []unitConfiguration{
 		{
 			unit:         systemdUnitDroptailer,
 			templateFile: tplDroptailer,
@@ -192,6 +192,26 @@ func (configurator FirewallConfigurator) getUnits() []unitConfiguration {
 			enabled: true,
 		},
 	}
+
+	if configurator.Kb.VPN != nil {
+		units = append(units, unitConfiguration{
+			unit:         systemdUnitTailscaled,
+			templateFile: tplTailscaled,
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+				return NewTailscaledServiceApplier(kb, v)
+			},
+			enabled: true,
+		}, unitConfiguration{
+			unit:         systemdUnitTailscale,
+			templateFile: tplTailscale,
+			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+				return NewTailscaleServiceApplier(kb, v)
+			},
+			enabled: true,
+		})
+	}
+
+	return units
 }
 
 func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {

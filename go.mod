@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/google/go-cmp v0.5.8
-	github.com/metal-stack/metal-go v0.18.5
+	github.com/metal-stack/metal-go v0.20.0
 	github.com/metal-stack/metal-lib v0.9.2
 	github.com/metal-stack/v v1.0.3
 	github.com/spf13/cobra v1.5.0

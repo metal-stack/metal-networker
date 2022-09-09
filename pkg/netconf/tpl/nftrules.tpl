@@ -17,7 +17,11 @@ table inet metal {
         ip saddr 10.0.0.0/8 udp dport {{ .DNSProxyDNAT.Port }} {{ .DNSProxyDNAT.DestSpec.AddressFamily }} daddr {{ .DNSProxyDNAT.DestSpec.Address }} accept comment "{{ .DNSProxyDNAT.Comment }}"
         {{- end }}
 
+        {{ if .VPN -}}
+        iifname "tailscale*" accept comment "Accept tailscale traffic"
+        {{- else -}}
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
+        {{- end }}
         ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
         ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
         
@@ -39,7 +43,7 @@ table inet metal {
         ip daddr 10.0.0.0/8 udp dport 4789 counter accept comment "outgoing VXLAN"
         
         ct state established,related counter accept comment "stateful output"
-        ct state invalid counter drop comment "drop invalid packets"                
+        ct state invalid counter drop comment "drop invalid packets"
     }
     chain refuse {
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "

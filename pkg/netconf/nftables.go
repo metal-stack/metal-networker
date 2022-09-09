@@ -25,6 +25,7 @@ type (
 		Comment      string
 		SNAT         []SNAT
 		DNSProxyDNAT DNAT
+		VPN          bool
 	}
 
 	// SNAT holds the information required to configure Source NAT.
@@ -65,6 +66,10 @@ func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator, enableD
 
 	if enableDNSProxy {
 		data.DNSProxyDNAT = getDNSProxyDNAT(kb, dnsPort)
+	}
+
+	if kb.VPN != nil {
+		data.VPN = true
 	}
 
 	return net.NewNetworkApplier(data, validator, &NftablesReloader{})
