@@ -13,7 +13,6 @@ const (
 
 // TailscaleData contains the data to render the Tailscale service template.
 type TailscaleData struct {
-	Hostname        string
 	MachineID       string
 	AuthKey         string
 	Address         string
@@ -28,7 +27,6 @@ func NewTailscaleServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier,
 	}
 
 	data := TailscaleData{
-		Hostname:        kb.Hostname,
 		MachineID:       kb.Machineuuid,
 		AuthKey:         *kb.VPN.AuthKey,
 		Address:         *kb.VPN.Address,
