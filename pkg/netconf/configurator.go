@@ -231,7 +231,7 @@ func applyCommonConfiguration(log *zap.SugaredLogger, kind BareMetalType, kb con
 	applyAndCleanUp(log, applier, tplHostname, src, "/etc/hostname", FileModeSixFourFour)
 
 	src = mustTmpFile("frr_")
-	applier = newFrrConfigApplier(kind, kb, src)
+	applier = NewFrrConfigApplier(kind, kb, src)
 	tpl := TplFirewallFRR
 
 	if kind == Machine {
