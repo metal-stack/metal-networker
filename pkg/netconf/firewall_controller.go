@@ -31,7 +31,7 @@ func NewFirewallControllerServiceApplier(kb KnowledgeBase, v net.Validator) (net
 		return nil, fmt.Errorf("no private IP found useable for the firewall controller")
 	}
 	data := FirewallControllerData{
-		Comment:         versionHeader(kb.Machineuuid),
+		Comment:         versionHeader(kb.MachineUUID),
 		DefaultRouteVrf: defaultRouteVrf,
 	}
 

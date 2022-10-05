@@ -70,7 +70,7 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 			CommonFRRData: CommonFRRData{
 				FRRVersion: FRRVersion,
 				Hostname:   kb.Hostname,
-				Comment:    versionHeader(kb.Machineuuid),
+				Comment:    versionHeader(kb.MachineUUID),
 				ASN:        *net.Asn,
 				RouterID:   routerID(net),
 			},
@@ -82,7 +82,7 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 			CommonFRRData: CommonFRRData{
 				FRRVersion: FRRVersion,
 				Hostname:   kb.Hostname,
-				Comment:    versionHeader(kb.Machineuuid),
+				Comment:    versionHeader(kb.MachineUUID),
 				ASN:        *net.Asn,
 				RouterID:   routerID(net),
 			},
@@ -99,7 +99,7 @@ func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) n
 // routerID will calculate the bgp router-id which must only be specified in the ipv6 range.
 // returns 0.0.0.0 for errornous ip addresses and 169.254.255.255 for ipv6
 // TODO prepare machine allocations with ipv6 primary address and tests
-func routerID(net models.V1MachineNetwork) string {
+func routerID(net *models.V1MachineNetwork) string {
 	if len(net.Ips) < 1 {
 		return "0.0.0.0"
 	}

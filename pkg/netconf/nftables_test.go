@@ -53,10 +53,10 @@ func TestCompileNftRules(t *testing.T) {
 			expected, err := os.ReadFile(tt.expected)
 			assert.NoError(err)
 
-			kb := NewKnowledgeBase(tt.input)
+			kb, err := NewKnowledgeBase(tt.input)
 			assert.NoError(err)
 
-			a := NewNftablesConfigApplier(kb, nil, tt.enableDNSProxy)
+			a := NewNftablesConfigApplier(*kb, nil, tt.enableDNSProxy)
 			b := bytes.Buffer{}
 
 			tpl := mustParseTpl(TplNftables)

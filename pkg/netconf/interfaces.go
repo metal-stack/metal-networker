@@ -34,7 +34,7 @@ type IfacesApplier struct {
 // NewIfacesApplier constructs a new instance of this type.
 func NewIfacesApplier(kind BareMetalType, kb KnowledgeBase) IfacesApplier {
 	d := IfacesData{
-		Comment: versionHeader(kb.Machineuuid),
+		Comment: versionHeader(kb.MachineUUID),
 	}
 
 	switch kind {
@@ -76,7 +76,7 @@ func (a *IfacesApplier) Render(w io.Writer, tpl template.Template) error {
 
 // Apply applies the interface configuration with systemd-networkd.
 func (a *IfacesApplier) Apply() {
-	uuid := a.kb.Machineuuid
+	uuid := a.kb.MachineUUID
 	evpnIfaces := a.data.EVPNIfaces
 
 	// /etc/systemd/network/00 loopback
@@ -149,7 +149,7 @@ func getEVPNIfaces(kb KnowledgeBase) []EVPNIface {
 
 		vrf := int(*n.Vrf)
 		e := EVPNIface{}
-		e.Comment = versionHeader(kb.Machineuuid)
+		e.Comment = versionHeader(kb.MachineUUID)
 		e.SVI.Comment = fmt.Sprintf("# svi (networkid: %s)", *n.Networkid)
 		e.SVI.VLANID = VLANOffset + i
 		e.SVI.Addresses = addBitlen(n.Ips)

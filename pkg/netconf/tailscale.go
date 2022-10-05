@@ -27,7 +27,7 @@ func NewTailscaleServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier,
 	}
 
 	data := TailscaleData{
-		MachineID:       kb.Machineuuid,
+		MachineID:       kb.MachineUUID,
 		AuthKey:         *kb.VPN.AuthKey,
 		Address:         *kb.VPN.Address,
 		DefaultRouteVrf: defaultRouteVrf,

@@ -49,7 +49,7 @@ func (i *importRule) bySourceVrf() map[string]ImportSettings {
 	return r
 }
 
-func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *importRule {
+func importRulesForNetwork(kb KnowledgeBase, network *models.V1MachineNetwork) *importRule {
 	vrfName := vrfNameOf(network)
 
 	if network.Networktype == nil || *network.Networktype == mn.Underlay {
@@ -82,7 +82,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 			i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 				Prefix:    netip.PrefixFrom(ip, bl),
 				Policy:    Deny,
-				SourceVRF: vrfNameOf(*defaultNet),
+				SourceVRF: vrfNameOf(defaultNet),
 			})
 		}
 
@@ -144,7 +144,7 @@ func importRulesForNetwork(kb KnowledgeBase, network models.V1MachineNetwork) *i
 		i.ImportVRFs = []string{vrfNameOf(privatePrimaryNet)}
 		i.ImportPrefixes = prefixesOfNetwork(network, vrfNameOf(privatePrimaryNet))
 
-		nets := []models.V1MachineNetwork{privatePrimaryNet}
+		nets := []*models.V1MachineNetwork{privatePrimaryNet}
 
 		if containsDefaultRoute(network.Destinationprefixes) {
 			for _, r := range privateSecondarySharedNets {
@@ -236,7 +236,7 @@ func stringSliceToIPPrefix(s []string, sourceVrf string) []importPrefix {
 	return result
 }
 
-func getDestinationPrefixes(networks []models.V1MachineNetwork) []importPrefix {
+func getDestinationPrefixes(networks []*models.V1MachineNetwork) []importPrefix {
 	var result []importPrefix
 	for _, network := range networks {
 		result = append(result, stringSliceToIPPrefix(network.Destinationprefixes, vrfNameOf(network))...)
@@ -244,7 +244,7 @@ func getDestinationPrefixes(networks []models.V1MachineNetwork) []importPrefix {
 	return result
 }
 
-func prefixesOfNetworks(networks []models.V1MachineNetwork) []importPrefix {
+func prefixesOfNetworks(networks []*models.V1MachineNetwork) []importPrefix {
 	var result []importPrefix
 	for _, network := range networks {
 		result = append(result, prefixesOfNetwork(network, vrfNameOf(network))...)
@@ -252,15 +252,15 @@ func prefixesOfNetworks(networks []models.V1MachineNetwork) []importPrefix {
 	return result
 }
 
-func prefixesOfNetwork(network models.V1MachineNetwork, sourceVrf string) []importPrefix {
+func prefixesOfNetwork(network *models.V1MachineNetwork, sourceVrf string) []importPrefix {
 	return stringSliceToIPPrefix(network.Prefixes, sourceVrf)
 }
 
-func vrfNameOf(n models.V1MachineNetwork) string {
+func vrfNameOf(n *models.V1MachineNetwork) string {
 	return fmt.Sprintf("vrf%d", *n.Vrf)
 }
 
-func vrfNamesOf(networks []models.V1MachineNetwork) []string {
+func vrfNamesOf(networks []*models.V1MachineNetwork) []string {
 	var result []string
 	for _, n := range networks {
 		result = append(result, vrfNameOf(n))

@@ -1,6 +1,7 @@
 package netconf
 
 import (
+	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
@@ -46,7 +47,7 @@ func NewSystemdNetworkdApplier(tmpFile string, data interface{}) net.Applier {
 }
 
 // NewSystemdLinkApplier creates a new Applier to configure systemd.link.
-func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic NIC,
+func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic *models.V1MachineNic,
 	tmpFile string, evpnIfaces []EVPNIface) net.Applier {
 	var mtu int
 
@@ -65,7 +66,7 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 			Index:   nicIndex,
 		},
 		MTU:        mtu,
-		MAC:        nic.Mac,
+		MAC:        *nic.Mac,
 		EVPNIfaces: evpnIfaces,
 	}
 	validator := SystemdValidator{tmpFile}

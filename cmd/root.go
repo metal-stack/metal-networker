@@ -86,14 +86,16 @@ func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
 		return err
 	}
 
-	kb := netconf.NewKnowledgeBase(input)
-
+	kb, err := netconf.NewKnowledgeBase(input)
+	if err != nil {
+		return err
+	}
 	err = kb.Validate(kind)
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
 
-	netconf.NewConfigurator(kind, kb).Configure()
+	netconf.NewConfigurator(kind, *kb).Configure()
 	log.Info("completed. Exiting..")
 
 	return nil

@@ -5,17 +5,17 @@ import (
 	"testing"
 
 	"github.com/metal-stack/metal-go/api/models"
+	"github.com/metal-stack/metal-hammer/pkg/api"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/stretchr/testify/assert"
 )
 
 func mustNewKnowledgeBase(t *testing.T) KnowledgeBase {
-	assert := assert.New(t)
+	d, err := NewKnowledgeBase("testdata/firewall.yaml")
+	assert.NoError(t, err)
+	assert.NotNil(t, d)
 
-	d := NewKnowledgeBase("testdata/firewall.yaml")
-	assert.NotNil(d)
-
-	return d
+	return *d
 }
 
 func TestNewKnowledgeBase(t *testing.T) {
@@ -99,14 +99,23 @@ var (
 func stubKnowledgeBase() KnowledgeBase {
 	privateNetID := "private"
 	underlayNetID := "underlay"
+	mac := "00:00:00:00:00:00"
 	privatePrimaryUnshared := mn.PrivatePrimaryUnshared
 	underlay := mn.Underlay
 	external := mn.External
-	return KnowledgeBase{Networks: []models.V1MachineNetwork{
-		{Private: &boolTrue, Networktype: &privatePrimaryUnshared, Ips: []string{"10.0.0.1"}, Asn: &asn1, Vrf: &vrf1, Networkid: &privateNetID},
-		{Underlay: &boolTrue, Networktype: &underlay, Ips: []string{"10.0.0.1"}, Asn: &asn1, Vrf: &vrf0, Networkid: &underlayNetID},
-		{Private: &boolFalse, Networktype: &external, Underlay: &boolFalse, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: &asn1, Vrf: &vrf1, Networkid: &underlayNetID},
-	}, Nics: []NIC{{Mac: "00:00:00:00:00:00"}}}
+	return KnowledgeBase{
+		InstallerConfig: api.InstallerConfig{
+			Networks: []*models.V1MachineNetwork{
+				{Private: &boolTrue, Networktype: &privatePrimaryUnshared, Ips: []string{"10.0.0.1"}, Asn: &asn1, Vrf: &vrf1, Networkid: &privateNetID},
+				{Underlay: &boolTrue, Networktype: &underlay, Ips: []string{"10.0.0.1"}, Asn: &asn1, Vrf: &vrf0, Networkid: &underlayNetID},
+				{Private: &boolFalse, Networktype: &external, Underlay: &boolFalse, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: &asn1, Vrf: &vrf1, Networkid: &underlayNetID},
+			},
+			Nics: []*models.V1MachineNic{
+				{
+					Mac: &mac},
+			},
+		},
+	}
 }
 
 func TestKnowledgeBase_Validate(t *testing.T) {
@@ -214,21 +223,23 @@ func setupIllegalNat(kb KnowledgeBase) KnowledgeBase {
 }
 
 func unlegalizeMACs(kb KnowledgeBase) KnowledgeBase {
+	mac := "1:2.3"
 	for i := 0; i < len(kb.Nics); i++ {
-		kb.Nics[i].Mac = "1:2.3"
+		kb.Nics[i].Mac = &mac
 	}
 	return kb
 }
 
 func stripMACs(kb KnowledgeBase) KnowledgeBase {
+	mac := ""
 	for i := 0; i < len(kb.Nics); i++ {
-		kb.Nics[i].Mac = ""
+		kb.Nics[i].Mac = &mac
 	}
 	return kb
 }
 
 func stripNICs(kb KnowledgeBase) KnowledgeBase {
-	kb.Nics = []NIC{}
+	kb.Nics = []*models.V1MachineNic{}
 	return kb
 }
 
@@ -258,7 +269,7 @@ func stripIPs(kb KnowledgeBase) KnowledgeBase {
 }
 
 func stripNetworks(kb KnowledgeBase) KnowledgeBase {
-	kb.Networks = []models.V1MachineNetwork{}
+	kb.Networks = []*models.V1MachineNetwork{}
 	return kb
 }
 

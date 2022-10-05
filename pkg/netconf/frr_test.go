@@ -69,12 +69,13 @@ func TestFrrConfigApplier(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
-			kb := NewKnowledgeBase(test.input)
-			a := NewFrrConfigApplier(test.configuratorType, kb, "")
+			kb, err := NewKnowledgeBase(test.input)
+			assert.NoError(t, err)
+			a := NewFrrConfigApplier(test.configuratorType, *kb, "")
 			b := bytes.Buffer{}
 
 			tpl := mustParseTpl(test.tpl)
-			err := a.Render(&b, *tpl)
+			err = a.Render(&b, *tpl)
 			assert.NoError(t, err)
 
 			// eases adjustment of test fixtures

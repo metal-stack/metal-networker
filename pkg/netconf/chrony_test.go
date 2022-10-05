@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/metal-stack/metal-go/api/models"
+	"github.com/metal-stack/metal-hammer/pkg/api"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/stretchr/testify/assert"
 )
@@ -13,18 +14,22 @@ func TestChronyServiceEnabler_Enable(t *testing.T) {
 
 	vrf := int64(104009)
 	external := mn.External
-	network := models.V1MachineNetwork{Networktype: &external, Destinationprefixes: []string{IPv4ZeroCIDR}, Vrf: &vrf}
+	network := &models.V1MachineNetwork{Networktype: &external, Destinationprefixes: []string{IPv4ZeroCIDR}, Vrf: &vrf}
 	tests := []struct {
 		kb              KnowledgeBase
 		vrf             string
 		isErrorExpected bool
 	}{
-		{kb: KnowledgeBase{Networks: []models.V1MachineNetwork{network}},
+		{
+			kb:              KnowledgeBase{InstallerConfig: api.InstallerConfig{Networks: []*models.V1MachineNetwork{network}}},
 			vrf:             "vrf104009",
-			isErrorExpected: false},
-		{kb: KnowledgeBase{Networks: []models.V1MachineNetwork{}},
+			isErrorExpected: false,
+		},
+		{
+			kb:              KnowledgeBase{InstallerConfig: api.InstallerConfig{Networks: []*models.V1MachineNetwork{}}},
 			vrf:             "",
-			isErrorExpected: true},
+			isErrorExpected: true,
+		},
 	}
 
 	for _, t := range tests {

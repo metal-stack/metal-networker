@@ -25,7 +25,7 @@ func NewDroptailerServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier
 		return nil, err
 	}
 
-	data := DroptailerData{Comment: versionHeader(kb.Machineuuid), TenantVrf: tenantVrf}
+	data := DroptailerData{Comment: versionHeader(kb.MachineUUID), TenantVrf: tenantVrf}
 
 	return net.NewNetworkApplier(data, v, nil), nil
 }

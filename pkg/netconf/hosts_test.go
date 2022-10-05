@@ -14,9 +14,9 @@ func TestNewHostsApplier(t *testing.T) {
 	expected, err := os.ReadFile("testdata/hosts")
 	assert.NoError(err)
 
-	kb := NewKnowledgeBase("testdata/firewall.yaml")
+	kb, err := NewKnowledgeBase("testdata/firewall.yaml")
 	assert.NoError(err)
-	a := NewHostsApplier(kb, "")
+	a := NewHostsApplier(*kb, "")
 	b := bytes.Buffer{}
 
 	tpl := mustParseTpl(TplHosts)

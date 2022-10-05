@@ -60,7 +60,7 @@ type (
 // NewNftablesConfigApplier constructs a new instance of this type.
 func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator, enableDNSProxy bool) net.Applier {
 	data := NftablesData{
-		Comment: versionHeader(kb.Machineuuid),
+		Comment: versionHeader(kb.MachineUUID),
 		SNAT:    getSNAT(kb, enableDNSProxy),
 	}
 
@@ -79,7 +79,7 @@ func (*NftablesReloader) Reload() error {
 	return exec.NewVerboseCmd(systemctlBin, "reload", nftablesService).Run()
 }
 
-func isDMZNetwork(n models.V1MachineNetwork) bool {
+func isDMZNetwork(n *models.V1MachineNetwork) bool {
 	return *n.Networktype == mn.PrivateSecondaryShared && containsDefaultRoute(n.Destinationprefixes)
 }
 

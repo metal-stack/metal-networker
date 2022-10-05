@@ -6,6 +6,8 @@ import (
 	"net"
 	"os"
 
+	"github.com/metal-stack/metal-hammer/pkg/api"
+
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/v"
@@ -22,33 +24,12 @@ type (
 	// KnowledgeBase was generated with: https://mengzhuo.github.io/yaml-to-go/.
 	// It represents the input yaml that is needed to render network configuration files.
 	KnowledgeBase struct {
-		Hostname     string                    `yaml:"hostname"`
-		Ipaddress    string                    `yaml:"ipaddress"`
-		Asn          string                    `yaml:"asn"`
-		Networks     []models.V1MachineNetwork `yaml:"networks"`
-		Machineuuid  string                    `yaml:"machineuuid"`
-		Sshpublickey string                    `yaml:"sshpublickey"`
-		Password     string                    `yaml:"password"`
-		Devmode      bool                      `yaml:"devmode"`
-		Console      string                    `yaml:"console"`
-		Nics         []NIC                     `yaml:"nics"`
-		VPN          *models.V1MachineVPN      `yaml:"vpn"`
-	}
-
-	// NIC is a representation of network interfaces attributes.
-	NIC struct {
-		Mac       string `yaml:"mac"`
-		Name      string `yaml:"name"`
-		Neighbors []struct {
-			Mac       string        `yaml:"mac"`
-			Name      interface{}   `yaml:"name"`
-			Neighbors []interface{} `yaml:"neighbors"`
-		} `yaml:"neighbors"`
+		api.InstallerConfig
 	}
 )
 
 // NewKnowledgeBase creates a new instance of this type.
-func NewKnowledgeBase(path string) KnowledgeBase {
+func NewKnowledgeBase(path string) (*KnowledgeBase, error) {
 	log.Infof("loading: %s", path)
 
 	f, err := os.ReadFile(path)
@@ -56,14 +37,14 @@ func NewKnowledgeBase(path string) KnowledgeBase {
 		log.Panic(err)
 	}
 
-	kb := &KnowledgeBase{}
-	err = yaml.Unmarshal(f, &kb)
+	installer := &api.InstallerConfig{}
+	err = yaml.Unmarshal(f, &installer)
 
 	if err != nil {
-		log.Panic(err)
+		return nil, err
 	}
 
-	return *kb
+	return &KnowledgeBase{InstallerConfig: *installer}, nil
 }
 
 // Validate validates the containing information depending on the demands of the bare metal type.
@@ -166,8 +147,8 @@ func (kb KnowledgeBase) CollectIPs(types ...string) []string {
 }
 
 // GetNetworks returns all networks present.
-func (kb KnowledgeBase) GetNetworks(types ...string) []models.V1MachineNetwork {
-	var result []models.V1MachineNetwork
+func (kb KnowledgeBase) GetNetworks(types ...string) []*models.V1MachineNetwork {
+	var result []*models.V1MachineNetwork
 
 	for _, t := range types {
 		for _, n := range kb.Networks {
@@ -193,11 +174,11 @@ func (kb KnowledgeBase) isAnyNAT() bool {
 	return false
 }
 
-func (kb KnowledgeBase) getPrivatePrimaryNetwork() models.V1MachineNetwork {
+func (kb KnowledgeBase) getPrivatePrimaryNetwork() *models.V1MachineNetwork {
 	return kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared)[0]
 }
 
-func (kb KnowledgeBase) getUnderlayNetwork() models.V1MachineNetwork {
+func (kb KnowledgeBase) getUnderlayNetwork() *models.V1MachineNetwork {
 	// Safe access since validation ensures there is exactly one.
 	return kb.GetNetworks(mn.Underlay)[0]
 }
@@ -206,14 +187,14 @@ func (kb KnowledgeBase) GetDefaultRouteNetwork() *models.V1MachineNetwork {
 	externalNets := kb.GetNetworks(mn.External)
 	for _, network := range externalNets {
 		if containsDefaultRoute(network.Destinationprefixes) {
-			return &network
+			return network
 		}
 	}
 
 	privateSecondarySharedNets := kb.GetNetworks(mn.PrivateSecondaryShared)
 	for _, network := range privateSecondarySharedNets {
 		if containsDefaultRoute(network.Destinationprefixes) {
-			return &network
+			return network
 		}
 	}
 
@@ -222,7 +203,7 @@ func (kb KnowledgeBase) GetDefaultRouteNetwork() *models.V1MachineNetwork {
 
 func (kb KnowledgeBase) getDefaultRouteVRFName() (string, error) {
 	if network := kb.GetDefaultRouteNetwork(); network != nil {
-		return vrfNameOf(*network), nil
+		return vrfNameOf(network), nil
 	}
 
 	return "", fmt.Errorf("there is no network providing a default (0.0.0.0/0) route")
@@ -230,11 +211,11 @@ func (kb KnowledgeBase) getDefaultRouteVRFName() (string, error) {
 
 func (kb KnowledgeBase) nicsContainValidMACs() bool {
 	for _, nic := range kb.Nics {
-		if nic.Mac == "" {
+		if nic.Mac == nil || *nic.Mac == "" {
 			return false
 		}
 
-		if _, err := net.ParseMAC(nic.Mac); err != nil {
+		if _, err := net.ParseMAC(*nic.Mac); err != nil {
 			log.Errorf("invalid mac: %s", nic.Mac)
 			return false
 		}

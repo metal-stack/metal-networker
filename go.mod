@@ -6,6 +6,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.4.0
 	github.com/google/go-cmp v0.5.9
 	github.com/metal-stack/metal-go v0.21.1
+	github.com/metal-stack/metal-hammer v0.10.5-0.20221003074822-e7a701137304
 	github.com/metal-stack/metal-lib v0.11.2
 	github.com/metal-stack/v v1.0.3
 	github.com/spf13/cobra v1.5.0

@@ -12,17 +12,18 @@ import (
 func TestServices(t *testing.T) {
 	assert := assert.New(t)
 
-	kb := NewKnowledgeBase("testdata/firewall.yaml")
+	kb, err := NewKnowledgeBase("testdata/firewall.yaml")
+	assert.NoError(err)
 	v := ServiceValidator{}
-	dsApplier, err := NewDroptailerServiceApplier(kb, v)
+	dsApplier, err := NewDroptailerServiceApplier(*kb, v)
 	assert.NoError(err)
-	fcApplier, err := NewFirewallControllerServiceApplier(kb, v)
+	fcApplier, err := NewFirewallControllerServiceApplier(*kb, v)
 	assert.NoError(err)
-	nodeExporterApplier, err := NewNodeExporterServiceApplier(kb, v)
+	nodeExporterApplier, err := NewNodeExporterServiceApplier(*kb, v)
 	assert.NoError(err)
-	suApplier, err := NewSuricataUpdateServiceApplier(kb, v)
+	suApplier, err := NewSuricataUpdateServiceApplier(*kb, v)
 	assert.NoError(err)
-	nftablesExporterApplier, err := NewNftablesExporterServiceApplier(kb, v)
+	nftablesExporterApplier, err := NewNftablesExporterServiceApplier(*kb, v)
 	assert.NoError(err)
 
 	tests := []struct {

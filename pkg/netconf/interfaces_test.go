@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIfacesApplier(t *testing.T) {
@@ -40,8 +41,9 @@ func TestIfacesApplier(t *testing.T) {
 				os.RemoveAll(systemdNetworkPath)
 				systemdNetworkPath = old
 			}()
-			kb := NewKnowledgeBase(tc.input)
-			a := NewIfacesApplier(tc.configuratorType, kb)
+			kb, err := NewKnowledgeBase(tc.input)
+			assert.NoError(t, err)
+			a := NewIfacesApplier(tc.configuratorType, *kb)
 			a.Apply()
 			if equal, s := equalDirs(systemdNetworkPath, tc.expectedOutput); !equal {
 				t.Error(s)

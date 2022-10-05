@@ -13,10 +13,10 @@ func TestNameHostname(t *testing.T) {
 	expected, err := os.ReadFile("testdata/hostname")
 	assert.NoError(err)
 
-	kb := NewKnowledgeBase("testdata/firewall.yaml")
+	kb, err := NewKnowledgeBase("testdata/firewall.yaml")
 	assert.NoError(err)
 
-	a := NewHostnameApplier(kb, "")
+	a := NewHostnameApplier(*kb, "")
 	b := bytes.Buffer{}
 
 	tpl := mustParseTpl(TplHostname)
