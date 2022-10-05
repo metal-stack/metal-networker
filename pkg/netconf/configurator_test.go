@@ -13,11 +13,11 @@ func TestNewConfigurator(t *testing.T) {
 	}{
 		{
 			kind:     Firewall,
-			expected: FirewallConfigurator{},
+			expected: firewallConfigurator{},
 		},
 		{
 			kind:     Machine,
-			expected: MachineConfigurator{},
+			expected: machineConfigurator{},
 		},
 	}
 

@@ -61,8 +61,8 @@ type (
 	AddressFamily string
 )
 
-// NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
-func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string) net.Applier {
+// newFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
+func newFrrConfigApplier(kind BareMetalType, c config, tmpFile string) net.Applier {
 	var data any
 
 	switch kind {

@@ -59,7 +59,7 @@ func TestCompileNftRules(t *testing.T) {
 			kb, err := New(log, tt.input)
 			assert.NoError(err)
 
-			a := NewNftablesConfigApplier(*kb, nil, tt.enableDNSProxy)
+			a := newNftablesConfigApplier(*kb, nil, tt.enableDNSProxy)
 			b := bytes.Buffer{}
 
 			tpl := mustParseTpl(TplNftables)

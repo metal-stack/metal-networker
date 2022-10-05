@@ -59,8 +59,8 @@ type (
 	NftablesReloader struct{}
 )
 
-// NewNftablesConfigApplier constructs a new instance of this type.
-func NewNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy bool) net.Applier {
+// newNftablesConfigApplier constructs a new instance of this type.
+func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy bool) net.Applier {
 	data := NftablesData{
 		Comment: versionHeader(c.MachineUUID),
 		SNAT:    getSNAT(c, enableDNSProxy),

@@ -12,16 +12,16 @@ const tplFirewallController = "firewall_controller.service.tpl"
 // SystemdUnitFirewallController is the name of the systemd unit for the firewall policy controller,
 const systemdUnitFirewallController = "firewall-controller.service"
 
-// FirewallControllerData contains the data to render the firewall-controller service template.
-type FirewallControllerData struct {
+// firewallControllerData contains the data to render the firewall-controller service template.
+type firewallControllerData struct {
 	Comment         string
 	DefaultRouteVrf string
 	ServiceIP       string
 	PrivateVrfID    int64
 }
 
-// NewFirewallControllerServiceApplier constructs a new instance of this type.
-func NewFirewallControllerServiceApplier(kb config, v net.Validator) (net.Applier, error) {
+// newFirewallControllerServiceApplier constructs a new instance of this type.
+func newFirewallControllerServiceApplier(kb config, v net.Validator) (net.Applier, error) {
 	defaultRouteVrf, err := kb.getDefaultRouteVRFName()
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func NewFirewallControllerServiceApplier(kb config, v net.Validator) (net.Applie
 	if len(kb.getPrivatePrimaryNetwork().Ips) == 0 {
 		return nil, fmt.Errorf("no private IP found useable for the firewall controller")
 	}
-	data := FirewallControllerData{
+	data := firewallControllerData{
 		Comment:         versionHeader(kb.MachineUUID),
 		DefaultRouteVrf: defaultRouteVrf,
 	}
@@ -38,13 +38,13 @@ func NewFirewallControllerServiceApplier(kb config, v net.Validator) (net.Applie
 	return net.NewNetworkApplier(data, v, nil), nil
 }
 
-// ServiceValidator holds information for systemd service validation.
-type ServiceValidator struct {
+// serviceValidator holds information for systemd service validation.
+type serviceValidator struct {
 	path string
 }
 
 // Validate validates the service file.
-func (v ServiceValidator) Validate() error {
+func (v serviceValidator) Validate() error {
 	// Currently not implemented as systemd-analyze fails in the metal-hammer.
 	// Error: Cannot determine cgroup we are running in: No medium found
 	return nil

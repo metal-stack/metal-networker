@@ -73,7 +73,7 @@ func TestFrrConfigApplier(t *testing.T) {
 			log := zaptest.NewLogger(t).Sugar()
 			kb, err := New(log, test.input)
 			assert.NoError(t, err)
-			a := NewFrrConfigApplier(test.configuratorType, *kb, "")
+			a := newFrrConfigApplier(test.configuratorType, *kb, "")
 			b := bytes.Buffer{}
 
 			tpl := mustParseTpl(test.tpl)

@@ -7,23 +7,23 @@ import (
 	"go.uber.org/zap"
 )
 
-// ChronyServiceEnabler can enable chrony systemd service for the given VRF.
-type ChronyServiceEnabler struct {
+// chronyServiceEnabler can enable chrony systemd service for the given VRF.
+type chronyServiceEnabler struct {
 	vrf string
 	log *zap.SugaredLogger
 }
 
-// NewChronyServiceEnabler constructs a new instance of this type.
-func NewChronyServiceEnabler(kb config) (ChronyServiceEnabler, error) {
+// newChronyServiceEnabler constructs a new instance of this type.
+func newChronyServiceEnabler(kb config) (chronyServiceEnabler, error) {
 	vrf, err := kb.getDefaultRouteVRFName()
-	return ChronyServiceEnabler{
+	return chronyServiceEnabler{
 		vrf: vrf,
 		log: kb.log,
 	}, err
 }
 
 // Enable enables chrony systemd service for the given VRF to be started after boot.
-func (c ChronyServiceEnabler) Enable() error {
+func (c chronyServiceEnabler) Enable() error {
 	cmd := fmt.Sprintf("systemctl enable chrony@%s", c.vrf)
 	c.log.Infof("running '%s' to enable chrony.'", cmd)
 

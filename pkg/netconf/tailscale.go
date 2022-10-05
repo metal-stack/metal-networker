@@ -19,8 +19,8 @@ type TailscaleData struct {
 	DefaultRouteVrf string
 }
 
-// NewTailscaleServiceApplier constructs a new instance of this type.
-func NewTailscaleServiceApplier(kb config, v net.Validator) (net.Applier, error) {
+// newTailscaleServiceApplier constructs a new instance of this type.
+func newTailscaleServiceApplier(kb config, v net.Validator) (net.Applier, error) {
 	defaultRouteVrf, err := kb.getDefaultRouteVRFName()
 	if err != nil {
 		return nil, err

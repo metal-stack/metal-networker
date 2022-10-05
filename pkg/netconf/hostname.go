@@ -4,8 +4,8 @@ import (
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
-// TplHostname defines the name of the template to render /etc/hostname.
-const TplHostname = "hostname.tpl"
+// tplHostname defines the name of the template to render /etc/hostname.
+const tplHostname = "hostname.tpl"
 
 type (
 	// HostnameData contains attributes to render hostname file.
@@ -19,8 +19,8 @@ type (
 	}
 )
 
-// NewHostnameApplier creates a new Applier to render hostname.
-func NewHostnameApplier(kb config, tmpFile string) net.Applier {
+// newHostnameApplier creates a new Applier to render hostname.
+func newHostnameApplier(kb config, tmpFile string) net.Applier {
 	data := HostnameData{Comment: versionHeader(kb.MachineUUID), Hostname: kb.Hostname}
 	validator := HostnameValidator{tmpFile}
 

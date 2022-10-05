@@ -13,7 +13,6 @@ func mustReadTpl(tplName string) string {
 	contents, err := templates.ReadFile(path.Join("tpl", tplName))
 	if err != nil {
 		panic(err)
-		return ""
 	}
 	return string(contents)
 }

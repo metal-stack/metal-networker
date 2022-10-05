@@ -35,21 +35,21 @@ type (
 		EVPNIfaces []EVPNIface
 	}
 
-	// SystemdValidator validates systemd.network and system.link files.
-	SystemdValidator struct {
+	// systemdValidator validates systemd.network and system.link files.
+	systemdValidator struct {
 		path string
 	}
 )
 
-// NewSystemdNetworkdApplier creates a new Applier to configure systemd.network.
-func NewSystemdNetworkdApplier(tmpFile string, data any) net.Applier {
-	validator := SystemdValidator{tmpFile}
+// newSystemdNetworkdApplier creates a new Applier to configure systemd.network.
+func newSystemdNetworkdApplier(tmpFile string, data any) net.Applier {
+	validator := systemdValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)
 }
 
-// NewSystemdLinkApplier creates a new Applier to configure systemd.link.
-func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic *models.V1MachineNic,
+// newSystemdLinkApplier creates a new Applier to configure systemd.link.
+func newSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic *models.V1MachineNic,
 	tmpFile string, evpnIfaces []EVPNIface) (net.Applier, error) {
 	var mtu int
 
@@ -71,12 +71,12 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 		MAC:        *nic.Mac,
 		EVPNIfaces: evpnIfaces,
 	}
-	validator := SystemdValidator{tmpFile}
+	validator := systemdValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil), nil
 }
 
 // Validate validates systemd.network and systemd.link files.
-func (v SystemdValidator) Validate() error {
+func (v systemdValidator) Validate() error {
 	return nil
 }

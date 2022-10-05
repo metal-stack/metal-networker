@@ -12,20 +12,20 @@ const tplDroptailer = "droptailer.service.tpl"
 // SystemdUnitDroptailer is the name of the systemd unit for the droptailer.
 const systemdUnitDroptailer = "droptailer.service"
 
-// DroptailerData contains the data to render the droptailer service template.
-type DroptailerData struct {
+// droptailerData contains the data to render the droptailer service template.
+type droptailerData struct {
 	Comment   string
 	TenantVrf string
 }
 
-// NewDroptailerServiceApplier constructs a new instance of this type.
-func NewDroptailerServiceApplier(kb config, v net.Validator) (net.Applier, error) {
+// newDroptailerServiceApplier constructs a new instance of this type.
+func newDroptailerServiceApplier(kb config, v net.Validator) (net.Applier, error) {
 	tenantVrf, err := getTenantVRFName(kb)
 	if err != nil {
 		return nil, err
 	}
 
-	data := DroptailerData{Comment: versionHeader(kb.MachineUUID), TenantVrf: tenantVrf}
+	data := droptailerData{Comment: versionHeader(kb.MachineUUID), TenantVrf: tenantVrf}
 
 	return net.NewNetworkApplier(data, v, nil), nil
 }

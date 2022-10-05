@@ -33,7 +33,7 @@ func TestChronyServiceEnabler_Enable(t *testing.T) {
 	}
 
 	for _, t := range tests {
-		e, err := NewChronyServiceEnabler(t.kb)
+		e, err := newChronyServiceEnabler(t.kb)
 		if t.isErrorExpected {
 			assert.Error(err)
 		} else {

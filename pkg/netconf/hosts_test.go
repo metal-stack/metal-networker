@@ -18,10 +18,10 @@ func TestNewHostsApplier(t *testing.T) {
 	log := zaptest.NewLogger(t).Sugar()
 	kb, err := New(log, "testdata/firewall.yaml")
 	assert.NoError(err)
-	a := NewHostsApplier(*kb, "")
+	a := newHostsApplier(*kb, "")
 	b := bytes.Buffer{}
 
-	tpl := mustParseTpl(TplHosts)
+	tpl := mustParseTpl(tplHosts)
 	err = a.Render(&b, *tpl)
 	assert.NoError(err)
 	assert.Equal(string(expected), b.String())

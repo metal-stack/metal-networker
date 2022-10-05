@@ -15,13 +15,13 @@ type SuricataDefaultsData struct {
 	Interface string
 }
 
-// SuricataDefaultsValidator can validate defaults for suricata.
-type SuricataDefaultsValidator struct {
+// suricataDefaultsValidator can validate defaults for suricata.
+type suricataDefaultsValidator struct {
 	path string
 }
 
-// NewSuricataDefaultsApplier constructs a new instance of this type.
-func NewSuricataDefaultsApplier(kb config, tmpFile string) (net.Applier, error) {
+// newSuricataDefaultsApplier constructs a new instance of this type.
+func newSuricataDefaultsApplier(kb config, tmpFile string) (net.Applier, error) {
 	defaultRouteVrf, err := kb.getDefaultRouteVRFName()
 	if err != nil {
 		return nil, err
@@ -29,12 +29,12 @@ func NewSuricataDefaultsApplier(kb config, tmpFile string) (net.Applier, error) 
 
 	i := strings.Replace(defaultRouteVrf, "vrf", "vlan", 1)
 	data := SuricataDefaultsData{Comment: versionHeader(kb.MachineUUID), Interface: i}
-	validator := SuricataDefaultsValidator{path: tmpFile}
+	validator := suricataDefaultsValidator{path: tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil), nil
 }
 
 // Validate validates suricata defaults.
-func (v SuricataDefaultsValidator) Validate() error {
+func (v suricataDefaultsValidator) Validate() error {
 	return nil
 }

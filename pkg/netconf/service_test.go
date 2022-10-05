@@ -16,14 +16,14 @@ func TestServices(t *testing.T) {
 
 	kb, err := New(log, "testdata/firewall.yaml")
 	assert.NoError(err)
-	v := ServiceValidator{}
-	dsApplier, err := NewDroptailerServiceApplier(*kb, v)
+	v := serviceValidator{}
+	dsApplier, err := newDroptailerServiceApplier(*kb, v)
 	assert.NoError(err)
-	fcApplier, err := NewFirewallControllerServiceApplier(*kb, v)
+	fcApplier, err := newFirewallControllerServiceApplier(*kb, v)
 	assert.NoError(err)
-	nodeExporterApplier, err := NewNodeExporterServiceApplier(*kb, v)
+	nodeExporterApplier, err := newNodeExporterServiceApplier(*kb, v)
 	assert.NoError(err)
-	suApplier, err := NewSuricataUpdateServiceApplier(*kb, v)
+	suApplier, err := newSuricataUpdateServiceApplier(*kb, v)
 	assert.NoError(err)
 	nftablesExporterApplier, err := NewNftablesExporterServiceApplier(*kb, v)
 	assert.NoError(err)

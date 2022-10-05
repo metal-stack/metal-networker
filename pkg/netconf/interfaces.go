@@ -20,15 +20,15 @@ type (
 	}
 )
 
-// IfacesApplier applies interfaces configuration.
-type IfacesApplier struct {
+// ifacesApplier applies interfaces configuration.
+type ifacesApplier struct {
 	kind BareMetalType
 	kb   config
 	data IfacesData
 }
 
-// NewIfacesApplier constructs a new instance of this type.
-func NewIfacesApplier(kind BareMetalType, c config) IfacesApplier {
+// newIfacesApplier constructs a new instance of this type.
+func newIfacesApplier(kind BareMetalType, c config) ifacesApplier {
 	d := IfacesData{
 		Comment: versionHeader(c.MachineUUID),
 	}
@@ -49,7 +49,7 @@ func NewIfacesApplier(kind BareMetalType, c config) IfacesApplier {
 		c.log.Fatalf("unknown configuratorType of configurator: %v", kind)
 	}
 
-	return IfacesApplier{kind: kind, kb: c, data: d}
+	return ifacesApplier{kind: kind, kb: c, data: d}
 }
 
 func addBitlen(ips []string) []string {
@@ -66,18 +66,18 @@ func addBitlen(ips []string) []string {
 }
 
 // Render renders the network interfaces to the given writer using the given template.
-func (a *IfacesApplier) Render(w io.Writer, tpl template.Template) error {
+func (a *ifacesApplier) Render(w io.Writer, tpl template.Template) error {
 	return tpl.Execute(w, a.data)
 }
 
 // Apply applies the interface configuration with systemd-networkd.
-func (a *IfacesApplier) Apply() {
+func (a *ifacesApplier) Apply() {
 	uuid := a.kb.MachineUUID
 	evpnIfaces := a.data.EVPNIfaces
 
 	// /etc/systemd/network/00 loopback
 	src := mustTmpFile("lo_network_")
-	applier := NewSystemdNetworkdApplier(src, a.data)
+	applier := newSystemdNetworkdApplier(src, a.data)
 	dest := fmt.Sprintf("%s/00-lo.network", systemdNetworkPath)
 	applyAndCleanUp(a.kb.log, applier, tplSystemdNetworkLo, src, dest, FileModeSystemd)
 
@@ -86,7 +86,7 @@ func (a *IfacesApplier) Apply() {
 	for i, nic := range a.kb.Nics {
 		prefix := fmt.Sprintf("lan%d_link_", i)
 		src := mustTmpFile(prefix)
-		applier, err := NewSystemdLinkApplier(a.kind, uuid, i, nic, src, evpnIfaces)
+		applier, err := newSystemdLinkApplier(a.kind, uuid, i, nic, src, evpnIfaces)
 		if err != nil {
 			a.kb.log.Fatalw("unable to create systemdlinkapplier", "error", err)
 		}
@@ -95,7 +95,7 @@ func (a *IfacesApplier) Apply() {
 
 		prefix = fmt.Sprintf("lan%d_network_", i)
 		src = mustTmpFile(prefix)
-		applier, err = NewSystemdLinkApplier(a.kind, uuid, i, nic, src, evpnIfaces)
+		applier, err = newSystemdLinkApplier(a.kind, uuid, i, nic, src, evpnIfaces)
 		if err != nil {
 			a.kb.log.Fatalw("unable to create systemdlinkapplier", "error", err)
 		}
@@ -122,13 +122,13 @@ func (a *IfacesApplier) Apply() {
 
 func applyNetdevAndNetwork(log *zap.SugaredLogger, si, di int, prefix, suffix string, data any) {
 	src := mustTmpFile(prefix + "_netdev_")
-	applier := NewSystemdNetworkdApplier(src, data)
+	applier := newSystemdNetworkdApplier(src, data)
 	dest := fmt.Sprintf("%s/%d-%s%s.netdev", systemdNetworkPath, di, prefix, suffix)
 	tpl := fmt.Sprintf("networkd/%d-%s.netdev.tpl", si, prefix)
 	applyAndCleanUp(log, applier, tpl, src, dest, FileModeSystemd)
 
 	src = mustTmpFile(prefix + "_network_")
-	applier = NewSystemdNetworkdApplier(src, data)
+	applier = newSystemdNetworkdApplier(src, data)
 	dest = fmt.Sprintf("%s/%d-%s%s.network", systemdNetworkPath, di, prefix, suffix)
 	tpl = fmt.Sprintf("networkd/%d-%s.network.tpl", si, prefix)
 	applyAndCleanUp(log, applier, tpl, src, dest, FileModeSystemd)

@@ -18,10 +18,10 @@ func TestNameHostname(t *testing.T) {
 	kb, err := New(log, "testdata/firewall.yaml")
 	assert.NoError(err)
 
-	a := NewHostnameApplier(*kb, "")
+	a := newHostnameApplier(*kb, "")
 	b := bytes.Buffer{}
 
-	tpl := mustParseTpl(TplHostname)
+	tpl := mustParseTpl(tplHostname)
 	err = a.Render(&b, *tpl)
 	assert.NoError(err)
 	assert.Equal(string(expected), b.String())

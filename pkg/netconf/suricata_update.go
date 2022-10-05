@@ -16,8 +16,8 @@ type SuricataUpdateData struct {
 	DefaultRouteVrf string
 }
 
-// NewSuricataUpdateServiceApplier constructs a new instance of this type.
-func NewSuricataUpdateServiceApplier(kb config, v net.Validator) (net.Applier, error) {
+// newSuricataUpdateServiceApplier constructs a new instance of this type.
+func newSuricataUpdateServiceApplier(kb config, v net.Validator) (net.Applier, error) {
 	defaultRouteVrf, err := kb.getDefaultRouteVRFName()
 	if err != nil {
 		return nil, err

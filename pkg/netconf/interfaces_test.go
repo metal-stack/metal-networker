@@ -45,7 +45,7 @@ func TestIfacesApplier(t *testing.T) {
 			}()
 			kb, err := New(log, tc.input)
 			assert.NoError(t, err)
-			a := NewIfacesApplier(tc.configuratorType, *kb)
+			a := newIfacesApplier(tc.configuratorType, *kb)
 			a.Apply()
 			if equal, s := equalDirs(systemdNetworkPath, tc.expectedOutput); !equal {
 				t.Error(s)
