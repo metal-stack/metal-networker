@@ -21,7 +21,7 @@ type SuricataDefaultsValidator struct {
 }
 
 // NewSuricataDefaultsApplier constructs a new instance of this type.
-func NewSuricataDefaultsApplier(kb KnowledgeBase, tmpFile string) (net.Applier, error) {
+func NewSuricataDefaultsApplier(kb config, tmpFile string) (net.Applier, error) {
 	defaultRouteVrf, err := kb.getDefaultRouteVRFName()
 	if err != nil {
 		return nil, err

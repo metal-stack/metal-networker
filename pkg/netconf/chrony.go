@@ -4,23 +4,28 @@ import (
 	"fmt"
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
+	"go.uber.org/zap"
 )
 
 // ChronyServiceEnabler can enable chrony systemd service for the given VRF.
 type ChronyServiceEnabler struct {
-	VRF string
+	vrf string
+	log *zap.SugaredLogger
 }
 
 // NewChronyServiceEnabler constructs a new instance of this type.
-func NewChronyServiceEnabler(kb KnowledgeBase) (ChronyServiceEnabler, error) {
+func NewChronyServiceEnabler(kb config) (ChronyServiceEnabler, error) {
 	vrf, err := kb.getDefaultRouteVRFName()
-	return ChronyServiceEnabler{VRF: vrf}, err
+	return ChronyServiceEnabler{
+		vrf: vrf,
+		log: kb.log,
+	}, err
 }
 
 // Enable enables chrony systemd service for the given VRF to be started after boot.
 func (c ChronyServiceEnabler) Enable() error {
-	cmd := fmt.Sprintf("systemctl enable chrony@%s", c.VRF)
-	log.Infof("running '%s' to enable chrony.'", cmd)
+	cmd := fmt.Sprintf("systemctl enable chrony@%s", c.vrf)
+	c.log.Infof("running '%s' to enable chrony.'", cmd)
 
 	return exec.NewVerboseCmd("bash", "-c", cmd).Run()
 }

@@ -9,7 +9,7 @@ import (
 func TestNewConfigurator(t *testing.T) {
 	tests := []struct {
 		kind     BareMetalType
-		expected interface{}
+		expected any
 	}{
 		{
 			kind:     Firewall,
@@ -22,7 +22,7 @@ func TestNewConfigurator(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		actual := NewConfigurator(test.kind, KnowledgeBase{})
+		actual := NewConfigurator(test.kind, config{})
 		assert.IsType(t, test.expected, actual)
 	}
 }

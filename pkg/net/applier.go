@@ -20,18 +20,17 @@ type Applier interface {
 
 // NetworkApplier holds the toolset for applying network configuration changes.
 type NetworkApplier struct {
-	Data      interface{}
+	Data      any
 	Validator Validator
 	Reloader  Reloader
 }
 
 // NewNetworkApplier creates a new NewNetworkApplier.
-func NewNetworkApplier(data interface{}, validator Validator, reloader Reloader) Applier {
+func NewNetworkApplier(data any, validator Validator, reloader Reloader) Applier {
 	return &NetworkApplier{Data: data, Validator: validator, Reloader: reloader}
 }
 
 // Apply applies the current configuration with the given template.
-// 
 func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error) {
 	f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {

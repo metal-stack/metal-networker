@@ -16,17 +16,17 @@ func TestChronyServiceEnabler_Enable(t *testing.T) {
 	external := mn.External
 	network := &models.V1MachineNetwork{Networktype: &external, Destinationprefixes: []string{IPv4ZeroCIDR}, Vrf: &vrf}
 	tests := []struct {
-		kb              KnowledgeBase
+		kb              config
 		vrf             string
 		isErrorExpected bool
 	}{
 		{
-			kb:              KnowledgeBase{InstallerConfig: api.InstallerConfig{Networks: []*models.V1MachineNetwork{network}}},
+			kb:              config{InstallerConfig: api.InstallerConfig{Networks: []*models.V1MachineNetwork{network}}},
 			vrf:             "vrf104009",
 			isErrorExpected: false,
 		},
 		{
-			kb:              KnowledgeBase{InstallerConfig: api.InstallerConfig{Networks: []*models.V1MachineNetwork{}}},
+			kb:              config{InstallerConfig: api.InstallerConfig{Networks: []*models.V1MachineNetwork{}}},
 			vrf:             "",
 			isErrorExpected: true,
 		},
@@ -39,6 +39,6 @@ func TestChronyServiceEnabler_Enable(t *testing.T) {
 		} else {
 			assert.NoError(err)
 		}
-		assert.Equal(t.vrf, e.VRF)
+		assert.Equal(t.vrf, e.vrf)
 	}
 }

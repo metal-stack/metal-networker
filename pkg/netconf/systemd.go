@@ -1,6 +1,8 @@
 package netconf
 
 import (
+	"fmt"
+
 	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
@@ -40,7 +42,7 @@ type (
 )
 
 // NewSystemdNetworkdApplier creates a new Applier to configure systemd.network.
-func NewSystemdNetworkdApplier(tmpFile string, data interface{}) net.Applier {
+func NewSystemdNetworkdApplier(tmpFile string, data any) net.Applier {
 	validator := SystemdValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)
@@ -48,7 +50,7 @@ func NewSystemdNetworkdApplier(tmpFile string, data interface{}) net.Applier {
 
 // NewSystemdLinkApplier creates a new Applier to configure systemd.link.
 func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic *models.V1MachineNic,
-	tmpFile string, evpnIfaces []EVPNIface) net.Applier {
+	tmpFile string, evpnIfaces []EVPNIface) (net.Applier, error) {
 	var mtu int
 
 	switch kind {
@@ -57,7 +59,7 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 	case Machine:
 		mtu = mtuMachine
 	default:
-		log.Fatalf("unknown configuratorType of configurator: %validator", kind)
+		return nil, fmt.Errorf("unknown configuratorType of configurator: %d", kind)
 	}
 
 	data := SystemdLinkData{
@@ -71,14 +73,10 @@ func NewSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 	}
 	validator := SystemdValidator{tmpFile}
 
-	return net.NewNetworkApplier(data, validator, nil)
+	return net.NewNetworkApplier(data, validator, nil), nil
 }
 
 // Validate validates systemd.network and systemd.link files.
 func (v SystemdValidator) Validate() error {
-	//nolint:godox
-	// FIXME: We need to add a way to validate those files.
-	// https://github.com/systemd/systemd/issues/11651
-	log.Infof("Skipping validation since there is no known way to validate (.network|.link) files in advance.")
 	return nil
 }

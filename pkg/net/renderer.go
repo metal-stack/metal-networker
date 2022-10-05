@@ -10,6 +10,6 @@ type Renderer struct {
 }
 
 // Render renders the given template using the given data into the provided writer.
-func (r *Renderer) Render(w io.Writer, data interface{}, tpl template.Template) error {
+func (r *Renderer) Render(w io.Writer, data any, tpl template.Template) error {
 	return tpl.Execute(w, data)
 }

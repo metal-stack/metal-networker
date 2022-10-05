@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zaptest"
 )
 
 func TestFrrConfigApplier(t *testing.T) {
@@ -69,7 +70,8 @@ func TestFrrConfigApplier(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
-			kb, err := NewKnowledgeBase(test.input)
+			log := zaptest.NewLogger(t).Sugar()
+			kb, err := New(log, test.input)
 			assert.NoError(t, err)
 			a := NewFrrConfigApplier(test.configuratorType, *kb, "")
 			b := bytes.Buffer{}
@@ -97,8 +99,11 @@ func TestFrrConfigApplier(t *testing.T) {
 
 func TestFRRValidator_Validate(t *testing.T) {
 	assert := assert.New(t)
+	log := zaptest.NewLogger(t).Sugar()
 
-	validator := FRRValidator{}
+	validator := FRRValidator{
+		log: log,
+	}
 	actual := validator.Validate()
 	assert.NotNil(actual)
 	assert.NotNil(actual.Error())

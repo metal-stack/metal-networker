@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zaptest"
 )
 
 func TestCompileNftRules(t *testing.T) {
@@ -47,13 +48,15 @@ func TestCompileNftRules(t *testing.T) {
 			enableDNSProxy: false,
 		},
 	}
+	log := zaptest.NewLogger(t).Sugar()
+
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.input, func(t *testing.T) {
 			expected, err := os.ReadFile(tt.expected)
 			assert.NoError(err)
 
-			kb, err := NewKnowledgeBase(tt.input)
+			kb, err := New(log, tt.input)
 			assert.NoError(err)
 
 			a := NewNftablesConfigApplier(*kb, nil, tt.enableDNSProxy)

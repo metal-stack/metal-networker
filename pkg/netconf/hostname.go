@@ -20,7 +20,7 @@ type (
 )
 
 // NewHostnameApplier creates a new Applier to render hostname.
-func NewHostnameApplier(kb KnowledgeBase, tmpFile string) net.Applier {
+func NewHostnameApplier(kb config, tmpFile string) net.Applier {
 	data := HostnameData{Comment: versionHeader(kb.MachineUUID), Hostname: kb.Hostname}
 	validator := HostnameValidator{tmpFile}
 

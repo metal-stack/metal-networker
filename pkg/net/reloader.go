@@ -26,14 +26,15 @@ type DBusReloader struct {
 
 // Reload reloads a systemd unit.
 func (r DBusReloader) Reload() error {
-	dbc, err := dbus.NewWithContext(context.Background())
+	ctx := context.Background()
+	dbc, err := dbus.NewWithContext(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to connect to dbus: %w", err)
 	}
 	defer dbc.Close()
 
 	c := make(chan string)
-	_, err = dbc.ReloadUnitContext(context.Background(), r.ServiceFilename, "replace", c)
+	_, err = dbc.ReloadUnitContext(ctx, r.ServiceFilename, "replace", c)
 
 	if err != nil {
 		return err
@@ -42,34 +43,6 @@ func (r DBusReloader) Reload() error {
 	job := <-c
 	if job != done {
 		return fmt.Errorf("reloading failed %s", job)
-	}
-
-	return nil
-}
-
-// DBusStartReloader applies the strategy of starting a systemd unit that applies the reload.
-type DBusStartReloader struct {
-	ServiceFilename string
-}
-
-// Reload starts a systemd unit.
-func (r DBusStartReloader) Reload() error {
-	dbc, err := dbus.NewWithContext(context.Background())
-	if err != nil {
-		return fmt.Errorf("unable to connect to dbus: %w", err)
-	}
-	defer dbc.Close()
-
-	c := make(chan string)
-
-	_, err = dbc.StartUnitContext(context.Background(), r.ServiceFilename, "replace", c)
-	if err != nil {
-		return err
-	}
-
-	job := <-c
-	if job != done {
-		return fmt.Errorf("start failed %s", job)
 	}
 
 	return nil

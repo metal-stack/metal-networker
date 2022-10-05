@@ -8,6 +8,7 @@ import (
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
+	"go.uber.org/zap"
 )
 
 const (
@@ -53,6 +54,7 @@ type (
 	// FRRValidator validates the frr.conf to apply.
 	FRRValidator struct {
 		path string
+		log  *zap.SugaredLogger
 	}
 
 	// AddressFamily is the address family for the routing daemon.
@@ -60,38 +62,41 @@ type (
 )
 
 // NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
-func NewFrrConfigApplier(kind BareMetalType, kb KnowledgeBase, tmpFile string) net.Applier {
-	var data interface{}
+func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string) net.Applier {
+	var data any
 
 	switch kind {
 	case Firewall:
-		net := kb.getUnderlayNetwork()
+		net := c.getUnderlayNetwork()
 		data = FirewallFRRData{
 			CommonFRRData: CommonFRRData{
 				FRRVersion: FRRVersion,
-				Hostname:   kb.Hostname,
-				Comment:    versionHeader(kb.MachineUUID),
+				Hostname:   c.Hostname,
+				Comment:    versionHeader(c.MachineUUID),
 				ASN:        *net.Asn,
 				RouterID:   routerID(net),
 			},
-			VRFs: assembleVRFs(kb),
+			VRFs: assembleVRFs(c),
 		}
 	case Machine:
-		net := kb.getPrivatePrimaryNetwork()
+		net := c.getPrivatePrimaryNetwork()
 		data = MachineFRRData{
 			CommonFRRData: CommonFRRData{
 				FRRVersion: FRRVersion,
-				Hostname:   kb.Hostname,
-				Comment:    versionHeader(kb.MachineUUID),
+				Hostname:   c.Hostname,
+				Comment:    versionHeader(c.MachineUUID),
 				ASN:        *net.Asn,
 				RouterID:   routerID(net),
 			},
 		}
 	default:
-		log.Fatalf("unknown kind of bare metal: %v", kind)
+		c.log.Fatalf("unknown kind of bare metal: %v", kind)
 	}
 
-	validator := FRRValidator{tmpFile}
+	validator := FRRValidator{
+		path: tmpFile,
+		log:  c.log,
+	}
 
 	return net.NewNetworkApplier(data, validator, net.NewDBusReloader("frr.service"))
 }
@@ -116,12 +121,12 @@ func routerID(net *models.V1MachineNetwork) string {
 // Validate can be used to run validation on FRR configuration using vtysh.
 func (v FRRValidator) Validate() error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
-	log.Infof("running '%s' to validate changes.'", vtysh)
+	v.log.Infof("running '%s' to validate changes.'", vtysh)
 
 	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }
 
-func assembleVRFs(kb KnowledgeBase) []VRF {
+func assembleVRFs(kb config) []VRF {
 	var result []VRF
 
 	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)

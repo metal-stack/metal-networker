@@ -4,6 +4,7 @@ import (
 	"github.com/metal-stack/metal-networker/pkg/netconf"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/metal-stack/v"
 
@@ -78,7 +79,6 @@ func initConfig() {
 
 // configure configures bare metal server depending on kind.
 func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
-	log.Infof("running app version: %s", v.V.String())
 
 	input, err := cmd.Flags().GetString(flagInputName)
 
@@ -86,7 +86,13 @@ func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
 		return err
 	}
 
-	kb, err := netconf.NewKnowledgeBase(input)
+	log, err := newLogger(zapcore.InfoLevel)
+	if err != nil {
+		return err
+	}
+	log.Infof("running app version: %s", v.V.String())
+
+	kb, err := netconf.New(log, input)
 	if err != nil {
 		return err
 	}
@@ -99,4 +105,15 @@ func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
 	log.Info("completed. Exiting..")
 
 	return nil
+}
+func newLogger(level zapcore.Level) (*zap.SugaredLogger, error) {
+	cfg := zap.NewProductionConfig()
+	cfg.Level = zap.NewAtomicLevelAt(level)
+	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	zlog, err := cfg.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	return zlog.Sugar(), nil
 }

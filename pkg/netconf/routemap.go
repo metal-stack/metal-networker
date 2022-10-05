@@ -49,7 +49,7 @@ func (i *importRule) bySourceVrf() map[string]ImportSettings {
 	return r
 }
 
-func importRulesForNetwork(kb KnowledgeBase, network *models.V1MachineNetwork) *importRule {
+func importRulesForNetwork(kb config, network *models.V1MachineNetwork) *importRule {
 	vrfName := vrfNameOf(network)
 
 	if network.Networktype == nil || *network.Networktype == mn.Underlay {

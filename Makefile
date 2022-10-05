@@ -22,7 +22,7 @@ all:: release;
 
 .PHONY: test
 test:
-	GO_ENV=testing go test -ldflags -v -cover ./...
+	GO_ENV=testing go test -v -race -cover ./...
 
 .PHONY: all
 bin/$(BINARY): test
