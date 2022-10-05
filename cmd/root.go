@@ -101,7 +101,11 @@ func configure(kind netconf.BareMetalType, cmd *cobra.Command) error {
 		return err
 	}
 
-	netconf.NewConfigurator(kind, *kb).Configure()
+	c, err := netconf.NewConfigurator(kind, *kb)
+	if err != nil {
+		return err
+	}
+	c.Configure()
 	log.Info("completed. Exiting..")
 
 	return nil

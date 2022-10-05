@@ -15,18 +15,20 @@ import (
 type BareMetalType int
 
 const (
-	// FileModeSystemd represents a file mode that allows systemd to read e.g. /etc/systemd/network files.
-	FileModeSystemd = 0644
-	// FileModeSixFourFour represents file mode 0644
-	FileModeSixFourFour = 0644
-	// FileModeDefault represents the default file mode sufficient e.g. to /etc/network/interfaces or /etc/frr.conf.
-	FileModeDefault = 0600
 	// Firewall defines the bare metal server to function as firewall.
 	Firewall BareMetalType = iota
 	// Machine defines the bare metal server to function as machine.
 	Machine
-	// SystemdUnitPath is the path where systemd units will be generated.
-	SystemdUnitPath = "/etc/systemd/system/"
+)
+const (
+	// fileModeSystemd represents a file mode that allows systemd to read e.g. /etc/systemd/network files.
+	fileModeSystemd = 0644
+	// fileModeSixFourFour represents file mode 0644
+	fileModeSixFourFour = 0644
+	// fileModeDefault represents the default file mode sufficient e.g. to /etc/network/interfaces or /etc/frr.conf.
+	fileModeDefault = 0600
+	// systemdUnitPath is the path where systemd units will be generated.
+	systemdUnitPath = "/etc/systemd/system/"
 )
 
 var (
@@ -42,19 +44,14 @@ type (
 		Configure()
 	}
 
-	// commonConfigurator contains information that is common to all configurators.
-	commonConfigurator struct {
-		c config
-	}
-
 	// machineConfigurator is a configurator that configures a bare metal server as 'machine'.
 	machineConfigurator struct {
-		commonConfigurator
+		c config
 	}
 
 	// firewallConfigurator is a configurator that configures a bare metal server as 'firewall'.
 	firewallConfigurator struct {
-		commonConfigurator
+		c              config
 		enableDNSProxy bool
 	}
 )
@@ -67,23 +64,19 @@ type unitConfiguration struct {
 }
 
 // NewConfigurator creates a new configurator.
-func NewConfigurator(kind BareMetalType, c config) Configurator {
-	var result Configurator
-
+func NewConfigurator(kind BareMetalType, c config) (Configurator, error) {
 	switch kind {
 	case Firewall:
-		fw := firewallConfigurator{}
-		fw.commonConfigurator = commonConfigurator{c}
-		result = fw
+		return firewallConfigurator{
+			c: c,
+		}, nil
 	case Machine:
-		m := machineConfigurator{}
-		m.commonConfigurator = commonConfigurator{c}
-		result = m
+		return machineConfigurator{
+			c: c,
+		}, nil
 	default:
-		c.log.Fatalf("Unknown kind of configurator: %v", kind)
+		return nil, fmt.Errorf("unknown type:%d", kind)
 	}
-
-	return result
 }
 
 // Configure applies configuration to a bare metal server to function as 'machine'.
@@ -117,7 +110,7 @@ func (fc firewallConfigurator) Configure() {
 			fc.c.log.Warnf("failed to deploy %s service : %v", u.unit, err)
 		}
 
-		applyAndCleanUp(fc.c.log, nfe, u.templateFile, src, path.Join(SystemdUnitPath, u.unit), FileModeSystemd)
+		applyAndCleanUp(fc.c.log, nfe, u.templateFile, src, path.Join(systemdUnitPath, u.unit), fileModeSystemd)
 
 		if u.enabled {
 			mustEnableUnit(fc.c.log, u.unit)
@@ -131,7 +124,7 @@ func (fc firewallConfigurator) Configure() {
 		fc.c.log.Warnf("failed to configure suricata defaults: %v", err)
 	}
 
-	applyAndCleanUp(fc.c.log, applier, tplSuricataDefaults, src, "/etc/default/suricata", FileModeSixFourFour)
+	applyAndCleanUp(fc.c.log, applier, tplSuricataDefaults, src, "/etc/default/suricata", fileModeSixFourFour)
 
 	src = mustTmpFile("suricata.yaml_")
 	applier, err = newSuricataConfigApplier(kb, src)
@@ -140,7 +133,7 @@ func (fc firewallConfigurator) Configure() {
 		fc.c.log.Warnf("failed to configure suricata: %v", err)
 	}
 
-	applyAndCleanUp(fc.c.log, applier, tplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
+	applyAndCleanUp(fc.c.log, applier, tplSuricataConfig, src, "/etc/suricata/suricata.yaml", fileModeSixFourFour)
 }
 
 func (fc firewallConfigurator) configureNftables() {
@@ -150,7 +143,7 @@ func (fc firewallConfigurator) configureNftables() {
 		log:  fc.c.log,
 	}
 	applier := newNftablesConfigApplier(fc.c, validator, fc.enableDNSProxy)
-	applyAndCleanUp(fc.c.log, applier, TplNftables, src, "/etc/nftables/rules", FileModeDefault)
+	applyAndCleanUp(fc.c.log, applier, TplNftables, src, "/etc/nftables/rules", fileModeDefault)
 }
 
 func (fc firewallConfigurator) getUnits() (units []unitConfiguration) {
@@ -224,11 +217,11 @@ func applyCommonConfiguration(log *zap.SugaredLogger, kind BareMetalType, kb con
 
 	src := mustTmpFile("hosts_")
 	applier := newHostsApplier(kb, src)
-	applyAndCleanUp(log, applier, tplHosts, src, "/etc/hosts", FileModeDefault)
+	applyAndCleanUp(log, applier, tplHosts, src, "/etc/hosts", fileModeDefault)
 
 	src = mustTmpFile("hostname_")
 	applier = newHostnameApplier(kb, src)
-	applyAndCleanUp(log, applier, tplHostname, src, "/etc/hostname", FileModeSixFourFour)
+	applyAndCleanUp(log, applier, tplHostname, src, "/etc/hostname", fileModeSixFourFour)
 
 	src = mustTmpFile("frr_")
 	applier = NewFrrConfigApplier(kind, kb, src)
@@ -238,7 +231,7 @@ func applyCommonConfiguration(log *zap.SugaredLogger, kind BareMetalType, kb con
 		tpl = TplMachineFRR
 	}
 
-	applyAndCleanUp(log, applier, tpl, src, "/etc/frr/frr.conf", FileModeDefault)
+	applyAndCleanUp(log, applier, tpl, src, "/etc/frr/frr.conf", fileModeDefault)
 }
 
 func applyAndCleanUp(log *zap.SugaredLogger, applier net.Applier, tpl, src, dest string, mode os.FileMode) {

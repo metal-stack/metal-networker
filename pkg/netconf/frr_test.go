@@ -85,7 +85,7 @@ func TestFrrConfigApplier(t *testing.T) {
 			// let the new fixtures get generated
 			// check them manually before commit
 			if _, err := os.Stat(test.expectedOutput); os.IsNotExist(err) {
-				err = os.WriteFile(test.expectedOutput, b.Bytes(), FileModeDefault)
+				err = os.WriteFile(test.expectedOutput, b.Bytes(), fileModeDefault)
 				assert.NoError(t, err)
 				return
 			}
