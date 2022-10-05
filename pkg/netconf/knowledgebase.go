@@ -221,7 +221,7 @@ func (c config) nicsContainValidMACs() bool {
 		}
 
 		if _, err := net.ParseMAC(*nic.Mac); err != nil {
-			c.log.Errorf("invalid mac: %s", nic.Mac)
+			c.log.Errorf("invalid mac: %s", *nic.Mac)
 			return false
 		}
 	}

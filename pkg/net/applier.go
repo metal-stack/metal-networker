@@ -43,7 +43,6 @@ func (n *networkApplier) Apply(tpl template.Template, tmpFile, destFile string, 
 
 	w := bufio.NewWriter(f)
 	err = n.Render(w, tpl)
-
 	if err != nil {
 		return false, err
 	}
