@@ -18,20 +18,20 @@ type Applier interface {
 	Compare(tmpFile, destFile string) bool
 }
 
-// NetworkApplier holds the toolset for applying network configuration changes.
-type NetworkApplier struct {
-	Data      any
-	Validator Validator
-	Reloader  Reloader
+// networkApplier holds the toolset for applying network configuration changes.
+type networkApplier struct {
+	data      any
+	validator Validator
+	reloader  Reloader
 }
 
 // NewNetworkApplier creates a new NewNetworkApplier.
 func NewNetworkApplier(data any, validator Validator, reloader Reloader) Applier {
-	return &NetworkApplier{Data: data, Validator: validator, Reloader: reloader}
+	return &networkApplier{data: data, validator: validator, reloader: reloader}
 }
 
 // Apply applies the current configuration with the given template.
-func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error) {
+func (n *networkApplier) Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error) {
 	f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return false, err
@@ -81,22 +81,22 @@ func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, 
 }
 
 // Render renders the network interfaces to the given writer using the given template.
-func (n *NetworkApplier) Render(w io.Writer, tpl template.Template) error {
-	return tpl.Execute(w, n.Data)
+func (n *networkApplier) Render(w io.Writer, tpl template.Template) error {
+	return tpl.Execute(w, n.data)
 }
 
 // Validate applies the given validator to validate current changes.
-func (n *NetworkApplier) Validate() error {
-	return n.Validator.Validate()
+func (n *networkApplier) Validate() error {
+	return n.validator.Validate()
 }
 
 // Reload reloads the necessary services when the network interfaces configuration was changed.
-func (n *NetworkApplier) Reload() error {
-	return n.Reloader.Reload()
+func (n *networkApplier) Reload() error {
+	return n.reloader.Reload()
 }
 
 // Compare compare source and target for hash equality.
-func (n *NetworkApplier) Compare(source, target string) bool {
+func (n *networkApplier) Compare(source, target string) bool {
 	sourceChecksum, err := checksum(source)
 	if err != nil {
 		return false

@@ -25,7 +25,7 @@ func TestNetworkApplier_Compare(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			n := &NetworkApplier{}
+			n := &networkApplier{}
 			if got := n.Compare(tt.source, tt.target); got != tt.want {
 				t.Errorf("NetworkApplier.Compare() = %v, want %v", got, tt.want)
 			}
