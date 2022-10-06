@@ -229,8 +229,8 @@ github.com/markbates/oncer v0.0.0-20181203154359-bf2de49a0be2/go.mod h1:Ld9puTsI
 github.com/markbates/safe v1.0.1/go.mod h1:nAqgmRi7cY2nqMc92/bSEeQA+R4OheNU2T1kNSCBdG0=
 github.com/metal-stack/metal-go v0.21.1 h1:KcacCfxtJQ+xFMg2cVbljh/jSsixvNNShyddEG+rhNw=
 github.com/metal-stack/metal-go v0.21.1/go.mod h1:PLeXd33yiv4RgCm2hx+flstm445DBnrQGSDw9pmMsSw=
-github.com/metal-stack/metal-hammer v0.10.5-0.20221003074822-e7a701137304 h1:7lUso/jGvpEFadyIEQ5IHTOLCgGc+B9XQVQPTlOjhjA=
-github.com/metal-stack/metal-hammer v0.10.5-0.20221003074822-e7a701137304/go.mod h1:81kdWP1HRYB8Kz8BaVhPP9if09o/L0lIHq0tuQzmAOM=
+github.com/metal-stack/metal-hammer v0.11.0 h1:2lMCiuPqwYtYkYTUSB9+AARfpfgt8p6jk3w90hTvlZI=
+github.com/metal-stack/metal-hammer v0.11.0/go.mod h1:81kdWP1HRYB8Kz8BaVhPP9if09o/L0lIHq0tuQzmAOM=
 github.com/metal-stack/metal-lib v0.11.2 h1:HqPMbHS7zMBRAcoGhbsUZRjDPvOtgI6qNshzd0bSmJQ=
 github.com/metal-stack/metal-lib v0.11.2/go.mod h1:Ge1ypz6aOf2ab98kr8GYMXD8eZ7VfKFUfUE3p/8Sm3g=
 github.com/metal-stack/v v1.0.3 h1:Sh2oBlnxrCUD+mVpzfC8HiqL045YWkxs0gpTvkjppqs=
