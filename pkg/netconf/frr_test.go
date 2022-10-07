@@ -101,7 +101,7 @@ func TestFRRValidator_Validate(t *testing.T) {
 	assert := assert.New(t)
 	log := zaptest.NewLogger(t).Sugar()
 
-	validator := FRRValidator{
+	validator := frrValidator{
 		log: log,
 	}
 	actual := validator.Validate()

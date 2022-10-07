@@ -51,8 +51,8 @@ type (
 		VRFs []VRF
 	}
 
-	// FRRValidator validates the frr.conf to apply.
-	FRRValidator struct {
+	// frrValidator validates the frr.conf to apply.
+	frrValidator struct {
 		path string
 		log  *zap.SugaredLogger
 	}
@@ -93,7 +93,7 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string) net.Appli
 		c.log.Fatalf("unknown kind of bare metal: %v", kind)
 	}
 
-	validator := FRRValidator{
+	validator := frrValidator{
 		path: tmpFile,
 		log:  c.log,
 	}
@@ -119,7 +119,7 @@ func routerID(net *models.V1MachineNetwork) string {
 }
 
 // Validate can be used to run validation on FRR configuration using vtysh.
-func (v FRRValidator) Validate() error {
+func (v frrValidator) Validate() error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
 	v.log.Infof("running '%s' to validate changes.'", vtysh)
 
