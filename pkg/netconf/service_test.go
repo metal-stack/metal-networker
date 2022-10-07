@@ -26,7 +26,7 @@ func TestServices(t *testing.T) {
 	assert.NoError(err)
 
 	tests := []struct {
-		applier  net.Applier
+		applier  *net.NetworkApplier
 		expected string
 		template string
 	}{

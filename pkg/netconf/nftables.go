@@ -58,7 +58,7 @@ type (
 )
 
 // NewNftablesConfigApplier constructs a new instance of this type.
-func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator, enableDNSProxy bool) net.Applier {
+func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator, enableDNSProxy bool) *net.NetworkApplier {
 	data := NftablesData{
 		Comment: versionHeader(kb.Machineuuid),
 		SNAT:    getSNAT(kb, enableDNSProxy),

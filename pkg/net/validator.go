@@ -8,11 +8,6 @@ import (
 	"github.com/coreos/go-systemd/v22/unit"
 )
 
-// Validator is an interface to apply common validation.
-type Validator interface {
-	Validate() error
-}
-
 // DBusTemplateValidator starts a dbus template (templatename@instancename.service) to apply validation.
 type DBusTemplateValidator struct {
 	TemplateName, InstanceName string

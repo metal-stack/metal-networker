@@ -9,57 +9,61 @@ import (
 	"text/template"
 )
 
-// Applier is an interface to render changes and reload services to apply them.
-type Applier interface {
-	Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error)
-	Render(writer io.Writer, tpl template.Template) error
+// Reloader triggers the reload to carry out the changes of an applier.
+type Reloader interface {
 	Reload() error
+}
+
+// Validator is an interface to apply common validation.
+type Validator interface {
 	Validate() error
-	Compare(tmpFile, destFile string) bool
 }
 
 // NetworkApplier holds the toolset for applying network configuration changes.
 type NetworkApplier struct {
-	Data      interface{}
-	Validator Validator
-	Reloader  Reloader
+	data      interface{}
+	validator Validator
+	reloader  Reloader
 }
 
 // NewNetworkApplier creates a new NewNetworkApplier.
-func NewNetworkApplier(data interface{}, validator Validator, reloader Reloader) Applier {
-	return &NetworkApplier{Data: data, Validator: validator, Reloader: reloader}
+func NewNetworkApplier(data interface{}, validator Validator, reloader Reloader) *NetworkApplier {
+	return &NetworkApplier{data: data, validator: validator, reloader: reloader}
 }
 
 // Apply applies the current configuration with the given template.
-// 
+//
 func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, reload bool) (bool, error) {
 	f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return false, err
 	}
 
-	defer func() {
-		_ = f.Close()
-	}()
-
 	w := bufio.NewWriter(f)
 	err = n.Render(w, tpl)
 
 	if err != nil {
+		_ = f.Close()
 		return false, err
 	}
 
 	err = w.Flush()
 	if err != nil {
+		_ = f.Close()
 		return false, err
 	}
 
-	err = n.Validate()
+	err = f.Close()
 	if err != nil {
 		return false, err
 	}
 
-	equal := n.Compare(tmpFile, destFile)
+	err = n.validate()
+	if err != nil {
+		return false, err
+	}
+
+	equal := n.compare(tmpFile, destFile)
 	if equal {
 		return false, nil
 	}
@@ -73,7 +77,7 @@ func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, 
 		return true, nil
 	}
 
-	err = n.Reload()
+	err = n.reload()
 	if err != nil {
 		return true, err
 	}
@@ -83,21 +87,20 @@ func (n *NetworkApplier) Apply(tpl template.Template, tmpFile, destFile string, 
 
 // Render renders the network interfaces to the given writer using the given template.
 func (n *NetworkApplier) Render(w io.Writer, tpl template.Template) error {
-	return tpl.Execute(w, n.Data)
+	return tpl.Execute(w, n.data)
 }
 
-// Validate applies the given validator to validate current changes.
-func (n *NetworkApplier) Validate() error {
-	return n.Validator.Validate()
+func (n *NetworkApplier) validate() error {
+	return n.validator.Validate()
 }
 
-// Reload reloads the necessary services when the network interfaces configuration was changed.
-func (n *NetworkApplier) Reload() error {
-	return n.Reloader.Reload()
+// reload reloads the necessary services when the network interfaces configuration was changed.
+func (n *NetworkApplier) reload() error {
+	return n.reloader.Reload()
 }
 
-// Compare compare source and target for hash equality.
-func (n *NetworkApplier) Compare(source, target string) bool {
+// compare compare source and target for hash equality.
+func (n *NetworkApplier) compare(source, target string) bool {
 	sourceChecksum, err := checksum(source)
 	if err != nil {
 		return false
