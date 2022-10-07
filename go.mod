@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/coreos/go-systemd/v22 v22.4.0
 	github.com/google/go-cmp v0.5.9
-	github.com/metal-stack/metal-go v0.21.1
+	github.com/metal-stack/metal-go v0.21.2
 	github.com/metal-stack/metal-hammer v0.11.0
 	github.com/metal-stack/metal-lib v0.11.2
 	github.com/metal-stack/v v1.0.3
@@ -34,7 +34,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	go.mongodb.org/mongo-driver v1.10.2 // indirect
+	go.mongodb.org/mongo-driver v1.10.3 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 )
