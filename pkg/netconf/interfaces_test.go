@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zaptest"
 )
 
 func TestIfacesApplier(t *testing.T) {
@@ -26,6 +28,7 @@ func TestIfacesApplier(t *testing.T) {
 			configuratorType: Machine,
 		},
 	}
+	log := zaptest.NewLogger(t).Sugar()
 
 	tmpPath = os.TempDir()
 	for _, tc := range tests {
@@ -40,8 +43,9 @@ func TestIfacesApplier(t *testing.T) {
 				os.RemoveAll(systemdNetworkPath)
 				systemdNetworkPath = old
 			}()
-			kb := NewKnowledgeBase(tc.input)
-			a := NewIfacesApplier(tc.configuratorType, kb)
+			kb, err := New(log, tc.input)
+			assert.NoError(t, err)
+			a := newIfacesApplier(tc.configuratorType, *kb)
 			a.Apply()
 			if equal, s := equalDirs(systemdNetworkPath, tc.expectedOutput); !equal {
 				t.Error(s)

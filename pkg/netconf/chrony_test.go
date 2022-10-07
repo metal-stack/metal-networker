@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/metal-stack/metal-go/api/models"
+	"github.com/metal-stack/metal-hammer/pkg/api"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/stretchr/testify/assert"
 )
@@ -13,27 +14,31 @@ func TestChronyServiceEnabler_Enable(t *testing.T) {
 
 	vrf := int64(104009)
 	external := mn.External
-	network := models.V1MachineNetwork{Networktype: &external, Destinationprefixes: []string{IPv4ZeroCIDR}, Vrf: &vrf}
+	network := &models.V1MachineNetwork{Networktype: &external, Destinationprefixes: []string{IPv4ZeroCIDR}, Vrf: &vrf}
 	tests := []struct {
-		kb              KnowledgeBase
+		kb              config
 		vrf             string
 		isErrorExpected bool
 	}{
-		{kb: KnowledgeBase{Networks: []models.V1MachineNetwork{network}},
+		{
+			kb:              config{InstallerConfig: api.InstallerConfig{Networks: []*models.V1MachineNetwork{network}}},
 			vrf:             "vrf104009",
-			isErrorExpected: false},
-		{kb: KnowledgeBase{Networks: []models.V1MachineNetwork{}},
+			isErrorExpected: false,
+		},
+		{
+			kb:              config{InstallerConfig: api.InstallerConfig{Networks: []*models.V1MachineNetwork{}}},
 			vrf:             "",
-			isErrorExpected: true},
+			isErrorExpected: true,
+		},
 	}
 
 	for _, t := range tests {
-		e, err := NewChronyServiceEnabler(t.kb)
+		e, err := newChronyServiceEnabler(t.kb)
 		if t.isErrorExpected {
 			assert.Error(err)
 		} else {
 			assert.NoError(err)
 		}
-		assert.Equal(t.vrf, e.VRF)
+		assert.Equal(t.vrf, e.vrf)
 	}
 }

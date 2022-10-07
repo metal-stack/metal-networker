@@ -17,13 +17,13 @@ type NftablesExporterData struct {
 }
 
 // NewNftablesExporterServiceApplier constructs a new instance of this type.
-func NewNftablesExporterServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
+func NewNftablesExporterServiceApplier(kb config, v net.Validator) (net.Applier, error) {
 	tenantVrf, err := getTenantVRFName(kb)
 	if err != nil {
 		return nil, err
 	}
 
-	data := NftablesExporterData{Comment: versionHeader(kb.Machineuuid), TenantVrf: tenantVrf}
+	data := NftablesExporterData{Comment: versionHeader(kb.MachineUUID), TenantVrf: tenantVrf}
 
 	return net.NewNetworkApplier(data, v, nil), nil
 }

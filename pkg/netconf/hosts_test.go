@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zaptest"
 )
 
 func TestNewHostsApplier(t *testing.T) {
@@ -14,12 +15,13 @@ func TestNewHostsApplier(t *testing.T) {
 	expected, err := os.ReadFile("testdata/hosts")
 	assert.NoError(err)
 
-	kb := NewKnowledgeBase("testdata/firewall.yaml")
+	log := zaptest.NewLogger(t).Sugar()
+	kb, err := New(log, "testdata/firewall.yaml")
 	assert.NoError(err)
-	a := NewHostsApplier(kb, "")
+	a := newHostsApplier(*kb, "")
 	b := bytes.Buffer{}
 
-	tpl := mustParseTpl(TplHosts)
+	tpl := mustParseTpl(tplHosts)
 	err = a.Render(&b, *tpl)
 	assert.NoError(err)
 	assert.Equal(string(expected), b.String())

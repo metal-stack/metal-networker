@@ -16,14 +16,14 @@ type NodeExporterData struct {
 	TenantVrf string
 }
 
-// NewNodeExporterServiceApplier constructs a new instance of this type.
-func NewNodeExporterServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
+// newNodeExporterServiceApplier constructs a new instance of this type.
+func newNodeExporterServiceApplier(kb config, v net.Validator) (net.Applier, error) {
 	tenantVrf, err := getTenantVRFName(kb)
 	if err != nil {
 		return nil, err
 	}
 
-	data := NodeExporterData{Comment: versionHeader(kb.Machineuuid), TenantVrf: tenantVrf}
+	data := NodeExporterData{Comment: versionHeader(kb.MachineUUID), TenantVrf: tenantVrf}
 
 	return net.NewNetworkApplier(data, v, nil), nil
 }

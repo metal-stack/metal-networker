@@ -6,8 +6,8 @@ import (
 	"github.com/metal-stack/metal-networker/pkg/net"
 )
 
-// TplSuricataConfig is the name of the template for the suricata configuration.
-const TplSuricataConfig = "suricata_config.yaml.tpl"
+// tplSuricataConfig is the name of the template for the suricata configuration.
+const tplSuricataConfig = "suricata_config.yaml.tpl"
 
 // SuricataConfigData represents the information required to render suricata configuration.
 type SuricataConfigData struct {
@@ -16,26 +16,26 @@ type SuricataConfigData struct {
 	Interface       string
 }
 
-// SuricataConfigValidator can validate configuration for suricata.
-type SuricataConfigValidator struct {
+// suricataConfigValidator can validate configuration for suricata.
+type suricataConfigValidator struct {
 	path string
 }
 
-// NewSuricataConfigApplier constructs a new instance of this type.
-func NewSuricataConfigApplier(kb KnowledgeBase, tmpFile string) (net.Applier, error) {
+// newSuricataConfigApplier constructs a new instance of this type.
+func newSuricataConfigApplier(kb config, tmpFile string) (net.Applier, error) {
 	defaultRouteVrf, err := kb.getDefaultRouteVRFName()
 	if err != nil {
 		return nil, err
 	}
 
 	i := strings.Replace(defaultRouteVrf, "vrf", "vlan", 1)
-	data := SuricataConfigData{Comment: versionHeader(kb.Machineuuid), DefaultRouteVrf: defaultRouteVrf, Interface: i}
-	validator := SuricataConfigValidator{tmpFile}
+	data := SuricataConfigData{Comment: versionHeader(kb.MachineUUID), DefaultRouteVrf: defaultRouteVrf, Interface: i}
+	validator := suricataConfigValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil), nil
 }
 
 // Validate validates suricata configuration.
-func (v SuricataConfigValidator) Validate() error {
+func (v suricataConfigValidator) Validate() error {
 	return nil
 }

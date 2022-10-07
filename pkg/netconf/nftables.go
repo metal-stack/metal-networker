@@ -6,6 +6,7 @@ import (
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
+	"go.uber.org/zap"
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
@@ -52,23 +53,24 @@ type (
 	// NftablesValidator can validate configuration for nftables rules.
 	NftablesValidator struct {
 		path string
+		log  *zap.SugaredLogger
 	}
 
 	NftablesReloader struct{}
 )
 
-// NewNftablesConfigApplier constructs a new instance of this type.
-func NewNftablesConfigApplier(kb KnowledgeBase, validator net.Validator, enableDNSProxy bool) net.Applier {
+// newNftablesConfigApplier constructs a new instance of this type.
+func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy bool) net.Applier {
 	data := NftablesData{
-		Comment: versionHeader(kb.Machineuuid),
-		SNAT:    getSNAT(kb, enableDNSProxy),
+		Comment: versionHeader(c.MachineUUID),
+		SNAT:    getSNAT(c, enableDNSProxy),
 	}
 
 	if enableDNSProxy {
-		data.DNSProxyDNAT = getDNSProxyDNAT(kb, dnsPort)
+		data.DNSProxyDNAT = getDNSProxyDNAT(c, dnsPort)
 	}
 
-	if kb.VPN != nil {
+	if c.VPN != nil {
 		data.VPN = true
 	}
 
@@ -79,18 +81,18 @@ func (*NftablesReloader) Reload() error {
 	return exec.NewVerboseCmd(systemctlBin, "reload", nftablesService).Run()
 }
 
-func isDMZNetwork(n models.V1MachineNetwork) bool {
+func isDMZNetwork(n *models.V1MachineNetwork) bool {
 	return *n.Networktype == mn.PrivateSecondaryShared && containsDefaultRoute(n.Destinationprefixes)
 }
 
-func getSNAT(kb KnowledgeBase, enableDNSProxy bool) []SNAT {
+func getSNAT(c config, enableDNSProxy bool) []SNAT {
 	var result []SNAT
 
-	private := kb.getPrivatePrimaryNetwork()
-	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
+	private := c.getPrivatePrimaryNetwork()
+	networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
 
 	privatePfx := private.Prefixes
-	for _, n := range kb.Networks {
+	for _, n := range c.Networks {
 		if isDMZNetwork(n) {
 			privatePfx = append(privatePfx, n.Prefixes...)
 		}
@@ -100,9 +102,9 @@ func getSNAT(kb KnowledgeBase, enableDNSProxy bool) []SNAT {
 		defaultNetwork models.V1MachineNetwork
 		defaultAF      string
 	)
-	defaultNetworkName, err := kb.getDefaultRouteVRFName()
+	defaultNetworkName, err := c.getDefaultRouteVRFName()
 	if err == nil {
-		defaultNetwork = *kb.GetDefaultRouteNetwork()
+		defaultNetwork = *c.GetDefaultRouteNetwork()
 		ip, _ := netip.ParseAddr(defaultNetwork.Ips[0])
 		defaultAF = "ip"
 		if ip.Is6() {
@@ -151,15 +153,15 @@ func getSNAT(kb KnowledgeBase, enableDNSProxy bool) []SNAT {
 	return result
 }
 
-func getDNSProxyDNAT(kb KnowledgeBase, port string) DNAT {
-	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
+func getDNSProxyDNAT(c config, port string) DNAT {
+	networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
 	svis := []string{}
 	for _, n := range networks {
 		svi := fmt.Sprintf("vlan%d", *n.Vrf)
 		svis = append(svis, svi)
 	}
 
-	n := kb.GetDefaultRouteNetwork()
+	n := c.GetDefaultRouteNetwork()
 	if n == nil {
 		return DNAT{}
 	}
@@ -182,6 +184,6 @@ func getDNSProxyDNAT(kb KnowledgeBase, port string) DNAT {
 
 // Validate validates network interfaces configuration.
 func (v NftablesValidator) Validate() error {
-	log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
+	v.log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
 	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
 }

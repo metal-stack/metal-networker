@@ -8,24 +8,27 @@ import (
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
+	"go.uber.org/zap"
 )
 
 // BareMetalType defines the type of configuration to apply.
 type BareMetalType int
 
 const (
-	// FileModeSystemd represents a file mode that allows systemd to read e.g. /etc/systemd/network files.
-	FileModeSystemd = 0644
-	// FileModeSixFourFour represents file mode 0644
-	FileModeSixFourFour = 0644
-	// FileModeDefault represents the default file mode sufficient e.g. to /etc/network/interfaces or /etc/frr.conf.
-	FileModeDefault = 0600
 	// Firewall defines the bare metal server to function as firewall.
 	Firewall BareMetalType = iota
 	// Machine defines the bare metal server to function as machine.
 	Machine
-	// SystemdUnitPath is the path where systemd units will be generated.
-	SystemdUnitPath = "/etc/systemd/system/"
+)
+const (
+	// fileModeSystemd represents a file mode that allows systemd to read e.g. /etc/systemd/network files.
+	fileModeSystemd = 0644
+	// fileModeSixFourFour represents file mode 0644
+	fileModeSixFourFour = 0644
+	// fileModeDefault represents the default file mode sufficient e.g. to /etc/network/interfaces or /etc/frr.conf.
+	fileModeDefault = 0600
+	// systemdUnitPath is the path where systemd units will be generated.
+	systemdUnitPath = "/etc/systemd/system/"
 )
 
 var (
@@ -41,136 +44,130 @@ type (
 		Configure()
 	}
 
-	// CommonConfigurator contains information that is common to all configurators.
-	CommonConfigurator struct {
-		Kb KnowledgeBase
+	// machineConfigurator is a configurator that configures a bare metal server as 'machine'.
+	machineConfigurator struct {
+		c config
 	}
 
-	// MachineConfigurator is a configurator that configures a bare metal server as 'machine'.
-	MachineConfigurator struct {
-		CommonConfigurator
-	}
-
-	// FirewallConfigurator is a configurator that configures a bare metal server as 'firewall'.
-	FirewallConfigurator struct {
-		CommonConfigurator
-		EnableDNSProxy bool
+	// firewallConfigurator is a configurator that configures a bare metal server as 'firewall'.
+	firewallConfigurator struct {
+		c              config
+		enableDNSProxy bool
 	}
 )
 
 type unitConfiguration struct {
 	unit             string
 	templateFile     string
-	constructApplier func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error)
+	constructApplier func(kb config, v serviceValidator) (net.Applier, error)
 	enabled          bool
 }
 
 // NewConfigurator creates a new configurator.
-func NewConfigurator(kind BareMetalType, kb KnowledgeBase) Configurator {
-	var result Configurator
-
+func NewConfigurator(kind BareMetalType, c config) (Configurator, error) {
 	switch kind {
 	case Firewall:
-		fw := FirewallConfigurator{}
-		fw.CommonConfigurator = CommonConfigurator{kb}
-		result = fw
+		return firewallConfigurator{
+			c: c,
+		}, nil
 	case Machine:
-		m := MachineConfigurator{}
-		m.CommonConfigurator = CommonConfigurator{kb}
-		result = m
+		return machineConfigurator{
+			c: c,
+		}, nil
 	default:
-		log.Fatalf("Unknown kind of configurator: %v", kind)
+		return nil, fmt.Errorf("unknown type:%d", kind)
 	}
-
-	return result
 }
 
 // Configure applies configuration to a bare metal server to function as 'machine'.
-func (configurator MachineConfigurator) Configure() {
-	applyCommonConfiguration(Machine, configurator.Kb)
+func (mc machineConfigurator) Configure() {
+	applyCommonConfiguration(mc.c.log, Machine, mc.c)
 }
 
 // Configure applies configuration to a bare metal server to function as 'firewall'.
-func (configurator FirewallConfigurator) Configure() {
-	kb := configurator.Kb
-	applyCommonConfiguration(Firewall, kb)
+func (fc firewallConfigurator) Configure() {
+	kb := fc.c
+	applyCommonConfiguration(fc.c.log, Firewall, kb)
 
-	configurator.ConfigureNftables()
+	fc.configureNftables()
 
-	chrony, err := NewChronyServiceEnabler(configurator.Kb)
+	chrony, err := newChronyServiceEnabler(fc.c)
 	if err != nil {
-		log.Warnf("failed to configure Chrony: %v", err)
+		fc.c.log.Warnf("failed to configure Chrony: %v", err)
 	} else {
 		err := chrony.Enable()
 		if err != nil {
-			log.Errorf("enabling Chrony failed: %v", err)
+			fc.c.log.Errorf("enabling Chrony failed: %v", err)
 		}
 	}
 
-	for _, u := range configurator.getUnits() {
+	for _, u := range fc.getUnits() {
 		src := mustTmpFile(u.unit)
-		validatorService := ServiceValidator{src}
-		nfe, err := u.constructApplier(configurator.Kb, validatorService)
+		validatorService := serviceValidator{src}
+		nfe, err := u.constructApplier(fc.c, validatorService)
 
 		if err != nil {
-			log.Warnf("failed to deploy %s service : %v", u.unit, err)
+			fc.c.log.Warnf("failed to deploy %s service : %v", u.unit, err)
 		}
 
-		applyAndCleanUp(nfe, u.templateFile, src, path.Join(SystemdUnitPath, u.unit), FileModeSystemd)
+		applyAndCleanUp(fc.c.log, nfe, u.templateFile, src, path.Join(systemdUnitPath, u.unit), fileModeSystemd)
 
 		if u.enabled {
-			mustEnableUnit(u.unit)
+			mustEnableUnit(fc.c.log, u.unit)
 		}
 	}
 
 	src := mustTmpFile("suricata_")
-	applier, err := NewSuricataDefaultsApplier(kb, src)
+	applier, err := newSuricataDefaultsApplier(kb, src)
 
 	if err != nil {
-		log.Warnf("failed to configure suricata defaults: %v", err)
+		fc.c.log.Warnf("failed to configure suricata defaults: %v", err)
 	}
 
-	applyAndCleanUp(applier, tplSuricataDefaults, src, "/etc/default/suricata", FileModeSixFourFour)
+	applyAndCleanUp(fc.c.log, applier, tplSuricataDefaults, src, "/etc/default/suricata", fileModeSixFourFour)
 
 	src = mustTmpFile("suricata.yaml_")
-	applier, err = NewSuricataConfigApplier(kb, src)
+	applier, err = newSuricataConfigApplier(kb, src)
 
 	if err != nil {
-		log.Warnf("failed to configure suricata: %v", err)
+		fc.c.log.Warnf("failed to configure suricata: %v", err)
 	}
 
-	applyAndCleanUp(applier, TplSuricataConfig, src, "/etc/suricata/suricata.yaml", FileModeSixFourFour)
+	applyAndCleanUp(fc.c.log, applier, tplSuricataConfig, src, "/etc/suricata/suricata.yaml", fileModeSixFourFour)
 }
 
-func (configurator FirewallConfigurator) ConfigureNftables() {
+func (fc firewallConfigurator) configureNftables() {
 	src := mustTmpFile("nftrules_")
-	validator := NftablesValidator{src}
-	applier := NewNftablesConfigApplier(configurator.Kb, validator, configurator.EnableDNSProxy)
-	applyAndCleanUp(applier, TplNftables, src, "/etc/nftables/rules", FileModeDefault)
+	validator := NftablesValidator{
+		path: src,
+		log:  fc.c.log,
+	}
+	applier := newNftablesConfigApplier(fc.c, validator, fc.enableDNSProxy)
+	applyAndCleanUp(fc.c.log, applier, TplNftables, src, "/etc/nftables/rules", fileModeDefault)
 }
 
-func (configurator FirewallConfigurator) getUnits() (units []unitConfiguration) {
+func (fc firewallConfigurator) getUnits() (units []unitConfiguration) {
 	units = []unitConfiguration{
 		{
 			unit:         systemdUnitDroptailer,
 			templateFile: tplDroptailer,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
-				return NewDroptailerServiceApplier(kb, v)
+			constructApplier: func(kb config, v serviceValidator) (net.Applier, error) {
+				return newDroptailerServiceApplier(kb, v)
 			},
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
 		},
 		{
 			unit:         systemdUnitFirewallController,
 			templateFile: tplFirewallController,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
-				return NewFirewallControllerServiceApplier(kb, v)
+			constructApplier: func(kb config, v serviceValidator) (net.Applier, error) {
+				return newFirewallControllerServiceApplier(kb, v)
 			},
 			enabled: false, // will be enabled in the case of k8s deployments with ignition on first boot
 		},
 		{
 			unit:         systemdUnitNftablesExporter,
 			templateFile: tplNftablesExporter,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
+			constructApplier: func(kb config, v serviceValidator) (net.Applier, error) {
 				return NewNftablesExporterServiceApplier(kb, v)
 			},
 			enabled: true,
@@ -178,34 +175,34 @@ func (configurator FirewallConfigurator) getUnits() (units []unitConfiguration) 
 		{
 			unit:         systemdUnitNodeExporter,
 			templateFile: tplNodeExporter,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
-				return NewNodeExporterServiceApplier(kb, v)
+			constructApplier: func(kb config, v serviceValidator) (net.Applier, error) {
+				return newNodeExporterServiceApplier(kb, v)
 			},
 			enabled: true,
 		},
 		{
 			unit:         systemdUnitSuricataUpdate,
 			templateFile: tplSuricataUpdate,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
-				return NewSuricataUpdateServiceApplier(kb, v)
+			constructApplier: func(kb config, v serviceValidator) (net.Applier, error) {
+				return newSuricataUpdateServiceApplier(kb, v)
 			},
 			enabled: true,
 		},
 	}
 
-	if configurator.Kb.VPN != nil {
+	if fc.c.VPN != nil {
 		units = append(units, unitConfiguration{
 			unit:         systemdUnitTailscaled,
 			templateFile: tplTailscaled,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
-				return NewTailscaledServiceApplier(kb, v)
+			constructApplier: func(kb config, v serviceValidator) (net.Applier, error) {
+				return newTailscaledServiceApplier(kb, v)
 			},
 			enabled: true,
 		}, unitConfiguration{
 			unit:         systemdUnitTailscale,
 			templateFile: tplTailscale,
-			constructApplier: func(kb KnowledgeBase, v ServiceValidator) (net.Applier, error) {
-				return NewTailscaleServiceApplier(kb, v)
+			constructApplier: func(kb config, v serviceValidator) (net.Applier, error) {
+				return newTailscaleServiceApplier(kb, v)
 			},
 			enabled: true,
 		})
@@ -214,17 +211,17 @@ func (configurator FirewallConfigurator) getUnits() (units []unitConfiguration) 
 	return units
 }
 
-func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
-	a := NewIfacesApplier(kind, kb)
+func applyCommonConfiguration(log *zap.SugaredLogger, kind BareMetalType, kb config) {
+	a := newIfacesApplier(kind, kb)
 	a.Apply()
 
 	src := mustTmpFile("hosts_")
-	applier := NewHostsApplier(kb, src)
-	applyAndCleanUp(applier, TplHosts, src, "/etc/hosts", FileModeDefault)
+	applier := newHostsApplier(kb, src)
+	applyAndCleanUp(log, applier, tplHosts, src, "/etc/hosts", fileModeDefault)
 
 	src = mustTmpFile("hostname_")
-	applier = NewHostnameApplier(kb, src)
-	applyAndCleanUp(applier, TplHostname, src, "/etc/hostname", FileModeSixFourFour)
+	applier = newHostnameApplier(kb, src)
+	applyAndCleanUp(log, applier, tplHostname, src, "/etc/hostname", fileModeSixFourFour)
 
 	src = mustTmpFile("frr_")
 	applier = NewFrrConfigApplier(kind, kb, src)
@@ -234,10 +231,10 @@ func applyCommonConfiguration(kind BareMetalType, kb KnowledgeBase) {
 		tpl = TplMachineFRR
 	}
 
-	applyAndCleanUp(applier, tpl, src, "/etc/frr/frr.conf", FileModeDefault)
+	applyAndCleanUp(log, applier, tpl, src, "/etc/frr/frr.conf", fileModeDefault)
 }
 
-func applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMode) {
+func applyAndCleanUp(log *zap.SugaredLogger, applier net.Applier, tpl, src, dest string, mode os.FileMode) {
 	log.Infof("rendering %s to %s (mode: %s)", tpl, dest, mode)
 	file := mustReadTpl(tpl)
 	mustApply(applier, file, src, dest)
@@ -250,14 +247,14 @@ func applyAndCleanUp(applier net.Applier, tpl, src, dest string, mode os.FileMod
 	_ = os.Remove(src)
 }
 
-func mustEnableUnit(unit string) {
+func mustEnableUnit(log *zap.SugaredLogger, unit string) {
 	cmd := fmt.Sprintf("systemctl enable %s", unit)
 	log.Infof("running '%s' to enable unit.'", cmd)
 
 	err := exec.NewVerboseCmd("bash", "-c", cmd).Run()
 
 	if err != nil {
-		log.Panic(err)
+		panic(err)
 	}
 }
 
@@ -266,19 +263,19 @@ func mustApply(applier net.Applier, tpl, src, dest string) {
 	_, err := applier.Apply(*t, src, dest, false)
 
 	if err != nil {
-		log.Panic(err)
+		panic(err)
 	}
 }
 
 func mustTmpFile(prefix string) string {
 	f, err := os.CreateTemp(tmpPath, prefix)
 	if err != nil {
-		log.Panic(err)
+		panic(err)
 	}
 
 	err = f.Close()
 	if err != nil {
-		log.Panic(err)
+		panic(err)
 	}
 
 	return f.Name()

@@ -19,15 +19,15 @@ type TailscaleData struct {
 	DefaultRouteVrf string
 }
 
-// NewTailscaleServiceApplier constructs a new instance of this type.
-func NewTailscaleServiceApplier(kb KnowledgeBase, v net.Validator) (net.Applier, error) {
+// newTailscaleServiceApplier constructs a new instance of this type.
+func newTailscaleServiceApplier(kb config, v net.Validator) (net.Applier, error) {
 	defaultRouteVrf, err := kb.getDefaultRouteVRFName()
 	if err != nil {
 		return nil, err
 	}
 
 	data := TailscaleData{
-		MachineID:       kb.Machineuuid,
+		MachineID:       kb.MachineUUID,
 		AuthKey:         *kb.VPN.AuthKey,
 		Address:         *kb.VPN.Address,
 		DefaultRouteVrf: defaultRouteVrf,

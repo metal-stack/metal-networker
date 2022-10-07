@@ -7,22 +7,25 @@ import (
 
 	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zaptest"
 )
 
 func TestServices(t *testing.T) {
 	assert := assert.New(t)
+	log := zaptest.NewLogger(t).Sugar()
 
-	kb := NewKnowledgeBase("testdata/firewall.yaml")
-	v := ServiceValidator{}
-	dsApplier, err := NewDroptailerServiceApplier(kb, v)
+	kb, err := New(log, "testdata/firewall.yaml")
 	assert.NoError(err)
-	fcApplier, err := NewFirewallControllerServiceApplier(kb, v)
+	v := serviceValidator{}
+	dsApplier, err := newDroptailerServiceApplier(*kb, v)
 	assert.NoError(err)
-	nodeExporterApplier, err := NewNodeExporterServiceApplier(kb, v)
+	fcApplier, err := newFirewallControllerServiceApplier(*kb, v)
 	assert.NoError(err)
-	suApplier, err := NewSuricataUpdateServiceApplier(kb, v)
+	nodeExporterApplier, err := newNodeExporterServiceApplier(*kb, v)
 	assert.NoError(err)
-	nftablesExporterApplier, err := NewNftablesExporterServiceApplier(kb, v)
+	suApplier, err := newSuricataUpdateServiceApplier(*kb, v)
+	assert.NoError(err)
+	nftablesExporterApplier, err := NewNftablesExporterServiceApplier(*kb, v)
 	assert.NoError(err)
 
 	tests := []struct {

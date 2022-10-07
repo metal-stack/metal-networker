@@ -9,20 +9,21 @@ import (
 func TestNewConfigurator(t *testing.T) {
 	tests := []struct {
 		kind     BareMetalType
-		expected interface{}
+		expected any
 	}{
 		{
 			kind:     Firewall,
-			expected: FirewallConfigurator{},
+			expected: firewallConfigurator{},
 		},
 		{
 			kind:     Machine,
-			expected: MachineConfigurator{},
+			expected: machineConfigurator{},
 		},
 	}
 
 	for _, test := range tests {
-		actual := NewConfigurator(test.kind, KnowledgeBase{})
+		actual, err := NewConfigurator(test.kind, config{})
+		assert.NoError(t, err)
 		assert.IsType(t, test.expected, actual)
 	}
 }

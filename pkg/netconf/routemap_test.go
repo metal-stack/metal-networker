@@ -5,6 +5,9 @@ import (
 	"net/netip"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zaptest"
 )
 
 type network struct {
@@ -250,18 +253,20 @@ func Test_importRulesForNetwork(t *testing.T) {
 			},
 		},
 	}
+	log := zaptest.NewLogger(t).Sugar()
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			kb := NewKnowledgeBase(tt.input)
-			err := kb.Validate(Firewall)
+			kb, err := New(log, tt.input)
+			assert.NoError(t, err)
+			err = kb.Validate(Firewall)
 			if err != nil {
 				t.Errorf("%s is not valid: %v", tt.input, err)
 				return
 			}
 			for _, network := range kb.Networks {
-				got := importRulesForNetwork(kb, network)
+				got := importRulesForNetwork(*kb, network)
 				if got == nil {
 					continue
 				}
