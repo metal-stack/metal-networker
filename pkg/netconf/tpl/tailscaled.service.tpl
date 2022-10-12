@@ -9,6 +9,7 @@ LimitMEMLOCK=infinity
 User=root
 Group=root
 Type=notify
+Environment="TS_NO_LOGS_NO_SUPPORT=true"
 ExecStartPre=ip vrf exec {{ .DefaultRouteVrf }} /usr/local/bin/tailscaled --cleanup
 ExecStart=/bin/ip vrf exec {{ .DefaultRouteVrf }} /usr/local/bin/tailscaled --port {{ .TailscaledPort }}
 ExecStopPost=ip vrf exec {{ .DefaultRouteVrf }} /usr/local/bin/tailscaled --cleanup
