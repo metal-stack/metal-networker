@@ -1,8 +1,7 @@
 [Unit]
 Description=Tailscale node agent
 Documentation=https://tailscale.com/kb/
-Wants=network-pre.target
-After=network-pre.target network.target systemd-resolved.service
+After=network.target
 
 [Service]
 LimitMEMLOCK=infinity
