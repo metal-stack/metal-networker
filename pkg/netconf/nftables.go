@@ -16,9 +16,15 @@ const (
 	// TplNftables defines the name of the template to render nftables configuration.
 	TplNftables     = "nftrules.tpl"
 	dnsPort         = "domain"
-	dnsProxyZone    = "3"
 	nftablesService = "nftables.service"
 	systemctlBin    = "/bin/systemctl"
+
+	// Set up additional conntrack zone for DNS traffic.
+	// There was a problem that duplicate packets were registered by conntrack
+	// when packet was leaking from private VRF to the internet VRF.
+	// Isolating traffic to special zone solves the problem.
+	// Zone number(3) was obtained by experiments.
+	dnsProxyZone = "3"
 )
 
 type (
