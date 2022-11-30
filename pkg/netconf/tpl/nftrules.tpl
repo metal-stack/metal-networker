@@ -45,20 +45,46 @@ table inet metal {
         ct state established,related counter accept comment "stateful output"
         ct state invalid counter drop comment "drop invalid packets"
     }
+    chain output_ct {
+        type filter hook output priority raw; policy accept;
+        {{-  $port:=.DNSProxyDNAT.Port }}
+        {{-  $zone:=.DNSProxyDNAT.Zone }}
+        {{- range .DNSProxyDNAT.InInterfaces }}
+        oifname "{{ . }}" tcp sport {{ $port }} ct zone set {{ $zone }}
+        oifname "{{ . }}" udp sport {{ $port }} ct zone set {{ $zone }}
+        {{- end }}
+    }
     chain refuse {
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
         counter drop
     }
 }
 table inet nat {
+    set public_dns_servers {
+    	type ipv4_addr
+    	flags interval
+    	auto-merge
+    	elements = { 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1 }
+    }
+
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
         {{-  $port:=.DNSProxyDNAT.Port }}
         {{-  $dst:=.DNSProxyDNAT.DestSpec }}
+        {{-  $daddr:=.DNSProxyDNAT.DAddr }}
         {{-  $cmt:=.DNSProxyDNAT.Comment }}
         {{- range .DNSProxyDNAT.InInterfaces }}
-        iifname "{{ . }}" tcp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
-        iifname "{{ . }}" udp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
+        {{ if $daddr -}} {{ $dst.AddressFamily }} daddr {{ $daddr }} {{ end -}} iifname "{{ . }}" tcp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
+        {{ if $daddr -}} {{ $dst.AddressFamily }} daddr {{ $daddr }} {{ end -}} iifname "{{ . }}" udp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
+        {{- end }}
+    }
+    chain prerouting_ct {
+        type filter hook prerouting priority raw; policy accept;
+        {{-  $port:=.DNSProxyDNAT.Port }}
+        {{-  $zone:=.DNSProxyDNAT.Zone }}
+        {{- range .DNSProxyDNAT.InInterfaces }}
+        iifname "{{ . }}" tcp dport {{ $port }} ct zone set {{ $zone }}
+        iifname "{{ . }}" udp dport {{ $port }} ct zone set {{ $zone }}
         {{- end }}
     }
     chain input {

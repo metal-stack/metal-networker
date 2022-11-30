@@ -18,6 +18,13 @@ const (
 	dnsPort         = "domain"
 	nftablesService = "nftables.service"
 	systemctlBin    = "/bin/systemctl"
+
+	// Set up additional conntrack zone for DNS traffic.
+	// There was a problem that duplicate packets were registered by conntrack
+	// when packet was leaking from private VRF to the internet VRF.
+	// Isolating traffic to special zone solves the problem.
+	// Zone number(3) was obtained by experiments.
+	dnsProxyZone = "3"
 )
 
 type (
@@ -41,7 +48,9 @@ type (
 	DNAT struct {
 		Comment      string
 		InInterfaces []string
+		DAddr        string
 		Port         string
+		Zone         string
 		DestSpec     AddrSpec
 	}
 
@@ -67,7 +76,7 @@ func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy 
 	}
 
 	if enableDNSProxy {
-		data.DNSProxyDNAT = getDNSProxyDNAT(c, dnsPort)
+		data.DNSProxyDNAT = getDNSProxyDNAT(c, dnsPort, dnsProxyZone)
 	}
 
 	if c.VPN != nil {
@@ -153,7 +162,7 @@ func getSNAT(c config, enableDNSProxy bool) []SNAT {
 	return result
 }
 
-func getDNSProxyDNAT(c config, port string) DNAT {
+func getDNSProxyDNAT(c config, port, zone string) DNAT {
 	networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
 	svis := []string{}
 	for _, n := range networks {
@@ -174,7 +183,9 @@ func getDNSProxyDNAT(c config, port string) DNAT {
 	return DNAT{
 		Comment:      "dnat to dns proxy",
 		InInterfaces: svis,
+		DAddr:        "@public_dns_servers",
 		Port:         port,
+		Zone:         zone,
 		DestSpec: AddrSpec{
 			AddressFamily: af,
 			Address:       n.Ips[0],
