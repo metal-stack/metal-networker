@@ -17,7 +17,7 @@ func mustReadTpl(tplName string) string {
 	return string(contents)
 }
 
-func mustParseTpl(tplName string) *template.Template {
+func MustParseTpl(tplName string) *template.Template {
 	s := mustReadTpl(tplName)
 	return template.Must(template.New(tplName).Parse(string(s)))
 }

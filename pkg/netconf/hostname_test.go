@@ -21,7 +21,7 @@ func TestNameHostname(t *testing.T) {
 	a := newHostnameApplier(*kb, "")
 	b := bytes.Buffer{}
 
-	tpl := mustParseTpl(tplHostname)
+	tpl := MustParseTpl(tplHostname)
 	err = a.Render(&b, *tpl)
 	assert.NoError(err)
 	assert.Equal(string(expected), b.String())

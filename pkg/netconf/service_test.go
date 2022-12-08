@@ -65,7 +65,7 @@ func TestServices(t *testing.T) {
 		assert.NoError(err)
 
 		b := bytes.Buffer{}
-		tpl := mustParseTpl(test.template)
+		tpl := MustParseTpl(test.template)
 		err = test.applier.Render(&b, *tpl)
 		assert.NoError(err)
 		assert.Equal(string(expected), b.String())

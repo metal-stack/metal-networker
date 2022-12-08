@@ -76,7 +76,7 @@ func TestFrrConfigApplier(t *testing.T) {
 			a := NewFrrConfigApplier(test.configuratorType, *kb, "")
 			b := bytes.Buffer{}
 
-			tpl := mustParseTpl(test.tpl)
+			tpl := MustParseTpl(test.tpl)
 			err = a.Render(&b, *tpl)
 			assert.NoError(t, err)
 
