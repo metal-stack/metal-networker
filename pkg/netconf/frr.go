@@ -13,7 +13,7 @@ import (
 
 const (
 	// FRRVersion holds a string that is used in the frr.conf to define the FRR version.
-	FRRVersion = "7.5"
+	FRRVersion = "8.3"
 	// TplFirewallFRR defines the name of the template to render FRR configuration to a 'firewall'.
 	TplFirewallFRR = "frr.firewall.tpl"
 	// TplMachineFRR defines the name of the template to render FRR configuration to a 'machine'.

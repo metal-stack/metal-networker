@@ -21,7 +21,7 @@ func TestNewHostsApplier(t *testing.T) {
 	a := newHostsApplier(*kb, "")
 	b := bytes.Buffer{}
 
-	tpl := mustParseTpl(tplHosts)
+	tpl := MustParseTpl(tplHosts)
 	err = a.Render(&b, *tpl)
 	assert.NoError(err)
 	assert.Equal(string(expected), b.String())
