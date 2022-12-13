@@ -116,7 +116,7 @@ func (fc firewallConfigurator) Configure() {
 			fc.c.log.Warnf("failed to deploy %s service : %v", u.unit, err)
 		}
 
-		applyAndCleanUp(fc.c.log, nfe, u.templateFile, src, path.Join(systemdUnitPath, u.unit), fileModeSystemd)
+		applyAndCleanUp(fc.c.log, nfe, u.templateFile, src, path.Join(systemdUnitPath, u.unit), fileModeSystemd, false)
 
 		if u.enabled {
 			mustEnableUnit(fc.c.log, u.unit)
@@ -130,7 +130,7 @@ func (fc firewallConfigurator) Configure() {
 		fc.c.log.Warnf("failed to configure suricata defaults: %v", err)
 	}
 
-	applyAndCleanUp(fc.c.log, applier, tplSuricataDefaults, src, "/etc/default/suricata", fileModeSixFourFour)
+	applyAndCleanUp(fc.c.log, applier, tplSuricataDefaults, src, "/etc/default/suricata", fileModeSixFourFour, false)
 
 	src = mustTmpFile("suricata.yaml_")
 	applier, err = newSuricataConfigApplier(kb, src)
@@ -139,7 +139,7 @@ func (fc firewallConfigurator) Configure() {
 		fc.c.log.Warnf("failed to configure suricata: %v", err)
 	}
 
-	applyAndCleanUp(fc.c.log, applier, tplSuricataConfig, src, "/etc/suricata/suricata.yaml", fileModeSixFourFour)
+	applyAndCleanUp(fc.c.log, applier, tplSuricataConfig, src, "/etc/suricata/suricata.yaml", fileModeSixFourFour, false)
 }
 
 func (fc firewallConfigurator) ConfigureNftables() {
@@ -149,7 +149,7 @@ func (fc firewallConfigurator) ConfigureNftables() {
 		log:  fc.c.log,
 	}
 	applier := newNftablesConfigApplier(fc.c, validator, fc.enableDNSProxy)
-	applyAndCleanUp(fc.c.log, applier, TplNftables, src, "/etc/nftables/rules", fileModeDefault)
+	applyAndCleanUp(fc.c.log, applier, TplNftables, src, "/etc/nftables/rules", fileModeDefault, true)
 }
 
 func (fc firewallConfigurator) getUnits() (units []unitConfiguration) {
@@ -223,11 +223,11 @@ func applyCommonConfiguration(log *zap.SugaredLogger, kind BareMetalType, kb con
 
 	src := mustTmpFile("hosts_")
 	applier := newHostsApplier(kb, src)
-	applyAndCleanUp(log, applier, tplHosts, src, "/etc/hosts", fileModeDefault)
+	applyAndCleanUp(log, applier, tplHosts, src, "/etc/hosts", fileModeDefault, false)
 
 	src = mustTmpFile("hostname_")
 	applier = newHostnameApplier(kb, src)
-	applyAndCleanUp(log, applier, tplHostname, src, "/etc/hostname", fileModeSixFourFour)
+	applyAndCleanUp(log, applier, tplHostname, src, "/etc/hostname", fileModeSixFourFour, false)
 
 	src = mustTmpFile("frr_")
 	applier = NewFrrConfigApplier(kind, kb, src)
@@ -237,13 +237,13 @@ func applyCommonConfiguration(log *zap.SugaredLogger, kind BareMetalType, kb con
 		tpl = TplMachineFRR
 	}
 
-	applyAndCleanUp(log, applier, tpl, src, "/etc/frr/frr.conf", fileModeDefault)
+	applyAndCleanUp(log, applier, tpl, src, "/etc/frr/frr.conf", fileModeDefault, false)
 }
 
-func applyAndCleanUp(log *zap.SugaredLogger, applier net.Applier, tpl, src, dest string, mode os.FileMode) {
+func applyAndCleanUp(log *zap.SugaredLogger, applier net.Applier, tpl, src, dest string, mode os.FileMode, reload bool) {
 	log.Infof("rendering %s to %s (mode: %s)", tpl, dest, mode)
 	file := mustReadTpl(tpl)
-	mustApply(applier, file, src, dest)
+	mustApply(applier, file, src, dest, reload)
 
 	err := os.Chmod(dest, mode)
 	if err != nil {
@@ -264,9 +264,9 @@ func mustEnableUnit(log *zap.SugaredLogger, unit string) {
 	}
 }
 
-func mustApply(applier net.Applier, tpl, src, dest string) {
+func mustApply(applier net.Applier, tpl, src, dest string, reload bool) {
 	t := template.Must(template.New(src).Parse(tpl))
-	_, err := applier.Apply(*t, src, dest, false)
+	_, err := applier.Apply(*t, src, dest, reload)
 
 	if err != nil {
 		panic(err)

@@ -79,7 +79,7 @@ func (a *ifacesApplier) Apply() {
 	src := mustTmpFile("lo_network_")
 	applier := newSystemdNetworkdApplier(src, a.data)
 	dest := fmt.Sprintf("%s/00-lo.network", systemdNetworkPath)
-	applyAndCleanUp(a.kb.log, applier, tplSystemdNetworkLo, src, dest, fileModeSystemd)
+	applyAndCleanUp(a.kb.log, applier, tplSystemdNetworkLo, src, dest, fileModeSystemd, false)
 
 	// /etc/systemd/network/1x* lan interfaces
 	offset := 10
@@ -91,7 +91,7 @@ func (a *ifacesApplier) Apply() {
 			a.kb.log.Fatalw("unable to create systemdlinkapplier", "error", err)
 		}
 		dest := fmt.Sprintf("%s/%d-lan%d.link", systemdNetworkPath, offset+i, i)
-		applyAndCleanUp(a.kb.log, applier, tplSystemdLinkLan, src, dest, fileModeSystemd)
+		applyAndCleanUp(a.kb.log, applier, tplSystemdLinkLan, src, dest, fileModeSystemd, false)
 
 		prefix = fmt.Sprintf("lan%d_network_", i)
 		src = mustTmpFile(prefix)
@@ -100,7 +100,7 @@ func (a *ifacesApplier) Apply() {
 			a.kb.log.Fatalw("unable to create systemdlinkapplier", "error", err)
 		}
 		dest = fmt.Sprintf("%s/%d-lan%d.network", systemdNetworkPath, offset+i, i)
-		applyAndCleanUp(a.kb.log, applier, tplSystemdNetworkLan, src, dest, fileModeSystemd)
+		applyAndCleanUp(a.kb.log, applier, tplSystemdNetworkLan, src, dest, fileModeSystemd, false)
 	}
 
 	if a.kind == Machine {
@@ -125,13 +125,13 @@ func applyNetdevAndNetwork(log *zap.SugaredLogger, si, di int, prefix, suffix st
 	applier := newSystemdNetworkdApplier(src, data)
 	dest := fmt.Sprintf("%s/%d-%s%s.netdev", systemdNetworkPath, di, prefix, suffix)
 	tpl := fmt.Sprintf("networkd/%d-%s.netdev.tpl", si, prefix)
-	applyAndCleanUp(log, applier, tpl, src, dest, fileModeSystemd)
+	applyAndCleanUp(log, applier, tpl, src, dest, fileModeSystemd, false)
 
 	src = mustTmpFile(prefix + "_network_")
 	applier = newSystemdNetworkdApplier(src, data)
 	dest = fmt.Sprintf("%s/%d-%s%s.network", systemdNetworkPath, di, prefix, suffix)
 	tpl = fmt.Sprintf("networkd/%d-%s.network.tpl", si, prefix)
-	applyAndCleanUp(log, applier, tpl, src, dest, fileModeSystemd)
+	applyAndCleanUp(log, applier, tpl, src, dest, fileModeSystemd, false)
 }
 
 func getEVPNIfaces(kb config) []EVPNIface {
