@@ -1,9 +1,9 @@
 {{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.SystemdLinkData*/ -}}
 {{ .Comment }}
 [Match]
-MACAddress={{ .MAC }}
+PermanentMACAddress={{ .MAC }}
 
 [Link]
 Name=lan{{ .Index }}
-NamePolicy=mac
+NamePolicy=
 MTUBytes={{ .MTU }}
