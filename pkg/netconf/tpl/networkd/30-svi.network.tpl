@@ -11,3 +11,4 @@ VRF=vrf{{ .VRF.ID }}
 {{- range .SVI.Addresses }}
 Address={{ . }}
 {{- end }}
+DuplicateAddressDetection=none

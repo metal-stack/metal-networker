@@ -8,3 +8,4 @@ MTUBytes=9000
 [Network]
 VRF=vrf3982
 Address=10.0.18.2/32
+DuplicateAddressDetection=none
