@@ -282,7 +282,7 @@ func byName(prefixLists []IPPrefixList) map[string]IPPrefixList {
 	return byName
 }
 
-func (i *importRule) routeMaps() []RouteMap {
+func (i *importRule) routeMaps(asn int64) []RouteMap {
 	var result []RouteMap
 
 	order := RouteMapOrderSeed
@@ -299,7 +299,8 @@ func (i *importRule) routeMaps() []RouteMap {
 
 		matchVrf := fmt.Sprintf("match source-vrf %s", prefixList.SourceVRF)
 		matchPfxList := fmt.Sprintf("match %s address prefix-list %s", prefixList.AddressFamily, n)
-		entries := []string{matchVrf, matchPfxList}
+		asPathPrepend := fmt.Sprintf("set as-path prepend %d %d", asn, asn)
+		entries := []string{matchVrf, matchPfxList, asPathPrepend}
 		if strings.HasSuffix(n, IPPrefixListNoExportSuffix) {
 			entries = append(entries, "set community additive no-export")
 		}
