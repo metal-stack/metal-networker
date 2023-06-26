@@ -1,8 +1,21 @@
 {{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.IptablesData*/ -}}
 {{ .Comment }}
 table inet metal {
+
+	# create a flowtable for all interfaces
+    flowtable f {
+        hook ingress priority 1;
+        devices = { lan0, lan1 };
+        counter;
+    }
+
     chain input {
         type filter hook input priority 0; policy drop;
+
+        # offload established connections
+        ip protocol { tcp, udp } flow offload @f
+        ip6 nexthdr { tcp, udp } flow offload @f
+
         meta l4proto ipv6-icmp counter accept comment "icmpv6 input required for neighbor discovery"
         iifname "lo" counter accept comment "BGP unnumbered"
         iifname "lan0" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered input from lan0"
