@@ -6,4 +6,4 @@ PermanentMACAddress=00:03:00:11:11:01
 [Link]
 Name=lan0
 NamePolicy=
-MTUBytes=9000
+MTUBytes=1440

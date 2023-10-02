@@ -15,9 +15,9 @@ const (
 	// tplSystemdNetworkLan defines the name of the template to render system.network file.
 	tplSystemdNetworkLan = "networkd/10-lan.network.tpl"
 	// mtuFirewall defines the value for MTU specific to the needs of a firewall. VXLAN requires higher MTU.
-	mtuFirewall = 9216
+	mtuFirewall = 1500
 	// mtuMachine defines the value for MTU specific to the needs of a machine.
-	mtuMachine = 9000
+	mtuMachine = 1440
 )
 
 type (
