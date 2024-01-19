@@ -20,9 +20,9 @@ table inet metal {
         counter jump refuse
     }
     chain forward {
-        type filter hook forward priority 0; policy accept;
+        type filter hook forward priority 0; policy drop;
         ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
-        tcp dport bgp ct state new counter jump refuse comment "block bgp forward to machines"
+        counter jump refuse
     }
     chain output {
         type filter hook output priority 0; policy accept;
