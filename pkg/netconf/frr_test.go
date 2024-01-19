@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 )
 
@@ -72,13 +73,13 @@ func TestFrrConfigApplier(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			log := zaptest.NewLogger(t).Sugar()
 			kb, err := New(log, test.input)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			a := NewFrrConfigApplier(test.configuratorType, *kb, "")
 			b := bytes.Buffer{}
 
 			tpl := MustParseTpl(test.tpl)
 			err = a.Render(&b, *tpl)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			// eases adjustment of test fixtures
 			// just remove old test fixture after a code change
@@ -86,25 +87,23 @@ func TestFrrConfigApplier(t *testing.T) {
 			// check them manually before commit
 			if _, err := os.Stat(test.expectedOutput); os.IsNotExist(err) {
 				err = os.WriteFile(test.expectedOutput, b.Bytes(), fileModeDefault)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				return
 			}
 
 			expected, err := os.ReadFile(test.expectedOutput)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, string(expected), b.String())
 		})
 	}
 }
 
 func TestFRRValidator_Validate(t *testing.T) {
-	assert := assert.New(t)
 	log := zaptest.NewLogger(t).Sugar()
 
 	validator := frrValidator{
 		log: log,
 	}
 	actual := validator.Validate()
-	assert.NotNil(actual)
-	assert.NotNil(actual.Error())
+	require.Error(t, actual)
 }

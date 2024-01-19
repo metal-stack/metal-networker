@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 )
 
@@ -44,7 +44,7 @@ func TestIfacesApplier(t *testing.T) {
 				systemdNetworkPath = old
 			}()
 			kb, err := New(log, tc.input)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			a := newIfacesApplier(tc.configuratorType, *kb)
 			a.Apply()
 			if equal, s := equalDirs(systemdNetworkPath, tc.expectedOutput); !equal {

@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 )
 
 func TestCompileNftRules(t *testing.T) {
-	assert := assert.New(t)
 
 	tests := []struct {
 		input          string
@@ -54,18 +54,18 @@ func TestCompileNftRules(t *testing.T) {
 		tt := tt
 		t.Run(tt.input, func(t *testing.T) {
 			expected, err := os.ReadFile(tt.expected)
-			assert.NoError(err)
+			require.NoError(t, err)
 
 			kb, err := New(log, tt.input)
-			assert.NoError(err)
+			require.NoError(t, err)
 
 			a := newNftablesConfigApplier(*kb, nil, tt.enableDNSProxy)
 			b := bytes.Buffer{}
 
 			tpl := MustParseTpl(TplNftables)
 			err = a.Render(&b, *tpl)
-			assert.NoError(err)
-			assert.Equal(string(expected), b.String())
+			require.NoError(t, err)
+			assert.Equal(t, string(expected), b.String())
 		})
 	}
 }
