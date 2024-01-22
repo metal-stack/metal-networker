@@ -29,7 +29,7 @@ table inet metal {
         counter jump refuse
     }
     chain forward {
-        type filter hook forward priority 0; policy drop;
+        type filter hook forward priority 0; policy {{.ForwardPolicy}};
         ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
         counter jump refuse
     }
