@@ -22,7 +22,8 @@ table inet metal {
     chain forward {
         type filter hook forward priority 0; policy drop;
         ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
-        counter jump refuse
+        tcp dport bgp ct state new counter jump refuse comment "block bgp forward to machines"
+        limit rate 2/minute counter log prefix "nftables-metal-dropped: "
     }
     chain output {
         type filter hook output priority 0; policy accept;
