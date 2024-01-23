@@ -12,9 +12,6 @@ table inet metal {
 
         ct state established,related counter accept comment "stateful input"
 
-        ip saddr 10.0.0.0/8 tcp dport domain ip daddr 185.1.2.3 accept comment "dnat to dns proxy"
-        ip saddr 10.0.0.0/8 udp dport domain ip daddr 185.1.2.3 accept comment "dnat to dns proxy"
-
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
         ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
         ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
@@ -23,10 +20,10 @@ table inet metal {
         counter jump refuse
     }
     chain forward {
-        type filter hook forward priority 0; policy drop;
+        type filter hook forward priority 0; policy accept;
         ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
         tcp dport bgp ct state new counter jump refuse comment "block bgp forward to machines"
-        limit rate 2/minute counter log prefix "nftables-metal-dropped: "
+        
     }
     chain output {
         type filter hook output priority 0; policy accept;
@@ -42,10 +39,6 @@ table inet metal {
     }
     chain output_ct {
         type filter hook output priority raw; policy accept;
-        oifname "vlan3981" tcp sport domain ct zone set 3
-        oifname "vlan3981" udp sport domain ct zone set 3
-        oifname "vlan3983" tcp sport domain ct zone set 3
-        oifname "vlan3983" udp sport domain ct zone set 3
     }
     chain refuse {
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
@@ -62,17 +55,9 @@ table inet nat {
 
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
-        ip daddr @public_dns_servers iifname "vlan3981" tcp dport domain dnat ip to 185.1.2.3 comment "dnat to dns proxy"
-        ip daddr @public_dns_servers iifname "vlan3981" udp dport domain dnat ip to 185.1.2.3 comment "dnat to dns proxy"
-        ip daddr @public_dns_servers iifname "vlan3983" tcp dport domain dnat ip to 185.1.2.3 comment "dnat to dns proxy"
-        ip daddr @public_dns_servers iifname "vlan3983" udp dport domain dnat ip to 185.1.2.3 comment "dnat to dns proxy"
     }
     chain prerouting_ct {
         type filter hook prerouting priority raw; policy accept;
-        iifname "vlan3981" tcp dport domain ct zone set 3
-        iifname "vlan3981" udp dport domain ct zone set 3
-        iifname "vlan3983" tcp dport domain ct zone set 3
-        iifname "vlan3983" udp dport domain ct zone set 3
     }
     chain input {
         type nat hook input priority 0; policy accept;
@@ -82,7 +67,7 @@ table inet nat {
     }
     chain postrouting {
         type nat hook postrouting priority 0; policy accept;
-        oifname "vlan104009" ip saddr 10.0.16.0/22 ip daddr != 185.1.2.3 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
-        oifname "vlan104009" ip saddr 10.0.20.0/22 ip daddr != 185.1.2.3 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
+        oifname "vlan104009" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
+        oifname "vlan104010" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: mpls-nbg-w8101-test)"
     }
 }

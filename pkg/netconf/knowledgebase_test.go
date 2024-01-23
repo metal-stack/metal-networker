@@ -8,6 +8,7 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/api"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 )
 
@@ -15,79 +16,78 @@ func mustNewKnowledgeBase(t *testing.T) config {
 	log := zaptest.NewLogger(t).Sugar()
 
 	d, err := New(log, "testdata/firewall.yaml")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, d)
 
 	return *d
 }
 
 func TestNewKnowledgeBase(t *testing.T) {
-	assert := assert.New(t)
 
 	d := mustNewKnowledgeBase(t)
 
-	assert.Equal("firewall", d.Hostname)
-	assert.NotEmpty(d.Networks)
-	assert.Equal(5, len(d.Networks))
+	assert.Equal(t, "firewall", d.Hostname)
+	assert.NotEmpty(t, d.Networks)
+	assert.Len(t, d.Networks, 5)
 
 	// private network
 	n := d.Networks[0]
-	assert.Equal(1, len(n.Ips))
-	assert.Equal("10.0.16.2", n.Ips[0])
-	assert.Equal(1, len(n.Prefixes))
-	assert.Equal("10.0.16.0/22", n.Prefixes[0])
-	assert.True(*n.Private)
-	assert.Equal(mn.PrivatePrimaryUnshared, *n.Networktype)
-	assert.Equal(int64(3981), *n.Vrf)
+	assert.Len(t, n.Ips, 1)
+	assert.Equal(t, "10.0.16.2", n.Ips[0])
+	assert.Len(t, n.Prefixes, 1)
+	assert.Equal(t, "10.0.16.0/22", n.Prefixes[0])
+	assert.True(t, *n.Private)
+	assert.Equal(t, mn.PrivatePrimaryUnshared, *n.Networktype)
+	assert.Equal(t, int64(3981), *n.Vrf)
 
 	// private shared network
 	n = d.Networks[1]
-	assert.Equal(1, len(n.Ips))
-	assert.Equal("10.0.18.2", n.Ips[0])
-	assert.Equal(1, len(n.Prefixes))
-	assert.Equal("10.0.18.0/22", n.Prefixes[0])
-	assert.True(*n.Private)
-	assert.Equal(mn.PrivateSecondaryShared, *n.Networktype)
-	assert.Equal(int64(3982), *n.Vrf)
+	assert.Len(t, n.Ips, 1)
+	assert.Equal(t, "10.0.18.2", n.Ips[0])
+	assert.Len(t, n.Prefixes, 1)
+	assert.Equal(t, "10.0.18.0/22", n.Prefixes[0])
+	assert.True(t, *n.Private)
+	assert.Equal(t, mn.PrivateSecondaryShared, *n.Networktype)
+	assert.Equal(t, int64(3982), *n.Vrf)
 
 	// public networks
 	n = d.Networks[2]
-	assert.Equal(1, len(n.Destinationprefixes))
-	assert.Equal(IPv4ZeroCIDR, n.Destinationprefixes[0])
-	assert.Equal(1, len(n.Ips))
-	assert.Equal("185.1.2.3", n.Ips[0])
-	assert.Equal(2, len(n.Prefixes))
-	assert.Equal("185.1.2.0/24", n.Prefixes[0])
-	assert.Equal("185.27.0.0/22", n.Prefixes[1])
-	assert.False(*n.Underlay)
-	assert.False(*n.Private)
-	assert.True(*n.Nat)
-	assert.Equal(mn.External, *n.Networktype)
-	assert.Equal(int64(104009), *n.Vrf)
+	assert.Len(t, n.Destinationprefixes, 1)
+	assert.Equal(t, IPv4ZeroCIDR, n.Destinationprefixes[0])
+	assert.Len(t, n.Ips, 1)
+	assert.Equal(t, "185.1.2.3", n.Ips[0])
+	assert.Len(t, n.Prefixes, 2)
+	assert.Equal(t, "185.1.2.0/24", n.Prefixes[0])
+	assert.Equal(t, "185.27.0.0/22", n.Prefixes[1])
+	assert.False(t, *n.Underlay)
+	assert.False(t, *n.Private)
+	assert.True(t, *n.Nat)
+	assert.Equal(t, mn.External, *n.Networktype)
+	assert.Equal(t, int64(104009), *n.Vrf)
 
 	// underlay network
 	n = d.Networks[3]
-	assert.Equal(int64(4200003073), *n.Asn)
-	assert.Equal(1, len(n.Ips))
-	assert.Equal("10.1.0.1", n.Ips[0])
-	assert.Equal(1, len(n.Prefixes))
-	assert.Equal("10.0.12.0/22", n.Prefixes[0])
-	assert.True(*n.Underlay)
-	assert.Equal(mn.Underlay, *n.Networktype)
+	assert.Equal(t, int64(4200003073), *n.Asn)
+	assert.Len(t, n.Ips, 1)
+	assert.Equal(t, "10.1.0.1", n.Ips[0])
+	assert.Len(t, n.Prefixes, 1)
+	assert.Equal(t, "10.0.12.0/22", n.Prefixes[0])
+	assert.True(t, *n.Underlay)
+	assert.Equal(t, mn.Underlay, *n.Networktype)
 
 	// public network mpls
 	n = d.Networks[4]
-	assert.Equal(1, len(n.Destinationprefixes))
-	assert.Equal("100.127.1.0/24", n.Destinationprefixes[0])
-	assert.Equal(1, len(n.Ips))
-	assert.Equal("100.127.129.1", n.Ips[0])
-	assert.Equal(1, len(n.Prefixes))
-	assert.Equal("100.127.129.0/24", n.Prefixes[0])
-	assert.False(*n.Underlay)
-	assert.False(*n.Private)
-	assert.True(*n.Nat)
-	assert.Equal(mn.External, *n.Networktype)
-	assert.Equal(int64(104010), *n.Vrf)
+	assert.Len(t, n.Destinationprefixes, 1)
+	assert.Equal(t, "100.127.1.0/24", n.Destinationprefixes[0])
+	assert.Len(t, n.Ips, 1)
+	assert.Equal(t, "100.127.129.1", n.Ips[0])
+	assert.Len(t, n.Prefixes, 1)
+	assert.Equal(t, "100.127.129.0/24", n.Prefixes[0])
+	assert.False(t, *n.Underlay)
+	assert.False(t, *n.Private)
+	assert.True(t, *n.Nat)
+	assert.Equal(t, mn.External, *n.Networktype)
+	assert.Equal(t, int64(104010), *n.Vrf)
 }
 
 var (
@@ -184,10 +184,10 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 			t.Run(fmt.Sprintf("testcase %d - kind %v", i, kind), func(t *testing.T) {
 				actualErr := test.kb.Validate(kind)
 				if test.expectedErrMsg == "" {
-					assert.NoError(t, actualErr)
+					require.NoError(t, actualErr)
 					return
 				}
-				assert.EqualError(t, actualErr, test.expectedErrMsg, "expected error: %s", test.expectedErrMsg)
+				require.EqualError(t, actualErr, test.expectedErrMsg, "expected error: %s", test.expectedErrMsg)
 			})
 		}
 	}

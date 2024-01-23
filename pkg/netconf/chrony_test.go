@@ -7,11 +7,10 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/api"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChronyServiceEnabler_Enable(t *testing.T) {
-	assert := assert.New(t)
-
 	vrf := int64(104009)
 	external := mn.External
 	network := &models.V1MachineNetwork{Networktype: &external, Destinationprefixes: []string{IPv4ZeroCIDR}, Vrf: &vrf}
@@ -32,13 +31,13 @@ func TestChronyServiceEnabler_Enable(t *testing.T) {
 		},
 	}
 
-	for _, t := range tests {
-		e, err := newChronyServiceEnabler(t.kb)
-		if t.isErrorExpected {
-			assert.Error(err)
+	for _, tt := range tests {
+		e, err := newChronyServiceEnabler(tt.kb)
+		if tt.isErrorExpected {
+			require.Error(t, err)
 		} else {
-			assert.NoError(err)
+			require.NoError(t, err)
 		}
-		assert.Equal(t.vrf, e.vrf)
+		assert.Equal(t, tt.vrf, e.vrf)
 	}
 }
