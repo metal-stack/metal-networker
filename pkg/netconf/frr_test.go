@@ -2,12 +2,12 @@ package netconf
 
 import (
 	"bytes"
+	"log/slog"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
 )
 
 func TestFrrConfigApplier(t *testing.T) {
@@ -71,7 +71,7 @@ func TestFrrConfigApplier(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
-			log := zaptest.NewLogger(t).Sugar()
+			log := slog.Default()
 			kb, err := New(log, test.input)
 			require.NoError(t, err)
 			a := NewFrrConfigApplier(test.configuratorType, *kb, "")
@@ -99,10 +99,8 @@ func TestFrrConfigApplier(t *testing.T) {
 }
 
 func TestFRRValidator_Validate(t *testing.T) {
-	log := zaptest.NewLogger(t).Sugar()
-
 	validator := frrValidator{
-		log: log,
+		log: slog.Default(),
 	}
 	actual := validator.Validate()
 	require.Error(t, actual)

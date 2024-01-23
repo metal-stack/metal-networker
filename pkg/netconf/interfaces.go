@@ -3,11 +3,11 @@ package netconf
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"net/netip"
 	"text/template"
 
 	mn "github.com/metal-stack/metal-lib/pkg/net"
-	"go.uber.org/zap"
 )
 
 type (
@@ -46,7 +46,8 @@ func newIfacesApplier(kind BareMetalType, c config) ifacesApplier {
 		// The first lo IP is used within network communication and other systems depend on seeing the first private ip.
 		d.Loopback.IPs = addBitlen(append(private.Ips, c.CollectIPs(mn.External)...))
 	default:
-		c.log.Fatalf("unknown configuratorType of configurator: %v", kind)
+		c.log.Error("unknown configuratorType", "kind", kind)
+		panic(fmt.Errorf("unknown configurator type:%v", kind))
 	}
 
 	return ifacesApplier{kind: kind, kb: c, data: d}
@@ -88,7 +89,8 @@ func (a *ifacesApplier) Apply() {
 		src := mustTmpFile(prefix)
 		applier, err := newSystemdLinkApplier(a.kind, uuid, i, nic, src, evpnIfaces)
 		if err != nil {
-			a.kb.log.Fatalw("unable to create systemdlinkapplier", "error", err)
+			a.kb.log.Error("unable to create systemdlinkapplier", "error", err)
+			panic(err)
 		}
 		dest := fmt.Sprintf("%s/%d-lan%d.link", systemdNetworkPath, offset+i, i)
 		applyAndCleanUp(a.kb.log, applier, tplSystemdLinkLan, src, dest, fileModeSystemd, false)
@@ -97,7 +99,8 @@ func (a *ifacesApplier) Apply() {
 		src = mustTmpFile(prefix)
 		applier, err = newSystemdLinkApplier(a.kind, uuid, i, nic, src, evpnIfaces)
 		if err != nil {
-			a.kb.log.Fatalw("unable to create systemdlinkapplier", "error", err)
+			a.kb.log.Error("unable to create systemdlinkapplier", "error", err)
+			panic(err)
 		}
 		dest = fmt.Sprintf("%s/%d-lan%d.network", systemdNetworkPath, offset+i, i)
 		applyAndCleanUp(a.kb.log, applier, tplSystemdNetworkLan, src, dest, fileModeSystemd, false)
@@ -120,7 +123,7 @@ func (a *ifacesApplier) Apply() {
 	}
 }
 
-func applyNetdevAndNetwork(log *zap.SugaredLogger, si, di int, prefix, suffix string, data any) {
+func applyNetdevAndNetwork(log *slog.Logger, si, di int, prefix, suffix string, data any) {
 	src := mustTmpFile(prefix + "_netdev_")
 	applier := newSystemdNetworkdApplier(src, data)
 	dest := fmt.Sprintf("%s/%d-%s%s.netdev", systemdNetworkPath, di, prefix, suffix)

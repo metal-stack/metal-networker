@@ -2,17 +2,17 @@ package netconf
 
 import (
 	"bytes"
+	"log/slog"
 	"os"
 	"testing"
 
 	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
 )
 
 func TestServices(t *testing.T) {
-	log := zaptest.NewLogger(t).Sugar()
+	log := slog.Default()
 
 	kb, err := New(log, "testdata/firewall.yaml")
 	require.NoError(t, err)
