@@ -2,11 +2,10 @@ package netconf
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path"
 	"text/template"
-
-	"go.uber.org/zap"
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
@@ -110,11 +109,11 @@ func (fc firewallConfigurator) Configure(forwardPolicy ForwardPolicy) {
 
 	chrony, err := newChronyServiceEnabler(fc.c)
 	if err != nil {
-		fc.c.log.Warnf("failed to configure Chrony: %v", err)
+		fc.c.log.Warn("failed to configure chrony", "error", err)
 	} else {
 		err := chrony.Enable()
 		if err != nil {
-			fc.c.log.Errorf("enabling Chrony failed: %v", err)
+			fc.c.log.Error("enabling chrony failed", "error", err)
 		}
 	}
 
@@ -124,7 +123,7 @@ func (fc firewallConfigurator) Configure(forwardPolicy ForwardPolicy) {
 		nfe, err := u.constructApplier(fc.c, validatorService)
 
 		if err != nil {
-			fc.c.log.Warnf("failed to deploy %s service : %v", u.unit, err)
+			fc.c.log.Warn("failed to deploy", "unit", u.unit, "error", err)
 		}
 
 		applyAndCleanUp(fc.c.log, nfe, u.templateFile, src, path.Join(systemdUnitPath, u.unit), fileModeSystemd, false)
@@ -138,7 +137,7 @@ func (fc firewallConfigurator) Configure(forwardPolicy ForwardPolicy) {
 	applier, err := newSuricataDefaultsApplier(kb, src)
 
 	if err != nil {
-		fc.c.log.Warnf("failed to configure suricata defaults: %v", err)
+		fc.c.log.Warn("failed to configure suricata defaults", "error", err)
 	}
 
 	applyAndCleanUp(fc.c.log, applier, tplSuricataDefaults, src, "/etc/default/suricata", fileModeSixFourFour, false)
@@ -147,7 +146,7 @@ func (fc firewallConfigurator) Configure(forwardPolicy ForwardPolicy) {
 	applier, err = newSuricataConfigApplier(kb, src)
 
 	if err != nil {
-		fc.c.log.Warnf("failed to configure suricata: %v", err)
+		fc.c.log.Warn("failed to configure suricata", "error", err)
 	}
 
 	applyAndCleanUp(fc.c.log, applier, tplSuricataConfig, src, "/etc/suricata/suricata.yaml", fileModeSixFourFour, false)
@@ -228,7 +227,7 @@ func (fc firewallConfigurator) getUnits() (units []unitConfiguration) {
 	return units
 }
 
-func applyCommonConfiguration(log *zap.SugaredLogger, kind BareMetalType, kb config) {
+func applyCommonConfiguration(log *slog.Logger, kind BareMetalType, kb config) {
 	a := newIfacesApplier(kind, kb)
 	a.Apply()
 
@@ -251,22 +250,22 @@ func applyCommonConfiguration(log *zap.SugaredLogger, kind BareMetalType, kb con
 	applyAndCleanUp(log, applier, tpl, src, "/etc/frr/frr.conf", fileModeDefault, false)
 }
 
-func applyAndCleanUp(log *zap.SugaredLogger, applier net.Applier, tpl, src, dest string, mode os.FileMode, reload bool) {
-	log.Infof("rendering %s to %s (mode: %s)", tpl, dest, mode)
+func applyAndCleanUp(log *slog.Logger, applier net.Applier, tpl, src, dest string, mode os.FileMode, reload bool) {
+	log.Info("rendering", "template", tpl, "destination", dest, "mode", mode)
 	file := mustReadTpl(tpl)
 	mustApply(applier, file, src, dest, reload)
 
 	err := os.Chmod(dest, mode)
 	if err != nil {
-		log.Errorf("error to chmod %s to %s", dest, mode)
+		log.Error("unable change mode", "file", dest, "mode", mode, "error", err)
 	}
 
 	_ = os.Remove(src)
 }
 
-func mustEnableUnit(log *zap.SugaredLogger, unit string) {
+func mustEnableUnit(log *slog.Logger, unit string) {
 	cmd := fmt.Sprintf("systemctl enable %s", unit)
-	log.Infof("running '%s' to enable unit.'", cmd)
+	log.Info("enable unit", "command", cmd)
 
 	err := exec.NewVerboseCmd("bash", "-c", cmd).Run()
 

@@ -2,12 +2,12 @@ package netconf
 
 import (
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
 )
 
 type network struct {
@@ -253,7 +253,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 			},
 		},
 	}
-	log := zaptest.NewLogger(t).Sugar()
+	log := slog.Default()
 
 	for _, tt := range tests {
 		tt := tt

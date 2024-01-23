@@ -2,13 +2,13 @@ package netconf
 
 import (
 	"fmt"
+	"log/slog"
 	"net/netip"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
-	"go.uber.org/zap"
 )
 
 const (
@@ -54,7 +54,7 @@ type (
 	// frrValidator validates the frr.conf to apply.
 	frrValidator struct {
 		path string
-		log  *zap.SugaredLogger
+		log  *slog.Logger
 	}
 
 	// AddressFamily is the address family for the routing daemon.
@@ -90,7 +90,8 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string) net.Appli
 			},
 		}
 	default:
-		c.log.Fatalf("unknown kind of bare metal: %v", kind)
+		c.log.Error("unknown kind of bare metal", "kind", kind)
+		panic(fmt.Errorf("unknown kind %v", kind))
 	}
 
 	validator := frrValidator{
@@ -121,7 +122,7 @@ func routerID(net *models.V1MachineNetwork) string {
 // Validate can be used to run validation on FRR configuration using vtysh.
 func (v frrValidator) Validate() error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", v.path)
-	v.log.Infof("running '%s' to validate changes.'", vtysh)
+	v.log.Info("validate changes", "command", vtysh)
 
 	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }

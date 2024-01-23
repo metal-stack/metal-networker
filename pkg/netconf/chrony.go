@@ -2,15 +2,15 @@ package netconf
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
-	"go.uber.org/zap"
 )
 
 // chronyServiceEnabler can enable chrony systemd service for the given VRF.
 type chronyServiceEnabler struct {
 	vrf string
-	log *zap.SugaredLogger
+	log *slog.Logger
 }
 
 // newChronyServiceEnabler constructs a new instance of this type.
@@ -25,7 +25,7 @@ func newChronyServiceEnabler(kb config) (chronyServiceEnabler, error) {
 // Enable enables chrony systemd service for the given VRF to be started after boot.
 func (c chronyServiceEnabler) Enable() error {
 	cmd := fmt.Sprintf("systemctl enable chrony@%s", c.vrf)
-	c.log.Infof("running '%s' to enable chrony.'", cmd)
+	c.log.Info("enable chrony", "command", cmd)
 
 	return exec.NewVerboseCmd("bash", "-c", cmd).Run()
 }

@@ -2,13 +2,13 @@ package netconf
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
 )
 
 func TestIfacesApplier(t *testing.T) {
@@ -28,17 +28,15 @@ func TestIfacesApplier(t *testing.T) {
 			configuratorType: Machine,
 		},
 	}
-	log := zaptest.NewLogger(t).Sugar()
+	log := slog.Default()
 
 	tmpPath = os.TempDir()
 	for _, tc := range tests {
 		func() {
 			old := systemdNetworkPath
 			tempdir, err := os.MkdirTemp(os.TempDir(), "networkd*")
+			require.NoError(t, err)
 			systemdNetworkPath = tempdir
-			if err != nil {
-				log.Fatal(err)
-			}
 			defer func() {
 				os.RemoveAll(systemdNetworkPath)
 				systemdNetworkPath = old

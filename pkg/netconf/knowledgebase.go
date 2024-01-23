@@ -3,11 +3,11 @@ package netconf
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 
 	"github.com/metal-stack/metal-hammer/pkg/api"
-	"go.uber.org/zap"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
@@ -26,17 +26,17 @@ type (
 	// It represents the input yaml that is needed to render network configuration files.
 	config struct {
 		api.InstallerConfig
-		log *zap.SugaredLogger
+		log *slog.Logger
 	}
 )
 
 // New creates a new instance of this type.
-func New(log *zap.SugaredLogger, path string) (*config, error) {
-	log.Infof("loading: %s", path)
+func New(log *slog.Logger, path string) (*config, error) {
+	log.Info("loading", "path", path)
 
 	f, err := os.ReadFile(path)
 	if err != nil {
-		log.Panic(err)
+		return nil, err
 	}
 
 	installer := &api.InstallerConfig{}
@@ -221,7 +221,7 @@ func (c config) nicsContainValidMACs() bool {
 		}
 
 		if _, err := net.ParseMAC(*nic.Mac); err != nil {
-			c.log.Errorf("invalid mac: %s", *nic.Mac)
+			c.log.Error("invalid mac", "mac", *nic.Mac)
 			return false
 		}
 	}

@@ -2,6 +2,7 @@ package netconf
 
 import (
 	"fmt"
+	"log/slog"
 	"testing"
 
 	"github.com/metal-stack/metal-go/api/models"
@@ -9,11 +10,10 @@ import (
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
 )
 
 func mustNewKnowledgeBase(t *testing.T) config {
-	log := zaptest.NewLogger(t).Sugar()
+	log := slog.Default()
 
 	d, err := New(log, "testdata/firewall.yaml")
 	require.NoError(t, err)
@@ -99,14 +99,14 @@ var (
 	vrf1      = int64(1011209)
 )
 
-func stubKnowledgeBase(t *testing.T) config {
+func stubKnowledgeBase() config {
 	privateNetID := "private"
 	underlayNetID := "underlay"
 	mac := "00:00:00:00:00:00"
 	privatePrimaryUnshared := mn.PrivatePrimaryUnshared
 	underlay := mn.Underlay
 	external := mn.External
-	log := zaptest.NewLogger(t).Sugar()
+	log := slog.Default()
 
 	return config{
 		InstallerConfig: api.InstallerConfig{
@@ -131,49 +131,49 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 		kinds          []BareMetalType
 	}{{
 		expectedErrMsg: "",
-		kb:             stubKnowledgeBase(t),
+		kb:             stubKnowledgeBase(),
 		kinds:          []BareMetalType{Firewall, Machine},
 	},
 		{
 			expectedErrMsg: "expectation at least one network is present failed",
-			kb:             stripNetworks(stubKnowledgeBase(t)),
+			kb:             stripNetworks(stubKnowledgeBase()),
 			kinds:          []BareMetalType{Firewall, Machine},
 		},
 		{
 			expectedErrMsg: "at least one IP must be present to be considered as LOOPBACK IP (" +
 				"'private: true' network IP for machine, 'underlay: true' network IP for firewall",
-			kb:    stripIPs(stubKnowledgeBase(t)),
+			kb:    stripIPs(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine},
 		},
 		{expectedErrMsg: "expectation exactly one underlay network is present failed",
-			kb:    maskUnderlayNetworks(stubKnowledgeBase(t)),
+			kb:    maskUnderlayNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "expectation exactly one 'private: true' network is present failed",
-			kb:    maskPrivatePrimaryNetworks(stubKnowledgeBase(t)),
+			kb:    maskPrivatePrimaryNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine}},
 		{expectedErrMsg: "'asn' of private (machine) resp. underlay (firewall) network must not be missing",
-			kb:    stripPrivateNetworkASN(stubKnowledgeBase(t)),
+			kb:    stripPrivateNetworkASN(stubKnowledgeBase()),
 			kinds: []BareMetalType{Machine}},
 		{expectedErrMsg: "'asn' of private (machine) resp. underlay (firewall) network must not be missing",
-			kb:    stripUnderlayNetworkASN(stubKnowledgeBase(t)),
+			kb:    stripUnderlayNetworkASN(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "at least one 'nics/nic' definition must be present",
-			kb:    stripNICs(stubKnowledgeBase(t)),
+			kb:    stripNICs(stubKnowledgeBase()),
 			kinds: []BareMetalType{Machine}},
 		{expectedErrMsg: "each 'nic' definition must contain a valid 'mac'",
-			kb:    stripMACs(stubKnowledgeBase(t)),
+			kb:    stripMACs(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine}},
 		{expectedErrMsg: "private network must not lack prefixes since nat is required",
-			kb:    setupIllegalNat(stubKnowledgeBase(t)),
+			kb:    setupIllegalNat(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "non-private, non-underlay networks must contain destination prefix(es) to make any sense of it",
-			kb:    stripDestinationPrefixesFromPublicNetworks(stubKnowledgeBase(t)),
+			kb:    stripDestinationPrefixesFromPublicNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "networks with 'underlay: false' must contain a value vor 'vrf' as it is used for BGP",
-			kb:    stripVRFValueOfNonUnderlayNetworks(stubKnowledgeBase(t)),
+			kb:    stripVRFValueOfNonUnderlayNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "each 'nic' definition must contain a valid 'mac'",
-			kb:    unlegalizeMACs(stubKnowledgeBase(t)),
+			kb:    unlegalizeMACs(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine}},
 	}
 
