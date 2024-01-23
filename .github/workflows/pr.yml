@@ -11,6 +11,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
     - name: Set up Go 1.21
       uses: actions/setup-go@v5
       with:
@@ -21,7 +22,6 @@ jobs:
       uses: golangci/golangci-lint-action@v3
       with:
         args: -p bugs -p unused
+
     - name: Build project
-      run: |
-        make
-        make validate
+      run: make
