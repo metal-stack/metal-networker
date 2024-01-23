@@ -99,7 +99,7 @@ var (
 	vrf1      = int64(1011209)
 )
 
-func stubKnowledgeBase(t *testing.T) config {
+func stubKnowledgeBase() config {
 	privateNetID := "private"
 	underlayNetID := "underlay"
 	mac := "00:00:00:00:00:00"
@@ -131,49 +131,49 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 		kinds          []BareMetalType
 	}{{
 		expectedErrMsg: "",
-		kb:             stubKnowledgeBase(t),
+		kb:             stubKnowledgeBase(),
 		kinds:          []BareMetalType{Firewall, Machine},
 	},
 		{
 			expectedErrMsg: "expectation at least one network is present failed",
-			kb:             stripNetworks(stubKnowledgeBase(t)),
+			kb:             stripNetworks(stubKnowledgeBase()),
 			kinds:          []BareMetalType{Firewall, Machine},
 		},
 		{
 			expectedErrMsg: "at least one IP must be present to be considered as LOOPBACK IP (" +
 				"'private: true' network IP for machine, 'underlay: true' network IP for firewall",
-			kb:    stripIPs(stubKnowledgeBase(t)),
+			kb:    stripIPs(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine},
 		},
 		{expectedErrMsg: "expectation exactly one underlay network is present failed",
-			kb:    maskUnderlayNetworks(stubKnowledgeBase(t)),
+			kb:    maskUnderlayNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "expectation exactly one 'private: true' network is present failed",
-			kb:    maskPrivatePrimaryNetworks(stubKnowledgeBase(t)),
+			kb:    maskPrivatePrimaryNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine}},
 		{expectedErrMsg: "'asn' of private (machine) resp. underlay (firewall) network must not be missing",
-			kb:    stripPrivateNetworkASN(stubKnowledgeBase(t)),
+			kb:    stripPrivateNetworkASN(stubKnowledgeBase()),
 			kinds: []BareMetalType{Machine}},
 		{expectedErrMsg: "'asn' of private (machine) resp. underlay (firewall) network must not be missing",
-			kb:    stripUnderlayNetworkASN(stubKnowledgeBase(t)),
+			kb:    stripUnderlayNetworkASN(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "at least one 'nics/nic' definition must be present",
-			kb:    stripNICs(stubKnowledgeBase(t)),
+			kb:    stripNICs(stubKnowledgeBase()),
 			kinds: []BareMetalType{Machine}},
 		{expectedErrMsg: "each 'nic' definition must contain a valid 'mac'",
-			kb:    stripMACs(stubKnowledgeBase(t)),
+			kb:    stripMACs(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine}},
 		{expectedErrMsg: "private network must not lack prefixes since nat is required",
-			kb:    setupIllegalNat(stubKnowledgeBase(t)),
+			kb:    setupIllegalNat(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "non-private, non-underlay networks must contain destination prefix(es) to make any sense of it",
-			kb:    stripDestinationPrefixesFromPublicNetworks(stubKnowledgeBase(t)),
+			kb:    stripDestinationPrefixesFromPublicNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "networks with 'underlay: false' must contain a value vor 'vrf' as it is used for BGP",
-			kb:    stripVRFValueOfNonUnderlayNetworks(stubKnowledgeBase(t)),
+			kb:    stripVRFValueOfNonUnderlayNetworks(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall}},
 		{expectedErrMsg: "each 'nic' definition must contain a valid 'mac'",
-			kb:    unlegalizeMACs(stubKnowledgeBase(t)),
+			kb:    unlegalizeMACs(stubKnowledgeBase()),
 			kinds: []BareMetalType{Firewall, Machine}},
 	}
 
