@@ -39,11 +39,22 @@ var (
 	tmpPath = "/etc/metal/networker/"
 )
 
+// ForwardPolicy defines how packets in the forwarding chain are handled, can be either drop or accept.
+// drop will be the standard for firewalls which are not managed by kubernetes resources (CWNPs)
+type ForwardPolicy string
+
+const (
+	// ForwardPolicyDrop drops packets which try to go through the forwarding chain
+	ForwardPolicyDrop = ForwardPolicy("drop")
+	// ForwardPolicyAccept accepts packets which try to go through the forwarding chain
+	ForwardPolicyAccept = ForwardPolicy("accept")
+)
+
 type (
 	// Configurator is an interface to configure bare metal servers.
 	Configurator interface {
-		Configure()
-		ConfigureNftables()
+		Configure(forwardPolicy ForwardPolicy)
+		ConfigureNftables(forwardPolicy ForwardPolicy)
 	}
 
 	// machineConfigurator is a configurator that configures a bare metal server as 'machine'.
@@ -83,19 +94,19 @@ func NewConfigurator(kind BareMetalType, c config, enableDNS bool) (Configurator
 }
 
 // Configure applies configuration to a bare metal server to function as 'machine'.
-func (mc machineConfigurator) Configure() {
+func (mc machineConfigurator) Configure(forwardPolicy ForwardPolicy) {
 	applyCommonConfiguration(mc.c.log, Machine, mc.c)
 }
 
 // ConfigureNftables is empty function that exists just to satisfy the Configurator interface
-func (mc machineConfigurator) ConfigureNftables() {}
+func (mc machineConfigurator) ConfigureNftables(forwardPolicy ForwardPolicy) {}
 
 // Configure applies configuration to a bare metal server to function as 'firewall'.
-func (fc firewallConfigurator) Configure() {
+func (fc firewallConfigurator) Configure(forwardPolicy ForwardPolicy) {
 	kb := fc.c
 	applyCommonConfiguration(fc.c.log, Firewall, kb)
 
-	fc.ConfigureNftables()
+	fc.ConfigureNftables(forwardPolicy)
 
 	chrony, err := newChronyServiceEnabler(fc.c)
 	if err != nil {
@@ -142,13 +153,13 @@ func (fc firewallConfigurator) Configure() {
 	applyAndCleanUp(fc.c.log, applier, tplSuricataConfig, src, "/etc/suricata/suricata.yaml", fileModeSixFourFour, false)
 }
 
-func (fc firewallConfigurator) ConfigureNftables() {
+func (fc firewallConfigurator) ConfigureNftables(forwardPolicy ForwardPolicy) {
 	src := mustTmpFile("nftrules_")
 	validator := NftablesValidator{
 		path: src,
 		log:  fc.c.log,
 	}
-	applier := newNftablesConfigApplier(fc.c, validator, fc.enableDNSProxy)
+	applier := newNftablesConfigApplier(fc.c, validator, fc.enableDNSProxy, forwardPolicy)
 	applyAndCleanUp(fc.c.log, applier, TplNftables, src, "/etc/nftables/rules", fileModeDefault, true)
 }
 

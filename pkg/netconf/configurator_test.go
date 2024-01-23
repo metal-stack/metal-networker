@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewConfigurator(t *testing.T) {
@@ -21,9 +22,9 @@ func TestNewConfigurator(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		actual, err := NewConfigurator(test.kind, config{}, false)
-		assert.NoError(t, err)
-		assert.IsType(t, test.expected, actual)
+	for _, tt := range tests {
+		actual, err := NewConfigurator(tt.kind, config{}, false)
+		require.NoError(t, err)
+		assert.IsType(t, tt.expected, actual)
 	}
 }

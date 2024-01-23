@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 )
 
@@ -259,7 +259,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			kb, err := New(log, tt.input)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			err = kb.Validate(Firewall)
 			if err != nil {
 				t.Errorf("%s is not valid: %v", tt.input, err)

@@ -14,10 +14,7 @@ validate () {
         . -t metal-networker
 }
 
-validate "ubuntu" "20.04" "frr-8"
-validate "debian" "10" "frr-8"
-
-# There is no release for jammy available yet
-# validate "ubuntu" "22.04" "frr-8"
 validate "ubuntu" "22.04" "frr-8"
-validate "debian" "11" "frr-8"
+validate "ubuntu" "22.04" "frr-9"
+validate "debian" "12" "frr-8"
+validate "debian" "12" "frr-9"

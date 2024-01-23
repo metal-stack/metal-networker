@@ -30,10 +30,11 @@ const (
 type (
 	// NftablesData represents the information required to render nftables configuration.
 	NftablesData struct {
-		Comment      string
-		SNAT         []SNAT
-		DNSProxyDNAT DNAT
-		VPN          bool
+		Comment       string
+		SNAT          []SNAT
+		DNSProxyDNAT  DNAT
+		VPN           bool
+		ForwardPolicy string
 	}
 
 	// SNAT holds the information required to configure Source NAT.
@@ -69,10 +70,11 @@ type (
 )
 
 // newNftablesConfigApplier constructs a new instance of this type.
-func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy bool) net.Applier {
+func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy bool, forwardPolicy ForwardPolicy) net.Applier {
 	data := NftablesData{
-		Comment: versionHeader(c.MachineUUID),
-		SNAT:    getSNAT(c, enableDNSProxy),
+		Comment:       versionHeader(c.MachineUUID),
+		SNAT:          getSNAT(c, enableDNSProxy),
+		ForwardPolicy: string(forwardPolicy),
 	}
 
 	if enableDNSProxy {

@@ -7,26 +7,26 @@ import (
 
 	"github.com/metal-stack/metal-networker/pkg/net"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 )
 
 func TestServices(t *testing.T) {
-	assert := assert.New(t)
 	log := zaptest.NewLogger(t).Sugar()
 
 	kb, err := New(log, "testdata/firewall.yaml")
-	assert.NoError(err)
+	require.NoError(t, err)
 	v := serviceValidator{}
 	dsApplier, err := newDroptailerServiceApplier(*kb, v)
-	assert.NoError(err)
+	require.NoError(t, err)
 	fcApplier, err := newFirewallControllerServiceApplier(*kb, v)
-	assert.NoError(err)
+	require.NoError(t, err)
 	nodeExporterApplier, err := newNodeExporterServiceApplier(*kb, v)
-	assert.NoError(err)
+	require.NoError(t, err)
 	suApplier, err := newSuricataUpdateServiceApplier(*kb, v)
-	assert.NoError(err)
+	require.NoError(t, err)
 	nftablesExporterApplier, err := NewNftablesExporterServiceApplier(*kb, v)
-	assert.NoError(err)
+	require.NoError(t, err)
 
 	tests := []struct {
 		applier  net.Applier
@@ -62,12 +62,12 @@ func TestServices(t *testing.T) {
 
 	for _, test := range tests {
 		expected, err := os.ReadFile(test.expected)
-		assert.NoError(err)
+		require.NoError(t, err)
 
 		b := bytes.Buffer{}
 		tpl := MustParseTpl(test.template)
 		err = test.applier.Render(&b, *tpl)
-		assert.NoError(err)
-		assert.Equal(string(expected), b.String())
+		require.NoError(t, err)
+		assert.Equal(t, string(expected), b.String())
 	}
 }
