@@ -2,6 +2,7 @@ package netconf
 
 import (
 	"fmt"
+	"log/slog"
 	"testing"
 
 	"github.com/metal-stack/metal-go/api/models"
@@ -9,11 +10,10 @@ import (
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
 )
 
 func mustNewKnowledgeBase(t *testing.T) config {
-	log := zaptest.NewLogger(t).Sugar()
+	log := slog.Default()
 
 	d, err := New(log, "testdata/firewall.yaml")
 	require.NoError(t, err)
@@ -106,7 +106,7 @@ func stubKnowledgeBase(t *testing.T) config {
 	privatePrimaryUnshared := mn.PrivatePrimaryUnshared
 	underlay := mn.Underlay
 	external := mn.External
-	log := zaptest.NewLogger(t).Sugar()
+	log := slog.Default()
 
 	return config{
 		InstallerConfig: api.InstallerConfig{

@@ -2,12 +2,12 @@ package netconf
 
 import (
 	"bytes"
+	"log/slog"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
 )
 
 func TestCompileNftRules(t *testing.T) {
@@ -61,7 +61,7 @@ func TestCompileNftRules(t *testing.T) {
 			forwardPolicy:  ForwardPolicyDrop,
 		},
 	}
-	log := zaptest.NewLogger(t).Sugar()
+	log := slog.Default()
 
 	for _, tt := range tests {
 		tt := tt

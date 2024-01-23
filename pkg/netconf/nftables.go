@@ -2,11 +2,11 @@ package netconf
 
 import (
 	"fmt"
+	"log/slog"
 	"net/netip"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
-	"go.uber.org/zap"
 
 	"github.com/metal-stack/metal-networker/pkg/exec"
 	"github.com/metal-stack/metal-networker/pkg/net"
@@ -63,7 +63,7 @@ type (
 	// NftablesValidator can validate configuration for nftables rules.
 	NftablesValidator struct {
 		path string
-		log  *zap.SugaredLogger
+		log  *slog.Logger
 	}
 
 	NftablesReloader struct{}
@@ -197,6 +197,6 @@ func getDNSProxyDNAT(c config, port, zone string) DNAT {
 
 // Validate validates network interfaces configuration.
 func (v NftablesValidator) Validate() error {
-	v.log.Infof("running 'nft --check --file %s' to validate changes.", v.path)
+	v.log.Info("running 'nft --check --file' to validate changes.", "file", v.path)
 	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
 }
