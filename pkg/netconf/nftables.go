@@ -219,7 +219,7 @@ func getFirewallRules(c config) FirewallRules {
 				continue
 			}
 			egressRules = append(egressRules,
-				fmt.Sprintf("ip saddr { 10.0.0.0/8 } %s daddr %s %s dport { %s } accept comment %q", af, daddr, r.Protocol, strings.Join(ports, ","), r.Comment))
+				fmt.Sprintf("ip saddr { 10.0.0.0/8 } %s daddr %s %s dport { %s } accept comment %q", af, daddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
 		}
 	}
 	for _, r := range c.FirewallRules.Ingress {
@@ -232,7 +232,7 @@ func getFirewallRules(c config) FirewallRules {
 			if err != nil {
 				continue
 			}
-			ingressRules = append(ingressRules, fmt.Sprintf("ip daddr { 10.0.0.0/8 } %s saddr %s %s dport { %s } accept comment %q", af, saddr, r.Protocol, strings.Join(ports, ","), r.Comment))
+			ingressRules = append(ingressRules, fmt.Sprintf("ip daddr { 10.0.0.0/8 } %s saddr %s %s dport { %s } accept comment %q", af, saddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
 		}
 	}
 	return FirewallRules{

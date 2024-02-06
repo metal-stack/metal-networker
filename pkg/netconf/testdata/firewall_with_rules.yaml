@@ -185,7 +185,7 @@ firewall_rules:
         - "0.0.0.0/0"
         - "::/0"
   ingress:
-    - protocol: tcp
+    - protocol: TCP
       ports: [80,443,8080]
       from_cidrs: 
         - "1.2.3.0/24"
