@@ -1,5 +1,5 @@
-{{- /*gotype: github.com/metal-stack/metal-networker/internal/netconf.IptablesData*/ -}}
-{{ .Comment }}
+# This file was auto generated for machine: 'e0ab02d2-27cd-5a5e-8efc-080ba80cf258' by app version .
+# Do not edit.
 table inet metal {
     chain input {
         type filter hook input priority 0; policy drop;
@@ -11,17 +11,8 @@ table inet metal {
         iifname "lan1" ip saddr 10.0.0.0/8 udp dport 4789 counter accept comment "incoming VXLAN lan1"
 
         ct state established,related counter accept comment "stateful input"
-        {{- if .DNSProxyDNAT.DestSpec.Address }}
 
-        ip saddr 10.0.0.0/8 tcp dport {{ .DNSProxyDNAT.Port }} {{ .DNSProxyDNAT.DestSpec.AddressFamily }} daddr {{ .DNSProxyDNAT.DestSpec.Address }} accept comment "{{ .DNSProxyDNAT.Comment }}"
-        ip saddr 10.0.0.0/8 udp dport {{ .DNSProxyDNAT.Port }} {{ .DNSProxyDNAT.DestSpec.AddressFamily }} daddr {{ .DNSProxyDNAT.DestSpec.Address }} accept comment "{{ .DNSProxyDNAT.Comment }}"
-        {{- end }}
-
-        {{ if .VPN -}}
-        iifname "tailscale*" accept comment "Accept tailscale traffic"
-        {{- else -}}
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
-        {{- end }}
         ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
         ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
         
@@ -29,18 +20,16 @@ table inet metal {
         counter jump refuse
     }
     chain forward {
-        type filter hook forward priority 0; policy {{ .ForwardPolicy }};
+        type filter hook forward priority 0; policy drop;
         ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
         tcp dport bgp ct state new counter jump refuse comment "block bgp forward to machines"
-        {{- range .FirewallRules.Egress }}
-        {{ . }}
-        {{- end }}
-        {{- range .FirewallRules.Ingress }}
-        {{ . }}
-        {{- end }}
-        {{ if eq .ForwardPolicy "drop" -}}
+        # egress rules specified during firewall creation
+        ip saddr { 10.0.0.0/8 } ip daddr 0.0.0.0/0 tcp dport { 443 } accept comment "allow apt update"
+        ip saddr { 10.0.0.0/8 } ip6 daddr ::/0 tcp dport { 443 } accept comment "allow apt update"
+        # ingress rules specified during firewall creation
+        ip daddr { 10.0.0.0/8 } ip saddr 1.2.3.0/24 tcp dport { 80,443,8080 } accept comment ""
+        ip daddr { 10.0.0.0/8 } ip saddr 192.168.0.0/16 tcp dport { 80,443,8080 } accept comment ""
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
-        {{- end }}
     }
     chain output {
         type filter hook output priority 0; policy accept;
@@ -56,12 +45,6 @@ table inet metal {
     }
     chain output_ct {
         type filter hook output priority raw; policy accept;
-        {{-  $port:=.DNSProxyDNAT.Port }}
-        {{-  $zone:=.DNSProxyDNAT.Zone }}
-        {{- range .DNSProxyDNAT.InInterfaces }}
-        oifname "{{ . }}" tcp sport {{ $port }} ct zone set {{ $zone }}
-        oifname "{{ . }}" udp sport {{ $port }} ct zone set {{ $zone }}
-        {{- end }}
     }
     chain refuse {
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
@@ -78,23 +61,9 @@ table inet nat {
 
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
-        {{-  $port:=.DNSProxyDNAT.Port }}
-        {{-  $dst:=.DNSProxyDNAT.DestSpec }}
-        {{-  $daddr:=.DNSProxyDNAT.DAddr }}
-        {{-  $cmt:=.DNSProxyDNAT.Comment }}
-        {{- range .DNSProxyDNAT.InInterfaces }}
-        {{ if $daddr -}} {{ $dst.AddressFamily }} daddr {{ $daddr }} {{ end -}} iifname "{{ . }}" tcp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
-        {{ if $daddr -}} {{ $dst.AddressFamily }} daddr {{ $daddr }} {{ end -}} iifname "{{ . }}" udp dport {{ $port }} dnat {{ $dst.AddressFamily }} to {{ $dst.Address }} comment "{{ $cmt }}"
-        {{- end }}
     }
     chain prerouting_ct {
         type filter hook prerouting priority raw; policy accept;
-        {{-  $port:=.DNSProxyDNAT.Port }}
-        {{-  $zone:=.DNSProxyDNAT.Zone }}
-        {{- range .DNSProxyDNAT.InInterfaces }}
-        iifname "{{ . }}" tcp dport {{ $port }} ct zone set {{ $zone }}
-        iifname "{{ . }}" udp dport {{ $port }} ct zone set {{ $zone }}
-        {{- end }}
     }
     chain input {
         type nat hook input priority 0; policy accept;
@@ -104,16 +73,7 @@ table inet nat {
     }
     chain postrouting {
         type nat hook postrouting priority 0; policy accept;
-        {{- range .SNAT }}
-        {{- $cmt:=.Comment }}
-        {{- $out:=.OutInterface }}
-        {{- $outspec:=.OutIntSpec }}
-        {{- range .SourceSpecs }}
-        {{- if and $outspec.Address (eq $outspec.AddressFamily .AddressFamily) }}
-        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} {{ .AddressFamily }} daddr != {{ $outspec.Address }} counter masquerade comment "{{ $cmt }}"{{ else }}
-        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} counter masquerade comment "{{ $cmt }}"
-        {{- end }}
-        {{- end }}
-        {{- end }}
+        oifname "vlan104009" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
+        oifname "vlan104010" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: mpls-nbg-w8101-test)"
     }
 }

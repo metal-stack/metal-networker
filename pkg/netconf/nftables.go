@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/netip"
+	"strconv"
+	"strings"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
@@ -35,8 +37,27 @@ type (
 		DNSProxyDNAT  DNAT
 		VPN           bool
 		ForwardPolicy string
+		FirewallRules FirewallRules
 	}
 
+	FirewallRules struct {
+		Egress  []string
+		Ingress []string
+	}
+
+	FirewallEgressRule struct {
+		Protocol string
+		Ports    []int
+		ToCIDRs  []string
+		Comment  string
+	}
+
+	FirewallIngressRule struct {
+		Protocol  string
+		Ports     []int
+		FromCIDRs []string
+		Comment   string
+	}
 	// SNAT holds the information required to configure Source NAT.
 	SNAT struct {
 		Comment      string
@@ -75,6 +96,7 @@ func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy 
 		Comment:       versionHeader(c.MachineUUID),
 		SNAT:          getSNAT(c, enableDNSProxy),
 		ForwardPolicy: string(forwardPolicy),
+		FirewallRules: getFirewallRules(c),
 	}
 
 	if enableDNSProxy {
@@ -192,6 +214,55 @@ func getDNSProxyDNAT(c config, port, zone string) DNAT {
 			AddressFamily: af,
 			Address:       n.Ips[0],
 		},
+	}
+}
+
+func getFirewallRules(c config) FirewallRules {
+	if c.FirewallRules == nil {
+		return FirewallRules{}
+	}
+	var (
+		egressRules  = []string{"# egress rules specified during firewall creation"}
+		ingressRules = []string{"# ingress rules specified during firewall creation"}
+	)
+	for _, r := range c.FirewallRules.Egress {
+		ports := make([]string, len(r.Ports))
+		for i, v := range r.Ports {
+			ports[i] = strconv.Itoa(int(v))
+		}
+		for _, daddr := range r.ToCidrs {
+			prefix, err := netip.ParsePrefix(daddr)
+			if err != nil {
+				continue
+			}
+			family := "ip"
+			if prefix.Addr().Is6() {
+				family = "ip6"
+			}
+			egressRules = append(egressRules,
+				fmt.Sprintf("ip saddr { 10.0.0.0/8 } %s daddr %s %s dport { %s } accept comment %q", family, daddr, r.Protocol, strings.Join(ports, ","), r.Comment))
+		}
+	}
+	for _, r := range c.FirewallRules.Ingress {
+		ports := make([]string, len(r.Ports))
+		for i, v := range r.Ports {
+			ports[i] = strconv.Itoa(int(v))
+		}
+		for _, saddr := range r.FromCidrs {
+			prefix, err := netip.ParsePrefix(saddr)
+			if err != nil {
+				continue
+			}
+			family := "ip"
+			if prefix.Addr().Is6() {
+				family = "ip6"
+			}
+			ingressRules = append(ingressRules, fmt.Sprintf("ip daddr { 10.0.0.0/8 } %s saddr %s %s dport { %s } accept comment %q", family, saddr, r.Protocol, strings.Join(ports, ","), r.Comment))
+		}
+	}
+	return FirewallRules{
+		Egress:  egressRules,
+		Ingress: ingressRules,
 	}
 }
 

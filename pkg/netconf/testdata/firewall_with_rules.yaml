@@ -1,0 +1,192 @@
+# Note: This is a general-purpose configuration file that contains information not only for this app.
+#
+# This file is considered to be used to configure the tenant firewall!
+#
+###########################################
+# root@firewall:/etc/metal# date
+# Thu May 16 13:48:11 CEST 2019
+# root@firewall:/etc/metal# cat install.yaml
+# hostname: firewall
+# ipaddress: 10.0.12.1
+# asn: "4200003073"
+# networks:
+#   - asn: 4200003073
+#     destinationprefixes: []
+#     ips:
+#       - 10.0.12.1
+#     nat: false
+#     networkid: bc830818-2df1-4904-8c40-4322296d393d
+#     prefixes:
+#       - 10.0.12.0/22
+#     private: true
+#     underlay: false
+#     vrf: 3981
+#   - asn: 4200003073
+#     destinationprefixes:
+#       - 0.0.0.0/0
+#     ips:
+#       - 185.24.0.1
+#     nat: false
+#     networkid: internet-vagrant-lab
+#     prefixes:
+#       - 185.24.0.0/22
+#       - 185.27.0.0/22
+#     private: false
+#     underlay: false
+#     vrf: 104009
+#   - asn: 4200003073
+#     destinationprefixes: []
+#     ips:
+#       - 10.1.0.1
+#     nat: false
+#     networkid: underlay-vagrant-lab
+#     prefixes:
+#       - 10.0.12.0/22
+#     private: false
+#     underlay: true
+#     vrf: 0
+# machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
+# sshpublickey: ""
+# password: KAWT5DugqSPAezMl
+# devmode: false
+# console: ttyS0,115200n8
+###########################################
+---
+# Applies to hostname of the firewall.
+hostname: firewall
+networks:
+  # === Tenant Network (private=true)
+    # [IGNORED]
+  - asn: 4200003073
+    # [IGNORED in case of private network]
+    destinationprefixes: []
+    # For Firewall: Used to consider the set of prefixes that originate the given IP's to establish route leak in public
+    # network VRF's for return traffic. Applied to the SVI (as /32)
+    # For Machine: Used to set the loopback ips.
+    ips:
+      - 10.0.16.2
+    # [IGNORED in case of private network]
+    nat: false
+    # [IGNORED in case of private network]
+    networkid: bc830818-2df1-4904-8c40-4322296d393d
+    # considered as source range for nat and to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
+    prefixes:
+      - 10.0.16.0/22
+    private: true
+    underlay: false
+    networktype: privateprimaryunshared
+    # [IGNORED in case of private network]
+    # Defines the tenant VRF id.
+    vrf: 3981
+  # === Private shared networks to route to
+    # [IGNORED]
+  - asn: 4200003073
+    # [IGNORED in case of private network]
+    destinationprefixes: []
+    # Applied to the SVI (as /32)
+    ips:
+      - 10.0.18.2
+    # In case nat equals true, Source NAT via SVI is added.
+    nat: false
+    networkid: storage-net
+    # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
+    prefixes:
+      - 10.0.18.0/22
+    private: true
+    underlay: false
+    networktype: privatesecondaryshared
+    # VRF id considered to define EVPN interfaces.
+    vrf: 3982
+  # === Public networks to route to
+    # [IGNORED]
+  - asn: 4200003073
+    # Considered to establish static route leak to reach out from tenant VRF into the public networks.
+    destinationprefixes:
+      - 0.0.0.0/0
+    # Applied to the SVI (as /32)
+    ips:
+      - 185.1.2.3
+    # In case nat equals true, Source NAT via SVI is added.
+    nat: true
+    networkid: internet-vagrant-lab
+    # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
+    prefixes:
+      - 185.1.2.0/24
+      - 185.27.0.0/22
+    private: false
+    underlay: false
+    networktype: external
+    # VRF id considered to define EVPN interfaces.
+    vrf: 104009
+  # === Underlay Network (underlay=true)
+    # Considered to define the BGP ASN.
+  - asn: 4200003073
+    # Considered to establish static route leak to reach out from tenant VRF into the public networks.
+    destinationprefixes: []
+    # Applied to local loopback as /32.
+    ips:
+      - 10.1.0.1
+    nat: false
+    networkid: underlay-vagrant-lab
+    # [IGNORED in case of UNDERLAY]
+    prefixes:
+      - 10.0.12.0/22
+    private: false
+    privateprimary: false
+    underlay: true
+    networktype: underlay
+    # [IGNORED] Underlay runs in default VRF.
+    vrf: 0
+  - asn: 4200003073
+    # considered to figure out allowed prefixes for route imports from public network into tenant network
+    destinationprefixes:
+      - 100.127.1.0/24
+    # Applied to local loopback as /32.
+    ips:
+      - 100.127.129.1
+    nat: true
+    networkid: mpls-nbg-w8101-test
+    # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
+    prefixes:
+      - 100.127.129.0/24
+    private: false
+    underlay: false
+    networktype: external
+    vrf: 104010
+machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
+# [IGNORED]
+sshpublickey: ""
+# [IGNORED]
+password: KAWT5DugqSPAezMl
+# [IGNORED]
+devmode: false
+# [IGNORED]
+console: ttyS1,115200n8
+timestamp: "2019-07-01T09:41:43Z"
+nics:
+  - mac: "00:03:00:11:11:01"
+    name: lan0
+    neighbors:
+      - mac: 44:38:39:00:00:1a
+        name: null
+        neighbors: []
+  - mac: "00:03:00:11:12:01"
+    name: lan1
+    neighbors:
+      - mac: "44:38:39:00:00:04"
+        name: null
+        neighbors: []
+firewall_rules:
+  egress:
+    - comment: "allow apt update"
+      protocol: tcp
+      ports: [443]
+      to_cidrs: 
+        - "0.0.0.0/0"
+        - "::/0"
+  ingress:
+    - protocol: tcp
+      ports: [80,443,8080]
+      from_cidrs: 
+        - "1.2.3.0/24"
+        - "192.168.0.0/16"
