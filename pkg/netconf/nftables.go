@@ -141,13 +141,9 @@ func getSNAT(c config, enableDNSProxy bool) []SNAT {
 		svi := fmt.Sprintf("vlan%d", *n.Vrf)
 
 		for _, p := range privatePfx {
-			ipprefix, err := netip.ParsePrefix(p)
+			af, err := getAddressFamily(p)
 			if err != nil {
 				continue
-			}
-			af := "ip"
-			if ipprefix.Addr().Is6() {
-				af = "ip6"
 			}
 			sspec := AddrSpec{
 				Address:       p,
@@ -218,16 +214,12 @@ func getFirewallRules(c config) FirewallRules {
 			ports[i] = strconv.Itoa(int(v))
 		}
 		for _, daddr := range r.ToCidrs {
-			prefix, err := netip.ParsePrefix(daddr)
+			af, err := getAddressFamily(daddr)
 			if err != nil {
 				continue
 			}
-			family := "ip"
-			if prefix.Addr().Is6() {
-				family = "ip6"
-			}
 			egressRules = append(egressRules,
-				fmt.Sprintf("ip saddr { 10.0.0.0/8 } %s daddr %s %s dport { %s } accept comment %q", family, daddr, r.Protocol, strings.Join(ports, ","), r.Comment))
+				fmt.Sprintf("ip saddr { 10.0.0.0/8 } %s daddr %s %s dport { %s } accept comment %q", af, daddr, r.Protocol, strings.Join(ports, ","), r.Comment))
 		}
 	}
 	for _, r := range c.FirewallRules.Ingress {
@@ -236,21 +228,29 @@ func getFirewallRules(c config) FirewallRules {
 			ports[i] = strconv.Itoa(int(v))
 		}
 		for _, saddr := range r.FromCidrs {
-			prefix, err := netip.ParsePrefix(saddr)
+			af, err := getAddressFamily(saddr)
 			if err != nil {
 				continue
 			}
-			family := "ip"
-			if prefix.Addr().Is6() {
-				family = "ip6"
-			}
-			ingressRules = append(ingressRules, fmt.Sprintf("ip daddr { 10.0.0.0/8 } %s saddr %s %s dport { %s } accept comment %q", family, saddr, r.Protocol, strings.Join(ports, ","), r.Comment))
+			ingressRules = append(ingressRules, fmt.Sprintf("ip daddr { 10.0.0.0/8 } %s saddr %s %s dport { %s } accept comment %q", af, saddr, r.Protocol, strings.Join(ports, ","), r.Comment))
 		}
 	}
 	return FirewallRules{
 		Egress:  egressRules,
 		Ingress: ingressRules,
 	}
+}
+
+func getAddressFamily(p string) (string, error) {
+	prefix, err := netip.ParsePrefix(p)
+	if err != nil {
+		return "", err
+	}
+	family := "ip"
+	if prefix.Addr().Is6() {
+		family = "ip6"
+	}
+	return family, nil
 }
 
 // Validate validates network interfaces configuration.
