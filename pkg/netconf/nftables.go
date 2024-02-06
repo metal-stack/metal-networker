@@ -45,19 +45,6 @@ type (
 		Ingress []string
 	}
 
-	FirewallEgressRule struct {
-		Protocol string
-		Ports    []int
-		ToCIDRs  []string
-		Comment  string
-	}
-
-	FirewallIngressRule struct {
-		Protocol  string
-		Ports     []int
-		FromCIDRs []string
-		Comment   string
-	}
 	// SNAT holds the information required to configure Source NAT.
 	SNAT struct {
 		Comment      string
