@@ -24,11 +24,11 @@ table inet metal {
         ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
         tcp dport bgp ct state new counter jump refuse comment "block bgp forward to machines"
         # egress rules specified during firewall creation
-        ip saddr { 10.0.0.0/8 } ip daddr 0.0.0.0/0 tcp dport { 443 } accept comment "allow apt update"
-        ip saddr { 10.0.0.0/8 } ip6 daddr ::/0 tcp dport { 443 } accept comment "allow apt update"
+        ip saddr { 10.0.0.0/8 } ip daddr 0.0.0.0/0 tcp dport { 443 } counter accept comment "allow apt update"
+        ip saddr { 10.0.0.0/8 } ip6 daddr ::/0 tcp dport { 443 } counter accept comment "allow apt update"
         # ingress rules specified during firewall creation
-        ip daddr { 10.0.0.0/8 } ip saddr 1.2.3.0/24 tcp dport { 80,443,8080 } accept comment ""
-        ip daddr { 10.0.0.0/8 } ip saddr 192.168.0.0/16 tcp dport { 80,443,8080 } accept comment ""
+        ip daddr { 10.0.0.0/8 } ip saddr 1.2.3.0/24 tcp dport { 80,443,8080 } counter accept comment ""
+        ip daddr { 10.0.0.0/8 } ip saddr 192.168.0.0/16 tcp dport { 80,443,8080 } counter accept comment ""
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
     }
     chain output {

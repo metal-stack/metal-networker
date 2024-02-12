@@ -1,6 +1,6 @@
 module github.com/metal-stack/metal-networker
 
-go 1.21
+go 1.22
 
 require (
 	github.com/coreos/go-systemd/v22 v22.5.0
@@ -33,5 +33,5 @@ require (
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.mongodb.org/mongo-driver v1.13.1 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
 )
