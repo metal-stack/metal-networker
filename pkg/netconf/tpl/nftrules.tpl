@@ -31,6 +31,7 @@ table inet metal {
     chain forward {
         type filter hook forward priority 0; policy {{ .ForwardPolicy }};
         ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
+        ct state established,related counter accept comment "stateful forward"
         tcp dport bgp ct state new counter jump refuse comment "block bgp forward to machines"
         {{- range .FirewallRules.Egress }}
         {{ . }}
