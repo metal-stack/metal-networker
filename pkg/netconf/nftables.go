@@ -226,7 +226,7 @@ func getFirewallRules(c config) FirewallRules {
 	privatePrimaryNetwork := c.getPrivatePrimaryNetwork()
 	outputInterfacenames := ""
 	if privatePrimaryNetwork != nil && privatePrimaryNetwork.Vrf != nil {
-		outputInterfacenames = fmt.Sprintf("oifname { \"vrf%d\", \"vni%d\" }", *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf)
+		outputInterfacenames = fmt.Sprintf("oifname { \"vrf%d\", \"vni%d\", \"vlan%d\" }", *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf)
 	}
 
 	for _, r := range c.FirewallRules.Ingress {
