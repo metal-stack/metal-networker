@@ -29,10 +29,10 @@ table inet metal {
         ip saddr { 10.0.0.0/8 } ip daddr 1.2.3.4/32 tcp dport { 443 } counter accept comment "allow apt update"
         ip saddr { 10.0.0.0/8 } ip6 daddr ::/0 tcp dport { 443 } counter accept comment "allow apt update v6"
         # ingress rules specified during firewall creation
-        oifname { "vrf3981", "vni3981" } ip saddr 1.2.3.0/24 tcp dport { 80,443,8080 } counter accept comment ""
-        oifname { "vrf3981", "vni3981" } ip saddr 192.168.0.0/16 tcp dport { 80,443,8080 } counter accept comment ""
         ip daddr { 100.1.2.3/32, 100.1.2.4/32 } ip saddr 2.3.4.0/24 tcp dport { 22 } counter accept comment "allow incomming ssh"
         ip daddr { 100.1.2.3/32, 100.1.2.4/32 } ip saddr 192.168.1.0/16 tcp dport { 22 } counter accept comment "allow incomming ssh"
+        oifname { "vrf3981", "vni3981" } ip saddr 1.2.3.0/24 tcp dport { 80,443,8080 } counter accept comment ""
+        oifname { "vrf3981", "vni3981" } ip saddr 192.168.0.0/16 tcp dport { 80,443,8080 } counter accept comment ""
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
     }
     chain output {

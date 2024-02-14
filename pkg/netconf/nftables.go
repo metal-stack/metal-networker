@@ -224,9 +224,9 @@ func getFirewallRules(c config) FirewallRules {
 	}
 
 	privatePrimaryNetwork := c.getPrivatePrimaryNetwork()
-	destinationSpec := ""
+	outputInterfacenames := ""
 	if privatePrimaryNetwork != nil && privatePrimaryNetwork.Vrf != nil {
-		destinationSpec = fmt.Sprintf("oifname { \"vrf%d\", \"vni%d\" }", *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf)
+		outputInterfacenames = fmt.Sprintf("oifname { \"vrf%d\", \"vni%d\" }", *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf)
 	}
 
 	for _, r := range c.FirewallRules.Ingress {
@@ -234,8 +234,11 @@ func getFirewallRules(c config) FirewallRules {
 		for i, v := range r.Ports {
 			ports[i] = strconv.Itoa(int(v))
 		}
+		destinationSpec := ""
 		if len(r.ToCidrs) > 0 {
 			destinationSpec = fmt.Sprintf("ip daddr { %s }", strings.Join(r.ToCidrs, ", "))
+		} else {
+			destinationSpec = outputInterfacenames
 		}
 
 		for _, saddr := range r.FromCidrs {
