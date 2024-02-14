@@ -222,17 +222,28 @@ func getFirewallRules(c config) FirewallRules {
 				fmt.Sprintf("ip saddr { 10.0.0.0/8 } %s daddr %s %s dport { %s } counter accept comment %q", af, daddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
 		}
 	}
+
+	privatePrimaryNetwork := c.getPrivatePrimaryNetwork()
+	destinationSpec := ""
+	if privatePrimaryNetwork != nil && privatePrimaryNetwork.Vrf != nil {
+		destinationSpec = fmt.Sprintf("oifname { \"vrf%d\", \"vni%d\" }", *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf)
+	}
+
 	for _, r := range c.FirewallRules.Ingress {
 		ports := make([]string, len(r.Ports))
 		for i, v := range r.Ports {
 			ports[i] = strconv.Itoa(int(v))
 		}
+		if len(r.ToCidrs) > 0 {
+			destinationSpec = fmt.Sprintf("ip daddr { %s }", strings.Join(r.ToCidrs, ", "))
+		}
+
 		for _, saddr := range r.FromCidrs {
 			af, err := getAddressFamily(saddr)
 			if err != nil {
 				continue
 			}
-			ingressRules = append(ingressRules, fmt.Sprintf("ip daddr { 10.0.0.0/8 } %s saddr %s %s dport { %s } counter accept comment %q", af, saddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
+			ingressRules = append(ingressRules, fmt.Sprintf("%s %s saddr %s %s dport { %s } counter accept comment %q", destinationSpec, af, saddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
 		}
 	}
 	return FirewallRules{

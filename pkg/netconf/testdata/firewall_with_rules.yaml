@@ -181,12 +181,26 @@ firewall_rules:
     - comment: "allow apt update"
       protocol: tcp
       ports: [443]
-      to_cidrs: 
+      to_cidrs:
         - "0.0.0.0/0"
+        - "1.2.3.4/32"
+    - comment: "allow apt update v6"
+      protocol: tcp
+      ports: [443]
+      to_cidrs:
         - "::/0"
   ingress:
     - protocol: TCP
       ports: [80,443,8080]
-      from_cidrs: 
+      from_cidrs:
         - "1.2.3.0/24"
         - "192.168.0.0/16"
+    - protocol: TCP
+      ports: [22]
+      from_cidrs:
+        - "2.3.4.0/24"
+        - "192.168.1.0/16"
+      to_cidrs:
+        - "100.1.2.3/32"
+        - "100.1.2.4/32"
+      comment: "allow incomming ssh"
