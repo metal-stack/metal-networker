@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/google/go-cmp v0.6.0
-	github.com/metal-stack/metal-go v0.26.4-0.20240213145736-fe197bb1f4fa
+	github.com/metal-stack/metal-go v0.26.4-0.20240214125619-668fc56d786a
 	github.com/metal-stack/metal-hammer v0.12.1-0.20240205144305-a2df68731814
 	github.com/metal-stack/metal-lib v0.14.4
 	github.com/metal-stack/v v1.0.3

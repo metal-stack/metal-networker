@@ -213,7 +213,7 @@ func getFirewallRules(c config) FirewallRules {
 		for i, v := range r.Ports {
 			ports[i] = strconv.Itoa(int(v))
 		}
-		for _, daddr := range r.ToCidrs {
+		for _, daddr := range r.To {
 			af, err := getAddressFamily(daddr)
 			if err != nil {
 				continue
@@ -235,13 +235,13 @@ func getFirewallRules(c config) FirewallRules {
 			ports[i] = strconv.Itoa(int(v))
 		}
 		destinationSpec := ""
-		if len(r.ToCidrs) > 0 {
-			destinationSpec = fmt.Sprintf("ip daddr { %s }", strings.Join(r.ToCidrs, ", "))
+		if len(r.To) > 0 {
+			destinationSpec = fmt.Sprintf("ip daddr { %s }", strings.Join(r.To, ", "))
 		} else {
 			destinationSpec = outputInterfacenames
 		}
 
-		for _, saddr := range r.FromCidrs {
+		for _, saddr := range r.From {
 			af, err := getAddressFamily(saddr)
 			if err != nil {
 				continue
