@@ -237,8 +237,10 @@ func getFirewallRules(c config) FirewallRules {
 		destinationSpec := ""
 		if len(r.To) > 0 {
 			destinationSpec = fmt.Sprintf("ip daddr { %s }", strings.Join(r.To, ", "))
-		} else {
+		} else if outputInterfacenames != "" {
 			destinationSpec = outputInterfacenames
+		} else {
+			c.log.Warn("no to address specified but not private primary network present, skipping this rule", "rule", r)
 		}
 
 		for _, saddr := range r.From {
