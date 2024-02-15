@@ -12,7 +12,7 @@ table inet metal {
 
         ct state established,related counter accept comment "stateful input"
 
-        iifname "tailscale*" accept comment "Accept tailscale traffic"
+        tcp dport ssh ct state new counter accept comment "SSH incoming connections"
         ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
         ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
         
@@ -24,6 +24,15 @@ table inet metal {
         ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
         ct state established,related counter accept comment "stateful forward"
         tcp dport bgp ct state new counter jump refuse comment "block bgp forward to machines"
+        # egress rules specified during firewall creation
+        ip saddr { 10.0.0.0/8 } ip daddr 0.0.0.0/0 tcp dport { 443 } counter accept comment "allow apt update"
+        ip saddr { 10.0.0.0/8 } ip daddr 1.2.3.4/32 tcp dport { 443 } counter accept comment "allow apt update"
+        ip saddr { 10.0.0.0/8 } ip6 daddr ::/0 tcp dport { 443 } counter accept comment "allow apt update v6"
+        # ingress rules specified during firewall creation
+        ip daddr { 100.1.2.3/32, 100.1.2.4/32 } ip saddr 2.3.4.0/24 tcp dport { 22 } counter accept comment "allow incomming ssh"
+        ip daddr { 100.1.2.3/32, 100.1.2.4/32 } ip saddr 192.168.1.0/16 tcp dport { 22 } counter accept comment "allow incomming ssh"
+        oifname { "vrf3981", "vni3981", "vlan3981" } ip saddr 1.2.3.0/24 tcp dport { 80,443,8080 } counter accept comment ""
+        oifname { "vrf3981", "vni3981", "vlan3981" } ip saddr 192.168.0.0/16 tcp dport { 80,443,8080 } counter accept comment ""
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
     }
     chain output {

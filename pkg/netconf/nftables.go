@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/netip"
+	"strconv"
+	"strings"
 
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
@@ -35,6 +37,12 @@ type (
 		DNSProxyDNAT  DNAT
 		VPN           bool
 		ForwardPolicy string
+		FirewallRules FirewallRules
+	}
+
+	FirewallRules struct {
+		Egress  []string
+		Ingress []string
 	}
 
 	// SNAT holds the information required to configure Source NAT.
@@ -75,6 +83,7 @@ func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy 
 		Comment:       versionHeader(c.MachineUUID),
 		SNAT:          getSNAT(c, enableDNSProxy),
 		ForwardPolicy: string(forwardPolicy),
+		FirewallRules: getFirewallRules(c),
 	}
 
 	if enableDNSProxy {
@@ -132,13 +141,9 @@ func getSNAT(c config, enableDNSProxy bool) []SNAT {
 		svi := fmt.Sprintf("vlan%d", *n.Vrf)
 
 		for _, p := range privatePfx {
-			ipprefix, err := netip.ParsePrefix(p)
+			af, err := getAddressFamily(p)
 			if err != nil {
 				continue
-			}
-			af := "ip"
-			if ipprefix.Addr().Is6() {
-				af = "ip6"
 			}
 			sspec := AddrSpec{
 				Address:       p,
@@ -193,6 +198,77 @@ func getDNSProxyDNAT(c config, port, zone string) DNAT {
 			Address:       n.Ips[0],
 		},
 	}
+}
+
+func getFirewallRules(c config) FirewallRules {
+	if c.FirewallRules == nil {
+		return FirewallRules{}
+	}
+	var (
+		egressRules  = []string{"# egress rules specified during firewall creation"}
+		ingressRules = []string{"# ingress rules specified during firewall creation"}
+	)
+	for _, r := range c.FirewallRules.Egress {
+		ports := make([]string, len(r.Ports))
+		for i, v := range r.Ports {
+			ports[i] = strconv.Itoa(int(v))
+		}
+		for _, daddr := range r.To {
+			af, err := getAddressFamily(daddr)
+			if err != nil {
+				continue
+			}
+			// We could potentially also take private primary network interface as iifname instead if saddr
+			egressRules = append(egressRules,
+				fmt.Sprintf("ip saddr { 10.0.0.0/8 } %s daddr %s %s dport { %s } counter accept comment %q", af, daddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
+		}
+	}
+
+	privatePrimaryNetwork := c.getPrivatePrimaryNetwork()
+	outputInterfacenames := ""
+	if privatePrimaryNetwork != nil && privatePrimaryNetwork.Vrf != nil {
+		outputInterfacenames = fmt.Sprintf("oifname { \"vrf%d\", \"vni%d\", \"vlan%d\" }", *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf)
+	}
+
+	for _, r := range c.FirewallRules.Ingress {
+		ports := make([]string, len(r.Ports))
+		for i, v := range r.Ports {
+			ports[i] = strconv.Itoa(int(v))
+		}
+		destinationSpec := ""
+		if len(r.To) > 0 {
+			destinationSpec = fmt.Sprintf("ip daddr { %s }", strings.Join(r.To, ", "))
+		} else if outputInterfacenames != "" {
+			destinationSpec = outputInterfacenames
+		} else {
+			c.log.Warn("no to address specified but not private primary network present, skipping this rule", "rule", r)
+			continue
+		}
+
+		for _, saddr := range r.From {
+			af, err := getAddressFamily(saddr)
+			if err != nil {
+				continue
+			}
+			ingressRules = append(ingressRules, fmt.Sprintf("%s %s saddr %s %s dport { %s } counter accept comment %q", destinationSpec, af, saddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
+		}
+	}
+	return FirewallRules{
+		Egress:  egressRules,
+		Ingress: ingressRules,
+	}
+}
+
+func getAddressFamily(p string) (string, error) {
+	prefix, err := netip.ParsePrefix(p)
+	if err != nil {
+		return "", err
+	}
+	family := "ip"
+	if prefix.Addr().Is6() {
+		family = "ip6"
+	}
+	return family, nil
 }
 
 // Validate validates network interfaces configuration.
