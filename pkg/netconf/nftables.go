@@ -218,6 +218,7 @@ func getFirewallRules(c config) FirewallRules {
 			if err != nil {
 				continue
 			}
+			// We could potentially also take private primary network interface as iifname instead if saddr
 			egressRules = append(egressRules,
 				fmt.Sprintf("ip saddr { 10.0.0.0/8 } %s daddr %s %s dport { %s } counter accept comment %q", af, daddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
 		}
@@ -241,6 +242,7 @@ func getFirewallRules(c config) FirewallRules {
 			destinationSpec = outputInterfacenames
 		} else {
 			c.log.Warn("no to address specified but not private primary network present, skipping this rule", "rule", r)
+			continue
 		}
 
 		for _, saddr := range r.From {
