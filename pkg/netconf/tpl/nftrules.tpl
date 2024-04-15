@@ -74,7 +74,7 @@ table inet nat {
     	type ipv4_addr
     	flags interval
     	auto-merge
-    	elements = { 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1 }
+    	elements = { 212.34.83.12, 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1 }
     }
 
     chain prerouting {
