@@ -34,6 +34,7 @@ type (
 	NftablesData struct {
 		Comment       string
 		SNAT          []SNAT
+		DNSAddrs      []string
 		DNSProxyDNAT  DNAT
 		VPN           bool
 		ForwardPolicy string
@@ -81,6 +82,7 @@ type (
 func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy bool, forwardPolicy ForwardPolicy) net.Applier {
 	data := NftablesData{
 		Comment:       versionHeader(c.MachineUUID),
+		DNSAddrs:      []string{"8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1"},
 		SNAT:          getSNAT(c, enableDNSProxy),
 		ForwardPolicy: string(forwardPolicy),
 		FirewallRules: getFirewallRules(c),
@@ -88,6 +90,10 @@ func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy 
 
 	if enableDNSProxy {
 		data.DNSProxyDNAT = getDNSProxyDNAT(c, dnsPort, dnsProxyZone)
+
+		if network := c.GetDefaultRouteNetwork(); len(network.Ips) > 0 {
+			data.DNSAddrs = append(data.DNSAddrs, network.Ips[0])
+		}
 	}
 
 	if c.VPN != nil {
