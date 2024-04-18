@@ -47,7 +47,7 @@ table inet metal {
     }
 }
 table inet nat {
-    set public_dns_servers {
+    set proxy_dns_servers {
     	type ipv4_addr
     	flags interval
     	auto-merge
