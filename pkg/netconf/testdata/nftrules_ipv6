@@ -54,7 +54,7 @@ table inet metal {
     }
 }
 table inet nat {
-    set public_dns_servers {
+    set proxy_dns_servers {
     	type ipv4_addr
     	flags interval
     	auto-merge
@@ -63,10 +63,10 @@ table inet nat {
 
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
-        ip6 daddr @public_dns_servers iifname "vlan3981" tcp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
-        ip6 daddr @public_dns_servers iifname "vlan3981" udp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
-        ip6 daddr @public_dns_servers iifname "vlan3982" tcp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
-        ip6 daddr @public_dns_servers iifname "vlan3982" udp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        ip6 daddr @proxy_dns_servers iifname "vlan3981" tcp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        ip6 daddr @proxy_dns_servers iifname "vlan3981" udp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        ip6 daddr @proxy_dns_servers iifname "vlan3982" tcp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        ip6 daddr @proxy_dns_servers iifname "vlan3982" udp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
     }
     chain prerouting_ct {
         type filter hook prerouting priority raw; policy accept;

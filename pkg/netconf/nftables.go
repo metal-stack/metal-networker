@@ -190,7 +190,7 @@ func getDNSProxyDNAT(c config, port, zone string) DNAT {
 	return DNAT{
 		Comment:      "dnat to dns proxy",
 		InInterfaces: svis,
-		DAddr:        "@public_dns_servers",
+		DAddr:        "@proxy_dns_servers",
 		Port:         port,
 		Zone:         zone,
 		DestSpec: AddrSpec{
