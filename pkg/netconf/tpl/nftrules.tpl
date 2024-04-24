@@ -24,7 +24,7 @@ table inet metal {
         {{- end }}
         ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
         ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
-        
+
         ct state invalid counter drop comment "drop invalid packets to prevent malicious activity"
         counter jump refuse
     }
@@ -51,7 +51,7 @@ table inet metal {
         oifname "lan1" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered output at lan1"
 
         ip daddr 10.0.0.0/8 udp dport 4789 counter accept comment "outgoing VXLAN"
-        
+
         ct state established,related counter accept comment "stateful output"
         ct state invalid counter drop comment "drop invalid packets"
     }
@@ -111,8 +111,8 @@ table inet nat {
         {{- $outspec:=.OutIntSpec }}
         {{- range .SourceSpecs }}
         {{- if and $outspec.Address (eq $outspec.AddressFamily .AddressFamily) }}
-        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} {{ .AddressFamily }} daddr != {{ $outspec.Address }} counter masquerade comment "{{ $cmt }}"{{ else }}
-        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} counter masquerade comment "{{ $cmt }}"
+        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} {{ .AddressFamily }} daddr != {{ $outspec.Address }} counter masquerade random comment "{{ $cmt }}"{{ else }}
+        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} counter masquerade random comment "{{ $cmt }}"
         {{- end }}
         {{- end }}
         {{- end }}

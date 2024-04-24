@@ -15,7 +15,7 @@ table inet metal {
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
         ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
         ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
-        
+
         ct state invalid counter drop comment "drop invalid packets to prevent malicious activity"
         counter jump refuse
     }
@@ -43,7 +43,7 @@ table inet metal {
         oifname "lan1" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered output at lan1"
 
         ip daddr 10.0.0.0/8 udp dport 4789 counter accept comment "outgoing VXLAN"
-        
+
         ct state established,related counter accept comment "stateful output"
         ct state invalid counter drop comment "drop invalid packets"
     }
@@ -77,7 +77,7 @@ table inet nat {
     }
     chain postrouting {
         type nat hook postrouting priority 0; policy accept;
-        oifname "vlan104009" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
-        oifname "vlan104010" ip saddr 10.0.16.0/22 counter masquerade comment "snat (networkid: mpls-nbg-w8101-test)"
+        oifname "vlan104009" ip saddr 10.0.16.0/22 counter masquerade random comment "snat (networkid: internet-vagrant-lab)"
+        oifname "vlan104010" ip saddr 10.0.16.0/22 counter masquerade random comment "snat (networkid: mpls-nbg-w8101-test)"
     }
 }
