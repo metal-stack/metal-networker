@@ -77,7 +77,7 @@ table inet nat {
     }
     chain postrouting {
         type nat hook postrouting priority 0; policy accept;
-        oifname "vlan3982" ip saddr 10.0.18.0/22 counter masquerade comment "snat (networkid: storage-net)"
-        oifname "vlan104009" ip saddr 10.0.18.0/22 ip daddr != 185.1.2.3 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
+        oifname "vlan3982" ip saddr 10.0.18.0/22 counter masquerade random comment "snat (networkid: storage-net)"
+        oifname "vlan104009" ip saddr 10.0.18.0/22 ip daddr != 185.1.2.3 counter masquerade random comment "snat (networkid: internet-vagrant-lab)"
     }
 }

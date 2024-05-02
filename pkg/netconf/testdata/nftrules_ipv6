@@ -83,7 +83,7 @@ table inet nat {
     }
     chain postrouting {
         type nat hook postrouting priority 0; policy accept;
-        oifname "vlan104009" ip6 saddr 2002::/64 ip6 daddr != 2a02:c00:20::1 counter masquerade comment "snat (networkid: internet-vagrant-lab)"
-        oifname "vlan104010" ip6 saddr 2002::/64 counter masquerade comment "snat (networkid: mpls-nbg-w8101-test)"
+        oifname "vlan104009" ip6 saddr 2002::/64 ip6 daddr != 2a02:c00:20::1 counter masquerade random comment "snat (networkid: internet-vagrant-lab)"
+        oifname "vlan104010" ip6 saddr 2002::/64 counter masquerade random comment "snat (networkid: mpls-nbg-w8101-test)"
     }
 }

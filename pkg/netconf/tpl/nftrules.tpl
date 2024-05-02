@@ -111,8 +111,8 @@ table inet nat {
         {{- $outspec:=.OutIntSpec }}
         {{- range .SourceSpecs }}
         {{- if and $outspec.Address (eq $outspec.AddressFamily .AddressFamily) }}
-        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} {{ .AddressFamily }} daddr != {{ $outspec.Address }} counter masquerade comment "{{ $cmt }}"{{ else }}
-        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} counter masquerade comment "{{ $cmt }}"
+        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} {{ .AddressFamily }} daddr != {{ $outspec.Address }} counter masquerade random comment "{{ $cmt }}"{{ else }}
+        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} counter masquerade random comment "{{ $cmt }}"
         {{- end }}
         {{- end }}
         {{- end }}
