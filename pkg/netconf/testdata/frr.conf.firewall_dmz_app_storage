@@ -3,7 +3,6 @@
 frr version 8.5
 frr defaults datacenter
 hostname firewall
-username cumulus nopassword
 !
 log syslog debugging
 debug bgp updates

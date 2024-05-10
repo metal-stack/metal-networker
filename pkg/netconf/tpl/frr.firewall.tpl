@@ -5,7 +5,6 @@
 frr version {{ .FRRVersion }}
 frr defaults datacenter
 hostname {{ .Hostname }}
-username cumulus nopassword
 !
 log syslog debugging
 debug bgp updates
