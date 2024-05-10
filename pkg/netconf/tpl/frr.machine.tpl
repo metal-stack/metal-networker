@@ -6,6 +6,7 @@ frr version {{ .FRRVersion }}
 frr defaults datacenter
 hostname {{ .Hostname }}
 username cumulus nopassword
+allow-reserved-ranges
 !
 service integrated-vtysh-config
 !

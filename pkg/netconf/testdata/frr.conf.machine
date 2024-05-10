@@ -4,6 +4,7 @@ frr version 8.5
 frr defaults datacenter
 hostname machine
 username cumulus nopassword
+allow-reserved-ranges
 !
 service integrated-vtysh-config
 !
