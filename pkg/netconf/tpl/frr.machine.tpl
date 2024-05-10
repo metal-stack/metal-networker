@@ -8,8 +8,6 @@ hostname {{ .Hostname }}
 username cumulus nopassword
 allow-reserved-ranges
 !
-service integrated-vtysh-config
-!
 log syslog debugging
 debug bgp updates
 debug bgp nht
