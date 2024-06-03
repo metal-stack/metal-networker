@@ -14,7 +14,6 @@ validate () {
         . -t metal-networker
 }
 
-validate "ubuntu" "22.04" "frr-8"
-validate "ubuntu" "22.04" "frr-9"
+validate "ubuntu" "24.04" "frr-10"
 validate "debian" "12" "frr-8"
-validate "debian" "12" "frr-9"
+validate "debian" "12" "frr-10"
