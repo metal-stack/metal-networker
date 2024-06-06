@@ -5,9 +5,7 @@
 frr version {{ .FRRVersion }}
 frr defaults datacenter
 hostname {{ .Hostname }}
-username cumulus nopassword
-!
-service integrated-vtysh-config
+allow-reserved-ranges
 !
 log syslog debugging
 debug bgp updates
