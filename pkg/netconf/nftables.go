@@ -38,6 +38,11 @@ type (
 		VPN           bool
 		ForwardPolicy string
 		FirewallRules FirewallRules
+		Input         Input
+	}
+
+	Input struct {
+		InInterfaces []string
 	}
 
 	FirewallRules struct {
@@ -84,6 +89,7 @@ func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy 
 		SNAT:          getSNAT(c, enableDNSProxy),
 		ForwardPolicy: string(forwardPolicy),
 		FirewallRules: getFirewallRules(c),
+		Input:         getInput(c),
 	}
 
 	if enableDNSProxy {
@@ -105,6 +111,15 @@ func isDMZNetwork(n *models.V1MachineNetwork) bool {
 	return *n.Networktype == mn.PrivateSecondaryShared && containsDefaultRoute(n.Destinationprefixes)
 }
 
+func getInput(c config) Input {
+	input := Input{}
+	networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
+	for _, n := range networks {
+		input.InInterfaces = append(input.InInterfaces, fmt.Sprintf("vrf%d", *n.Vrf))
+	}
+	return input
+}
+
 func getSNAT(c config, enableDNSProxy bool) []SNAT {
 	var result []SNAT
 
@@ -116,6 +131,7 @@ func getSNAT(c config, enableDNSProxy bool) []SNAT {
 		if isDMZNetwork(n) {
 			privatePfx = append(privatePfx, n.Prefixes...)
 		}
+
 	}
 
 	var (

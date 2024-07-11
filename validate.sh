@@ -15,5 +15,4 @@ validate () {
 }
 
 validate "ubuntu" "24.04" "frr-10"
-validate "debian" "12" "frr-8"
 validate "debian" "12" "frr-10"
