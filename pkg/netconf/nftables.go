@@ -221,9 +221,15 @@ func getFirewallRules(c config) FirewallRules {
 		return FirewallRules{}
 	}
 	var (
-		egressRules  = []string{"# egress rules specified during firewall creation"}
-		ingressRules = []string{"# ingress rules specified during firewall creation"}
+		egressRules           = []string{"# egress rules specified during firewall creation"}
+		ingressRules          = []string{"# ingress rules specified during firewall creation"}
+		inputInterfaces       = getInput(c)
+		quotedInputInterfaces []string
 	)
+	for _, i := range inputInterfaces.InInterfaces {
+		quotedInputInterfaces = append(quotedInputInterfaces, "\""+i+"\"")
+	}
+
 	for _, r := range c.FirewallRules.Egress {
 		ports := make([]string, len(r.Ports))
 		for i, v := range r.Ports {
@@ -234,9 +240,8 @@ func getFirewallRules(c config) FirewallRules {
 			if err != nil {
 				continue
 			}
-			// We could potentially also take private primary network interface as iifname instead if saddr
 			egressRules = append(egressRules,
-				fmt.Sprintf("ip saddr { 10.0.0.0/8 } %s daddr %s %s dport { %s } counter accept comment %q", af, daddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
+				fmt.Sprintf("iifname { %s } %s daddr %s %s dport { %s } counter accept comment %q", strings.Join(quotedInputInterfaces, ","), af, daddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
 		}
 	}
 

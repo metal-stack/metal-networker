@@ -198,7 +198,7 @@ firewall_rules:
       to:
         - "100.1.2.3/32"
         - "100.1.2.4/32"
-      comment: "allow incomming ssh"
+      comment: "allow incoming ssh"
     - protocol: TCP
       ports: [80,443,8080]
       from:
