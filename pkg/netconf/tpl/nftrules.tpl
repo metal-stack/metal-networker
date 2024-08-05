@@ -22,8 +22,10 @@ table inet metal {
         {{- else -}}
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
         {{- end }}
-        ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
-        ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
+        {{- range .Input.InInterfaces }}
+        iifname "{{ . }}" tcp dport 9100 counter accept comment "node metrics"
+        iifname "{{ . }}" tcp dport 9630 counter accept comment "nftables metrics"
+        {{- end }}
         
         ct state invalid counter drop comment "drop invalid packets to prevent malicious activity"
         counter jump refuse

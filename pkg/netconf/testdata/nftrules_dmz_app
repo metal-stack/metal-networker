@@ -16,8 +16,10 @@ table inet metal {
         ip saddr 10.0.0.0/8 udp dport domain ip daddr 10.0.20.2 accept comment "dnat to dns proxy"
 
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
-        ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
-        ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
+        iifname "vrf3981" tcp dport 9100 counter accept comment "node metrics"
+        iifname "vrf3981" tcp dport 9630 counter accept comment "nftables metrics"
+        iifname "vrf3983" tcp dport 9100 counter accept comment "node metrics"
+        iifname "vrf3983" tcp dport 9630 counter accept comment "nftables metrics"
         
         ct state invalid counter drop comment "drop invalid packets to prevent malicious activity"
         counter jump refuse
