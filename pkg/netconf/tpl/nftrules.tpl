@@ -22,8 +22,10 @@ table inet metal {
         {{- else -}}
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
         {{- end }}
-        ip saddr 10.0.0.0/8 tcp dport 9100 counter accept comment "node metrics"
-        ip saddr 10.0.0.0/8 tcp dport 9630 counter accept comment "nftables metrics"
+        {{- range .Input.InInterfaces }}
+        iifname "{{ . }}" tcp dport 9100 counter accept comment "node metrics"
+        iifname "{{ . }}" tcp dport 9630 counter accept comment "nftables metrics"
+        {{- end }}
         
         ct state invalid counter drop comment "drop invalid packets to prevent malicious activity"
         counter jump refuse
@@ -31,7 +33,14 @@ table inet metal {
     chain forward {
         type filter hook forward priority 0; policy {{ .ForwardPolicy }};
         ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
+        ct state established,related counter accept comment "stateful forward"
         tcp dport bgp ct state new counter jump refuse comment "block bgp forward to machines"
+        {{- range .FirewallRules.Egress }}
+        {{ . }}
+        {{- end }}
+        {{- range .FirewallRules.Ingress }}
+        {{ . }}
+        {{- end }}
         {{ if eq .ForwardPolicy "drop" -}}
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
         {{- end }}
@@ -63,7 +72,7 @@ table inet metal {
     }
 }
 table inet nat {
-    set public_dns_servers {
+    set proxy_dns_servers {
     	type ipv4_addr
     	flags interval
     	auto-merge
@@ -104,8 +113,8 @@ table inet nat {
         {{- $outspec:=.OutIntSpec }}
         {{- range .SourceSpecs }}
         {{- if and $outspec.Address (eq $outspec.AddressFamily .AddressFamily) }}
-        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} {{ .AddressFamily }} daddr != {{ $outspec.Address }} counter masquerade comment "{{ $cmt }}"{{ else }}
-        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} counter masquerade comment "{{ $cmt }}"
+        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} {{ .AddressFamily }} daddr != {{ $outspec.Address }} counter masquerade random comment "{{ $cmt }}"{{ else }}
+        oifname "{{ $out }}" {{ .AddressFamily }} saddr {{ .Address }} counter masquerade random comment "{{ $cmt }}"
         {{- end }}
         {{- end }}
         {{- end }}

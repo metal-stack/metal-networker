@@ -4,10 +4,9 @@ Configures networking related resources such as interfaces, frr and nftables.
 
 ## Preconditions
 
-Ubuntu operating system in place with the following packages installed:
+Ubuntu/Debian operating system in place with the following packages installed:
 
-- ifupdown2
-- frr > 7.0
+- frr >= 10.0
 - nftables
 
 ## Usage
