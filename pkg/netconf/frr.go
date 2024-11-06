@@ -144,7 +144,7 @@ func assembleVRFs(kb config) []VRF {
 			VNI:            int(*network.Vrf),
 			ImportVRFNames: i.ImportVRFs,
 			IPPrefixLists:  i.prefixLists(),
-			RouteMaps:      i.routeMaps(*network.Asn,2),
+			RouteMaps:      i.routeMaps(*network.Asn, 2),
 		}
 		result = append(result, vrf)
 	}
