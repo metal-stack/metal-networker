@@ -158,7 +158,7 @@ nics:
       - mac: "44:38:39:00:00:04"
         name: null
         neighbors: []
-
+firewallDistance: 2
 
 
 

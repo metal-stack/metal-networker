@@ -100,7 +100,7 @@ ip prefix-list vrf3982-import-from-vrf104009 seq 103 permit 185.27.0.0/22 le 32
 route-map vrf3982-import-map permit 10
  match source-vrf vrf104009
  match ip address prefix-list vrf3982-import-from-vrf104009
- set as-path prepend 4200003073 4200003073 4200003073 4200003073
+ set as-path prepend 4200003073 4200003073
 route-map vrf3982-import-map deny 20
 !
 ip prefix-list vrf104009-import-from-vrf3982-no-export seq 100 permit 10.0.18.0/22 le 32
@@ -109,12 +109,12 @@ ip prefix-list vrf104009-import-from-vrf3982 seq 102 permit 185.27.0.0/22 le 32
 route-map vrf104009-import-map permit 10
  match source-vrf vrf3982
  match ip address prefix-list vrf104009-import-from-vrf3982-no-export
- set as-path prepend 4200003073 4200003073 4200003073 4200003073
+ set as-path prepend 4200003073 4200003073
  set community additive no-export
 route-map vrf104009-import-map permit 20
  match source-vrf vrf3982
  match ip address prefix-list vrf104009-import-from-vrf3982
- set as-path prepend 4200003073 4200003073 4200003073 4200003073
+ set as-path prepend 4200003073 4200003073
 route-map vrf104009-import-map deny 30
 !
 route-map only-self-out permit 10

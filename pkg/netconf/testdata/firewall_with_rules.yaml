@@ -204,3 +204,4 @@ firewall_rules:
       from:
         - "1.2.3.0/24"
         - "192.168.0.0/16"
+firewallDistance: 2
