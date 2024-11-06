@@ -159,12 +159,15 @@ ipv6 prefix-list vrf3981-import-from-vrf104009-ipv6 seq 105 permit 2a02:c00:20::
 route-map vrf3981-import-map permit 10
  match source-vrf vrf3982
  match ip address prefix-list vrf3981-import-from-vrf3982
+ set as-path prepend 4200003073 4200003073
 route-map vrf3981-import-map permit 20
  match source-vrf vrf104010
  match ip address prefix-list vrf3981-import-from-vrf104010
+ set as-path prepend 4200003073 4200003073
 route-map vrf3981-import-map permit 30
  match source-vrf vrf104009
  match ipv6 address prefix-list vrf3981-import-from-vrf104009-ipv6
+ set as-path prepend 4200003073 4200003073
 route-map vrf3981-import-map deny 40
 !
 ip prefix-list vrf3982-import-from-vrf3981 seq 100 permit 10.0.18.0/22 le 32
@@ -172,9 +175,11 @@ ipv6 prefix-list vrf3982-import-from-vrf3981-ipv6 seq 101 permit 2002::/64 le 12
 route-map vrf3982-import-map permit 10
  match source-vrf vrf3981
  match ipv6 address prefix-list vrf3982-import-from-vrf3981-ipv6
+ set as-path prepend 4200003073 4200003073
 route-map vrf3982-import-map permit 20
  match source-vrf vrf3981
  match ip address prefix-list vrf3982-import-from-vrf3981
+ set as-path prepend 4200003073 4200003073
 route-map vrf3982-import-map deny 30
 !
 ipv6 prefix-list vrf104009-import-from-vrf3981-ipv6-no-export seq 100 permit 2002::/64 le 128
@@ -182,10 +187,12 @@ ipv6 prefix-list vrf104009-import-from-vrf3981-ipv6 seq 101 permit 2a02:c00:20::
 route-map vrf104009-import-map permit 10
  match source-vrf vrf3981
  match ipv6 address prefix-list vrf104009-import-from-vrf3981-ipv6-no-export
+ set as-path prepend 4200003073 4200003073
  set community additive no-export
 route-map vrf104009-import-map permit 20
  match source-vrf vrf3981
  match ipv6 address prefix-list vrf104009-import-from-vrf3981-ipv6
+ set as-path prepend 4200003073 4200003073
 route-map vrf104009-import-map deny 30
 !
 ip prefix-list vrf104010-import-from-vrf3981 seq 100 permit 100.127.129.0/24 le 32
@@ -193,10 +200,12 @@ ipv6 prefix-list vrf104010-import-from-vrf3981-ipv6-no-export seq 100 permit 200
 route-map vrf104010-import-map permit 10
  match source-vrf vrf3981
  match ipv6 address prefix-list vrf104010-import-from-vrf3981-ipv6-no-export
+ set as-path prepend 4200003073 4200003073
  set community additive no-export
 route-map vrf104010-import-map permit 20
  match source-vrf vrf3981
  match ip address prefix-list vrf104010-import-from-vrf3981
+ set as-path prepend 4200003073 4200003073
 route-map vrf104010-import-map deny 30
 !
 route-map only-self-out permit 10
