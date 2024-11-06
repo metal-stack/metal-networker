@@ -282,50 +282,57 @@ func byName(prefixLists []IPPrefixList) map[string]IPPrefixList {
 	return byName
 }
 
-func (i *importRule) routeMaps(asn int64) []RouteMap {
-	var result []RouteMap
+func (i *importRule) routeMaps(asn int64, distance uint8) []RouteMap {
+    var result []RouteMap
 
-	order := RouteMapOrderSeed
-	byName := byName(i.prefixLists())
+    order := RouteMapOrderSeed
+    byName := byName(i.prefixLists())
 
-	names := []string{}
-	for n := range byName {
-		names = append(names, n)
-	}
-	sort.Sort(sort.Reverse(sort.StringSlice(names)))
+    names := []string{}
+    for n := range byName {
+        names = append(names, n)
+    }
+    sort.Sort(sort.Reverse(sort.StringSlice(names)))
 
-	for _, n := range names {
-		prefixList := byName[n]
+    for _, n := range names {
+        prefixList := byName[n]
 
-		matchVrf := fmt.Sprintf("match source-vrf %s", prefixList.SourceVRF)
-		matchPfxList := fmt.Sprintf("match %s address prefix-list %s", prefixList.AddressFamily, n)
-		asPathPrepend := fmt.Sprintf("set as-path prepend %d %d", asn, asn)
-		entries := []string{matchVrf, matchPfxList, asPathPrepend}
-		if strings.HasSuffix(n, IPPrefixListNoExportSuffix) {
-			entries = append(entries, "set community additive no-export")
-		}
+        matchVrf := fmt.Sprintf("match source-vrf %s", prefixList.SourceVRF)
+        matchPfxList := fmt.Sprintf("match %s address prefix-list %s", prefixList.AddressFamily, n)
+		// Using the distance we extend the path of a firewall by adding asn to its as-path prepend
+        numAsns := int(2 + distance) 
+        asnList := make([]string, numAsns)
+        for i := 0; i < numAsns; i++ {
+            asnList[i] = fmt.Sprintf("%d", asn)
+        }
+        asPathPrepend := fmt.Sprintf("set as-path prepend %s", strings.Join(asnList, " "))
+        entries := []string{matchVrf, matchPfxList, asPathPrepend}
+        if strings.HasSuffix(n, IPPrefixListNoExportSuffix) {
+            entries = append(entries, "set community additive no-export")
+        }
 
-		routeMap := RouteMap{
-			Name:    routeMapName(i.TargetVRF),
-			Policy:  Permit.String(),
-			Order:   order,
-			Entries: entries,
-		}
-		order += RouteMapOrderSeed
+        routeMap := RouteMap{
+            Name:    routeMapName(i.TargetVRF),
+            Policy:  Permit.String(),
+            Order:   order,
+            Entries: entries,
+        }
+        order += RouteMapOrderSeed
 
-		result = append(result, routeMap)
-	}
+        result = append(result, routeMap)
+    }
 
-	routeMap := RouteMap{
-		Name:   routeMapName(i.TargetVRF),
-		Policy: Deny.String(),
-		Order:  order,
-	}
+    routeMap := RouteMap{
+        Name:   routeMapName(i.TargetVRF),
+        Policy: Deny.String(),
+        Order:  order,
+    }
 
-	result = append(result, routeMap)
+    result = append(result, routeMap)
 
-	return result
+    return result
 }
+
 
 func routeMapName(vrfName string) string {
 	return vrfName + "-import-map"
