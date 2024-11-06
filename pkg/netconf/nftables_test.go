@@ -60,6 +60,12 @@ func TestCompileNftRules(t *testing.T) {
 			enableDNSProxy: false,
 			forwardPolicy:  ForwardPolicyDrop,
 		},
+		{
+			input:          "testdata/firewall_with_rules.yaml",
+			expected:       "testdata/nftrules_with_rules",
+			enableDNSProxy: false,
+			forwardPolicy:  ForwardPolicyDrop,
+		},
 	}
 	log := slog.Default()
 
