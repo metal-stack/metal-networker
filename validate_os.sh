@@ -9,6 +9,7 @@ for tc in $testcases; do
     else
         printf "\e[31m\xE2\x9D\x8C\e[0m\n"
         echo "FRR ${FRR_VERSION} on ${OS_NAME}:${OS_VERSION} produces an invalid configuration"
+        exit 1
     fi
 done
 
@@ -21,5 +22,6 @@ for tc in $testcases; do
     else
         printf "\e[31m\xE2\x9D\x8C\e[0m\n"
         echo "nft input ${tc} on ${OS_NAME}:${OS_VERSION} produces an invalid configuration"
+        exit 1
     fi
 done
