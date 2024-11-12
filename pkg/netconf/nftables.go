@@ -62,6 +62,7 @@ type (
 	DNAT struct {
 		Comment      string
 		InInterfaces []string
+		SAddr        string
 		DAddr        string
 		Port         string
 		Zone         string
@@ -200,13 +201,18 @@ func getDNSProxyDNAT(c config, port, zone string) DNAT {
 
 	ip, _ := netip.ParseAddr(n.Ips[0])
 	af := "ip"
+	saddr := "10.0.0.0/8"
+	daddr := "@proxy_dns_servers"
 	if ip.Is6() {
 		af = "ip6"
+		saddr = "fd00::/8"
+		daddr = "@proxy_dns_servers_v6"
 	}
 	return DNAT{
 		Comment:      "dnat to dns proxy",
 		InInterfaces: svis,
-		DAddr:        "@proxy_dns_servers",
+		SAddr: saddr,
+		DAddr:        daddr,
 		Port:         port,
 		Zone:         zone,
 		DestSpec: AddrSpec{
