@@ -13,8 +13,8 @@ table inet metal {
         ct state established,related counter accept comment "stateful input"
         {{- if .DNSProxyDNAT.DestSpec.Address }}
 
-        ip saddr 10.0.0.0/8 tcp dport {{ .DNSProxyDNAT.Port }} {{ .DNSProxyDNAT.DestSpec.AddressFamily }} daddr {{ .DNSProxyDNAT.DestSpec.Address }} accept comment "{{ .DNSProxyDNAT.Comment }}"
-        ip saddr 10.0.0.0/8 udp dport {{ .DNSProxyDNAT.Port }} {{ .DNSProxyDNAT.DestSpec.AddressFamily }} daddr {{ .DNSProxyDNAT.DestSpec.Address }} accept comment "{{ .DNSProxyDNAT.Comment }}"
+        {{ .DNSProxyDNAT.DestSpec.AddressFamily }} saddr {{ .DNSProxyDNAT.SAddr }} tcp dport {{ .DNSProxyDNAT.Port }} {{ .DNSProxyDNAT.DestSpec.AddressFamily }} daddr {{ .DNSProxyDNAT.DestSpec.Address }} accept comment "{{ .DNSProxyDNAT.Comment }}"
+        {{ .DNSProxyDNAT.DestSpec.AddressFamily }} saddr {{ .DNSProxyDNAT.SAddr }} udp dport {{ .DNSProxyDNAT.Port }} {{ .DNSProxyDNAT.DestSpec.AddressFamily }} daddr {{ .DNSProxyDNAT.DestSpec.Address }} accept comment "{{ .DNSProxyDNAT.Comment }}"
         {{- end }}
 
         {{ if .VPN -}}
@@ -78,6 +78,15 @@ table inet nat {
     	auto-merge
     	elements = { 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1 }
     }
+    {{- if eq .DNSProxyDNAT.DestSpec.AddressFamily "ip6" }}
+
+    set proxy_dns_servers_v6 {
+    	type ipv6_addr
+    	flags interval
+    	auto-merge
+    	elements = { 2001:4860:4860::8888, 2001:4860:4860::8844, 2606:4700:4700::1111, 2606:4700:4700::1001 }
+    }
+    {{- end }}
 
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;

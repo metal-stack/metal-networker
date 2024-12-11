@@ -12,8 +12,8 @@ table inet metal {
 
         ct state established,related counter accept comment "stateful input"
 
-        ip saddr 10.0.0.0/8 tcp dport domain ip6 daddr 2a02:c00:20::1 accept comment "dnat to dns proxy"
-        ip saddr 10.0.0.0/8 udp dport domain ip6 daddr 2a02:c00:20::1 accept comment "dnat to dns proxy"
+        ip6 saddr fd00::/8 tcp dport domain ip6 daddr 2a02:c00:20::1 accept comment "dnat to dns proxy"
+        ip6 saddr fd00::/8 udp dport domain ip6 daddr 2a02:c00:20::1 accept comment "dnat to dns proxy"
 
         tcp dport ssh ct state new counter accept comment "SSH incoming connections"
         iifname "vrf3981" tcp dport 9100 counter accept comment "node metrics"
@@ -63,12 +63,19 @@ table inet nat {
     	elements = { 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1 }
     }
 
+    set proxy_dns_servers_v6 {
+    	type ipv6_addr
+    	flags interval
+    	auto-merge
+    	elements = { 2001:4860:4860::8888, 2001:4860:4860::8844, 2606:4700:4700::1111, 2606:4700:4700::1001 }
+    }
+
     chain prerouting {
         type nat hook prerouting priority 0; policy accept;
-        ip6 daddr @proxy_dns_servers iifname "vlan3981" tcp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
-        ip6 daddr @proxy_dns_servers iifname "vlan3981" udp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
-        ip6 daddr @proxy_dns_servers iifname "vlan3982" tcp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
-        ip6 daddr @proxy_dns_servers iifname "vlan3982" udp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        ip6 daddr @proxy_dns_servers_v6 iifname "vlan3981" tcp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        ip6 daddr @proxy_dns_servers_v6 iifname "vlan3981" udp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        ip6 daddr @proxy_dns_servers_v6 iifname "vlan3982" tcp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
+        ip6 daddr @proxy_dns_servers_v6 iifname "vlan3982" udp dport domain dnat ip6 to 2a02:c00:20::1 comment "dnat to dns proxy"
     }
     chain prerouting_ct {
         type filter hook prerouting priority raw; policy accept;
