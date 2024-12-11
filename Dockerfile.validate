@@ -23,9 +23,9 @@ RUN apt-get update --quiet \
  && curl -fLsS https://deb.frrouting.org/frr/keys.asc | apt-key add - \
  && add-apt-repository "deb [arch=amd64] https://deb.frrouting.org/frr $(lsb_release -s -c) ${FRR_VERSION}" \
  && apt update \
- && apt install --yes --no-install-recommends frr frr-pythontools
+ && apt install --yes --no-install-recommends frr frr-pythontools nftables netbase
 
-
-COPY ./pkg/netconf/testdata /testdata
-COPY validate_os.sh /
-RUN "/validate_os.sh"
+ ENV OS_NAME=${OS_NAME}
+ ENV OS_VERSION=${OS_VERSION}
+ ENV FRR_VERSION=${FRR_VERSION}
+ COPY validate_os.sh /
