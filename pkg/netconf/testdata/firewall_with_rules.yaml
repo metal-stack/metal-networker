@@ -200,6 +200,13 @@ firewall_rules:
         - "100.1.2.4/32"
       comment: "allow incoming ssh"
     - protocol: TCP
+      ports: [22]
+      from:
+        - 2001:db8::1/128
+      to:
+        - 2001:db8:0:113::/64
+      comment: "allow incoming ssh ipv6"
+    - protocol: TCP
       ports: [80,443,8080]
       from:
         - "1.2.3.0/24"
