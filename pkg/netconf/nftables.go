@@ -264,7 +264,11 @@ func getFirewallRules(c config) FirewallRules {
 		}
 		destinationSpec := ""
 		if len(r.To) > 0 {
-			destinationSpec = fmt.Sprintf("ip daddr { %s }", strings.Join(r.To, ", "))
+			af, err := getAddressFamily(r.To[0]) // To is validated to contain no mixed addressfamilies in metal-api
+			if err != nil {
+				continue
+			}
+			destinationSpec = fmt.Sprintf("%s daddr { %s }", af, strings.Join(r.To, ", "))
 		} else if outputInterfacenames != "" {
 			destinationSpec = outputInterfacenames
 		} else {

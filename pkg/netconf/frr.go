@@ -103,7 +103,7 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string) net.Appli
 }
 
 // routerID will calculate the bgp router-id which must only be specified in the ipv6 range.
-// returns 0.0.0.0 for errornous ip addresses and 169.254.255.255 for ipv6
+// returns 0.0.0.0 for erroneous ip addresses and 169.254.255.255 for ipv6
 // TODO prepare machine allocations with ipv6 primary address and tests
 func routerID(net *models.V1MachineNetwork) string {
 	if len(net.Ips) < 1 {
