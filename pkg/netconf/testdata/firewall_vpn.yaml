@@ -179,6 +179,6 @@ nics:
 vpn:
   address: https://test.test.dev
   auth_key: abracadabra
-
+firewallDistance: 2
 
 
