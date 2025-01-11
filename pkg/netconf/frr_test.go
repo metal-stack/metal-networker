@@ -61,6 +61,13 @@ func TestFrrConfigApplier(t *testing.T) {
 			tpl:              TplFirewallFRR,
 		},
 		{
+			name:             "firewall with private primary unshared ipv6 network, private secondary shared ipv4 network, dualstack internet and ipv4 mpls",
+			input:            "testdata/firewall_dualstack.yaml",
+			expectedOutput:   "testdata/frr.conf.firewall_dualstack",
+			configuratorType: Firewall,
+			tpl:              TplFirewallFRR,
+		},
+		{
 			name:             "standard machine",
 			input:            "testdata/machine.yaml",
 			expectedOutput:   "testdata/frr.conf.machine",
