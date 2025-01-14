@@ -11,6 +11,7 @@ validate () {
         --build-arg OS_NAME="${1}" \
         --build-arg OS_VERSION="${2}" \
         --build-arg FRR_VERSION="${3}" \
+        --build-arg FRR_APT_CHANNEL="${4}" \
         --file Dockerfile.validate \
         . -t metal-networker-validate:${tag}
 
@@ -24,5 +25,5 @@ validate () {
         metal-networker-validate:${tag} /validate_os.sh
 }
 
-validate "ubuntu" "24.04" "frr-10"
-validate "debian" "12" "frr-10"
+validate "ubuntu" "24.04" "frr-10.2" "noble"
+validate "debian" "12" "frr-10.2" "bookworm"

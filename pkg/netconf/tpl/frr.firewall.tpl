@@ -54,6 +54,7 @@ router bgp {{ .ASN }}
 {{- range .VRFs }}
 router bgp {{ $ASN }} vrf vrf{{ .ID }}
  bgp router-id {{ $RouterId }}
+ no bgp enforce-first-as
  bgp bestpath as-path multipath-relax
  !
  address-family ipv4 unicast

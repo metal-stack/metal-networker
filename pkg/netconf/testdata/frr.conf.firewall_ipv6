@@ -61,6 +61,7 @@ router bgp 4200003073
 !
 router bgp 4200003073 vrf vrf3981
  bgp router-id 10.1.0.1
+ no bgp enforce-first-as
  bgp bestpath as-path multipath-relax
  !
  address-family ipv4 unicast
@@ -86,6 +87,7 @@ router bgp 4200003073 vrf vrf3981
 !
 router bgp 4200003073 vrf vrf3982
  bgp router-id 10.1.0.1
+ no bgp enforce-first-as
  bgp bestpath as-path multipath-relax
  !
  address-family ipv4 unicast
@@ -107,6 +109,7 @@ router bgp 4200003073 vrf vrf3982
 !
 router bgp 4200003073 vrf vrf104009
  bgp router-id 10.1.0.1
+ no bgp enforce-first-as
  bgp bestpath as-path multipath-relax
  !
  address-family ipv4 unicast
@@ -128,6 +131,7 @@ router bgp 4200003073 vrf vrf104009
 !
 router bgp 4200003073 vrf vrf104010
  bgp router-id 10.1.0.1
+ no bgp enforce-first-as
  bgp bestpath as-path multipath-relax
  !
  address-family ipv4 unicast
