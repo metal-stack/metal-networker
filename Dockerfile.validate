@@ -1,10 +1,11 @@
-ARG OS_NAME
-ARG OS_VERSION
+ARG OS_NAME=debian
+ARG OS_VERSION=12
 
 FROM ${OS_NAME}:${OS_VERSION}
 ARG OS_NAME
 ARG OS_VERSION
 ARG FRR_VERSION
+ARG FRR_APT_CHANNEL
 
 WORKDIR /tmp
 
@@ -20,8 +21,8 @@ RUN apt-get update --quiet \
     gnupg2 \
     software-properties-common \
  # install frr from frrouting debian package repo
- && curl -fLsS https://deb.frrouting.org/frr/keys.asc | apt-key add - \
- && add-apt-repository "deb [arch=amd64] https://deb.frrouting.org/frr $(lsb_release -s -c) ${FRR_VERSION}" \
+ && curl -s https://deb.frrouting.org/frr/keys.gpg | tee /usr/share/keyrings/frrouting.gpg > /dev/null \
+ && echo "deb [signed-by=/usr/share/keyrings/frrouting.gpg] https://deb.frrouting.org/frr ${FRR_APT_CHANNEL} ${FRR_VERSION}" > /etc/apt/sources.list.d/frr.list \
  && apt update \
  && apt install --yes --no-install-recommends frr frr-pythontools nftables netbase
 
