@@ -3,6 +3,7 @@ module github.com/metal-stack/metal-networker
 go 1.23.0
 
 require (
+	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/google/go-cmp v0.6.0
 	github.com/metal-stack/metal-go v0.39.4

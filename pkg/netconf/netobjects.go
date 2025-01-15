@@ -31,11 +31,12 @@ type (
 	// VRF represents data required to render VRF information into frr.conf.
 	VRF struct {
 		Identity
-		Table          int
-		VNI            int
-		ImportVRFNames []string
-		IPPrefixLists  []IPPrefixList
-		RouteMaps      []RouteMap
+		Table            int
+		VNI              int
+		ImportVRFNames   []string
+		IPPrefixLists    []IPPrefixList
+		RouteMaps        []RouteMap
+		NoEnforceFirstAS bool
 	}
 
 	// RouteMap represents a route-map to permit or deny routes.

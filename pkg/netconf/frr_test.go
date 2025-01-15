@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,6 +15,7 @@ func TestFrrConfigApplier(t *testing.T) {
 	tests := []struct {
 		name             string
 		input            string
+		frrVersion       *semver.Version
 		expectedOutput   string
 		configuratorType BareMetalType
 		tpl              string
@@ -74,6 +76,22 @@ func TestFrrConfigApplier(t *testing.T) {
 			configuratorType: Machine,
 			tpl:              TplMachineFRR,
 		},
+		{
+			name:             "standard firewall with lower frr version",
+			input:            "testdata/firewall.yaml",
+			frrVersion:       semver.MustParse("9.0.5-0"),
+			expectedOutput:   "testdata/frr.conf.firewall_frr-9",
+			configuratorType: Firewall,
+			tpl:              TplFirewallFRR,
+		},
+		{
+			name:             "standard firewall with higher frr version",
+			input:            "testdata/firewall.yaml",
+			frrVersion:       semver.MustParse("10.1.5"),
+			expectedOutput:   "testdata/frr.conf.firewall_frr-10",
+			configuratorType: Firewall,
+			tpl:              TplFirewallFRR,
+		},
 	}
 	for _, test := range tests {
 		test := test
@@ -81,7 +99,7 @@ func TestFrrConfigApplier(t *testing.T) {
 			log := slog.Default()
 			kb, err := New(log, test.input)
 			require.NoError(t, err)
-			a := NewFrrConfigApplier(test.configuratorType, *kb, "")
+			a := NewFrrConfigApplier(test.configuratorType, *kb, "", test.frrVersion)
 			b := bytes.Buffer{}
 
 			tpl := MustParseTpl(test.tpl)
@@ -111,4 +129,36 @@ func TestFRRValidator_Validate(t *testing.T) {
 	}
 	actual := validator.Validate()
 	require.Error(t, actual)
+}
+
+func Test_enableNoBGPEnforceFirstAS(t *testing.T) {
+	tests := []struct {
+		name       string
+		frrVersion *semver.Version
+		want       bool
+		wantErr    bool
+	}{
+		{
+			name:       "lower than 10",
+			frrVersion: semver.MustParse("9.0.1"),
+			want:       false,
+		},
+		{
+			name:       "higher than 10",
+			frrVersion: semver.MustParse("10.1.5"),
+			want:       true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := enableNoBGPEnforceFirstAS(tt.frrVersion)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("enableNoBGPEnforceFirstAS() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("enableNoBGPEnforceFirstAS() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
