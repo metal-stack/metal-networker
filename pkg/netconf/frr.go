@@ -66,13 +66,6 @@ type (
 func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string, frrVersion *semver.Version) net.Applier {
 	var data any
 
-	enableNoBGPEnforceFirstAS, err := enableNoBGPEnforceFirstAS(frrVersion)
-	if err != nil {
-		c.log.Error("unable to parse frr version", "error", err)
-		panic(err)
-	}
-	c.log.Info("enableNoBGPEnforceFirstAS", "value", enableNoBGPEnforceFirstAS)
-
 	switch kind {
 	case Firewall:
 		net := c.getUnderlayNetwork()
@@ -84,7 +77,7 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string, frrVersio
 				ASN:        *net.Asn,
 				RouterID:   routerID(net),
 			},
-			VRFs: assembleVRFs(c, enableNoBGPEnforceFirstAS),
+			VRFs: assembleVRFs(c, frrVersion),
 		}
 	case Machine:
 		net := c.getPrivatePrimaryNetwork()
@@ -108,20 +101,6 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string, frrVersio
 	}
 
 	return net.NewNetworkApplier(data, validator, net.NewDBusReloader("frr.service"))
-}
-
-func enableNoBGPEnforceFirstAS(frrVersion *semver.Version) (bool, error) {
-	if frrVersion == nil {
-		return false, nil
-	}
-	frrVersionGreaterOrEqual10, err := semver.NewConstraint(">= 10.0.0")
-	if err != nil {
-		return false, err
-	}
-	if frrVersionGreaterOrEqual10.Check(frrVersion) {
-		return true, nil
-	}
-	return false, nil
 }
 
 // routerID will calculate the bgp router-id which must only be specified in the ipv6 range.
@@ -149,8 +128,17 @@ func (v frrValidator) Validate() error {
 	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }
 
-func assembleVRFs(kb config, enableNoBGPenforceFirstAs bool) []VRF {
-	var result []VRF
+func assembleVRFs(kb config, frrVersion *semver.Version) []VRF {
+	var (
+		result []VRF
+		frr    *FRR
+	)
+	if frrVersion != nil {
+		frr = &FRR{
+			Major: frrVersion.Major(),
+			Minor: frrVersion.Minor(),
+		}
+	}
 
 	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
 	for _, network := range networks {
@@ -163,11 +151,11 @@ func assembleVRFs(kb config, enableNoBGPenforceFirstAs bool) []VRF {
 			Identity: Identity{
 				ID: int(*network.Vrf),
 			},
-			VNI:              int(*network.Vrf),
-			ImportVRFNames:   i.ImportVRFs,
-			IPPrefixLists:    i.prefixLists(),
-			RouteMaps:        i.routeMaps(),
-			NoEnforceFirstAS: enableNoBGPenforceFirstAs,
+			VNI:            int(*network.Vrf),
+			ImportVRFNames: i.ImportVRFs,
+			IPPrefixLists:  i.prefixLists(),
+			RouteMaps:      i.routeMaps(),
+			FRRVersion:     frr,
 		}
 		result = append(result, vrf)
 	}

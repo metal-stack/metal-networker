@@ -130,35 +130,3 @@ func TestFRRValidator_Validate(t *testing.T) {
 	actual := validator.Validate()
 	require.Error(t, actual)
 }
-
-func Test_enableNoBGPEnforceFirstAS(t *testing.T) {
-	tests := []struct {
-		name       string
-		frrVersion *semver.Version
-		want       bool
-		wantErr    bool
-	}{
-		{
-			name:       "lower than 10",
-			frrVersion: semver.MustParse("9.0.1"),
-			want:       false,
-		},
-		{
-			name:       "higher than 10",
-			frrVersion: semver.MustParse("10.1.5"),
-			want:       true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := enableNoBGPEnforceFirstAS(tt.frrVersion)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("enableNoBGPEnforceFirstAS() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("enableNoBGPEnforceFirstAS() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
