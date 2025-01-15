@@ -240,7 +240,7 @@ func applyCommonConfiguration(log *slog.Logger, kind BareMetalType, kb config) {
 	applyAndCleanUp(log, applier, tplHostname, src, "/etc/hostname", fileModeSixFourFour, false)
 
 	src = mustTmpFile("frr_")
-	applier = NewFrrConfigApplier(kind, kb, src)
+	applier = NewFrrConfigApplier(kind, kb, src, nil)
 	tpl := TplFirewallFRR
 
 	if kind == Machine {

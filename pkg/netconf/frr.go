@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/netip"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/metal-stack/metal-go/api/models"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/metal-networker/pkg/exec"
@@ -62,7 +63,7 @@ type (
 )
 
 // NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
-func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string) net.Applier {
+func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string, frrVersion *semver.Version) net.Applier {
 	var data any
 
 	switch kind {
@@ -76,7 +77,7 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string) net.Appli
 				ASN:        *net.Asn,
 				RouterID:   routerID(net),
 			},
-			VRFs: assembleVRFs(c),
+			VRFs: assembleVRFs(c, frrVersion),
 		}
 	case Machine:
 		net := c.getPrivatePrimaryNetwork()
@@ -127,8 +128,17 @@ func (v frrValidator) Validate() error {
 	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }
 
-func assembleVRFs(kb config) []VRF {
-	var result []VRF
+func assembleVRFs(kb config, frrVersion *semver.Version) []VRF {
+	var (
+		result []VRF
+		frr    *FRR
+	)
+	if frrVersion != nil {
+		frr = &FRR{
+			Major: frrVersion.Major(),
+			Minor: frrVersion.Minor(),
+		}
+	}
 
 	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
 	for _, network := range networks {
@@ -145,6 +155,7 @@ func assembleVRFs(kb config) []VRF {
 			ImportVRFNames: i.ImportVRFs,
 			IPPrefixLists:  i.prefixLists(),
 			RouteMaps:      i.routeMaps(),
+			FRRVersion:     frr,
 		}
 		result = append(result, vrf)
 	}

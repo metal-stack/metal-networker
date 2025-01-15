@@ -36,8 +36,13 @@ type (
 		ImportVRFNames []string
 		IPPrefixLists  []IPPrefixList
 		RouteMaps      []RouteMap
+		FRRVersion     *FRR
 	}
 
+	FRR struct {
+		Major uint64
+		Minor uint64
+	}
 	// RouteMap represents a route-map to permit or deny routes.
 	RouteMap struct {
 		Name    string
