@@ -2,7 +2,9 @@
 {{- $ASN := .ASN -}}
 {{- $RouterId := .RouterID -}}
 {{ .Comment }}
-frr version {{ .FRRVersion }}
+{{- if and (.FRRVersion) }}
+frr version {{ .FRRVersion.Major }}.{{ .FRRVersion.Minor }}
+{{- end }}
 frr defaults datacenter
 hostname {{ .Hostname }}
 allow-reserved-ranges
