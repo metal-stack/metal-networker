@@ -54,6 +54,9 @@ router bgp {{ .ASN }}
  address-family l2vpn evpn
   neighbor FABRIC activate
   advertise-all-vni
+{{- if and (.FRRVersion) (gt .FRRVersion.Major 9) }}
+  enable-resolve-overlay-index
+{{- end }}
  exit-address-family
 !
 {{- range .VRFs }}
@@ -83,6 +86,9 @@ router bgp {{ $ASN }} vrf vrf{{ .ID }}
  address-family l2vpn evpn
   advertise ipv4 unicast
   advertise ipv6 unicast
+{{- if and (.FRRVersion) (gt .FRRVersion.Major 9) }}
+  enable-resolve-overlay-index
+{{- end }}
  exit-address-family
 !
 {{- end }}

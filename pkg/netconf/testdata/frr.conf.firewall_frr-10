@@ -58,6 +58,7 @@ router bgp 4200003073
  address-family l2vpn evpn
   neighbor FABRIC activate
   advertise-all-vni
+  enable-resolve-overlay-index
  exit-address-family
 !
 router bgp 4200003073 vrf vrf3981
@@ -84,6 +85,7 @@ router bgp 4200003073 vrf vrf3981
  address-family l2vpn evpn
   advertise ipv4 unicast
   advertise ipv6 unicast
+  enable-resolve-overlay-index
  exit-address-family
 !
 router bgp 4200003073 vrf vrf3982
@@ -106,6 +108,7 @@ router bgp 4200003073 vrf vrf3982
  address-family l2vpn evpn
   advertise ipv4 unicast
   advertise ipv6 unicast
+  enable-resolve-overlay-index
  exit-address-family
 !
 router bgp 4200003073 vrf vrf104009
@@ -128,6 +131,7 @@ router bgp 4200003073 vrf vrf104009
  address-family l2vpn evpn
   advertise ipv4 unicast
   advertise ipv6 unicast
+  enable-resolve-overlay-index
  exit-address-family
 !
 router bgp 4200003073 vrf vrf104010
@@ -150,6 +154,7 @@ router bgp 4200003073 vrf vrf104010
  address-family l2vpn evpn
   advertise ipv4 unicast
   advertise ipv6 unicast
+  enable-resolve-overlay-index
  exit-address-family
 !
 ip prefix-list vrf3981-import-from-vrf104009 permit 0.0.0.0/0
