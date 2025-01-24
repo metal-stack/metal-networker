@@ -37,6 +37,9 @@ router bgp {{ .ASN }}
  neighbor FABRIC peer-group
  neighbor FABRIC remote-as external
  neighbor FABRIC timers 2 8
+{{- if and (.FRRVersion) (gt .FRRVersion.Major 9) }}
+ neighbor FABRIC ebgp-multihop
+{{- end }}
  neighbor lan0 interface peer-group FABRIC
  neighbor lan1 interface peer-group FABRIC
  !

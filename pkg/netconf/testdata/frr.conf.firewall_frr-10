@@ -41,6 +41,7 @@ router bgp 4200003073
  neighbor FABRIC peer-group
  neighbor FABRIC remote-as external
  neighbor FABRIC timers 2 8
+ neighbor FABRIC ebgp-multihop
  neighbor lan0 interface peer-group FABRIC
  neighbor lan1 interface peer-group FABRIC
  !
