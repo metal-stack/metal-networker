@@ -23,6 +23,7 @@ func TestFrrConfigApplier(t *testing.T) {
 		{
 			name:             "firewall of a shared private network",
 			input:            "testdata/firewall_shared.yaml",
+			frrVersion:       semver.MustParse("8.5"),
 			expectedOutput:   "testdata/frr.conf.firewall_shared",
 			configuratorType: Firewall,
 			tpl:              TplFirewallFRR,
@@ -30,6 +31,7 @@ func TestFrrConfigApplier(t *testing.T) {
 		{
 			name:             "standard firewall with private primary unshared network, private secondary shared network, internet and mpls",
 			input:            "testdata/firewall.yaml",
+			frrVersion:       semver.MustParse("8.5"),
 			expectedOutput:   "testdata/frr.conf.firewall",
 			configuratorType: Firewall,
 			tpl:              TplFirewallFRR,
@@ -37,6 +39,7 @@ func TestFrrConfigApplier(t *testing.T) {
 		{
 			name:             "dmz firewall with private primary unshared network, private secondary shared dmz network, internet and mpls",
 			input:            "testdata/firewall_dmz.yaml",
+			frrVersion:       semver.MustParse("8.5"),
 			expectedOutput:   "testdata/frr.conf.firewall_dmz",
 			configuratorType: Firewall,
 			tpl:              TplFirewallFRR,
@@ -44,6 +47,7 @@ func TestFrrConfigApplier(t *testing.T) {
 		{
 			name:             "dmz firewall with private primary unshared network, private secondary shared dmz network",
 			input:            "testdata/firewall_dmz_app.yaml",
+			frrVersion:       semver.MustParse("8.5"),
 			expectedOutput:   "testdata/frr.conf.firewall_dmz_app",
 			configuratorType: Firewall,
 			tpl:              TplFirewallFRR,
@@ -51,6 +55,7 @@ func TestFrrConfigApplier(t *testing.T) {
 		{
 			name:             "firewall with private primary unshared network, private secondary shared dmz network and private secondary shared storage network",
 			input:            "testdata/firewall_dmz_app_storage.yaml",
+			frrVersion:       semver.MustParse("8.5"),
 			expectedOutput:   "testdata/frr.conf.firewall_dmz_app_storage",
 			configuratorType: Firewall,
 			tpl:              TplFirewallFRR,
@@ -58,6 +63,7 @@ func TestFrrConfigApplier(t *testing.T) {
 		{
 			name:             "firewall with private primary unshared ipv6 network, private secondary shared ipv4 network, ipv6 internet and ipv4 mpls",
 			input:            "testdata/firewall_ipv6.yaml",
+			frrVersion:       semver.MustParse("8.5"),
 			expectedOutput:   "testdata/frr.conf.firewall_ipv6",
 			configuratorType: Firewall,
 			tpl:              TplFirewallFRR,
@@ -65,6 +71,7 @@ func TestFrrConfigApplier(t *testing.T) {
 		{
 			name:             "firewall with private primary unshared ipv6 network, private secondary shared ipv4 network, dualstack internet and ipv4 mpls",
 			input:            "testdata/firewall_dualstack.yaml",
+			frrVersion:       semver.MustParse("8.5"),
 			expectedOutput:   "testdata/frr.conf.firewall_dualstack",
 			configuratorType: Firewall,
 			tpl:              TplFirewallFRR,
@@ -72,6 +79,7 @@ func TestFrrConfigApplier(t *testing.T) {
 		{
 			name:             "standard machine",
 			input:            "testdata/machine.yaml",
+			frrVersion:       semver.MustParse("8.5"),
 			expectedOutput:   "testdata/frr.conf.machine",
 			configuratorType: Machine,
 			tpl:              TplMachineFRR,

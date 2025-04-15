@@ -2,7 +2,9 @@
 {{- $ASN := .ASN -}}
 {{- $RouterId := .RouterID -}}
 {{ .Comment }}
-frr version {{ .FRRVersion }}
+{{- if and (.FRRVersion) }}
+frr version {{ .FRRVersion.Major }}.{{ .FRRVersion.Minor }}
+{{- end }}
 frr defaults datacenter
 hostname {{ .Hostname }}
 !
@@ -28,6 +30,9 @@ interface lan1
 !
 router bgp {{ .ASN }}
  bgp router-id {{ .RouterID }}
+{{- if and (.FRRVersion) (gt .FRRVersion.Major 9) }}
+ no bgp enforce-first-as
+{{- end }}
  bgp bestpath as-path multipath-relax
  neighbor FABRIC peer-group
  neighbor FABRIC remote-as external
