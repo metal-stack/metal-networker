@@ -4,6 +4,7 @@
 Name=lan{{ .Index }}
 
 [Network]
+IPv6AcceptRA=no
 {{- range .EVPNIfaces }}
 VXLAN=vni{{ .VXLAN.ID }}
 {{- end }}
