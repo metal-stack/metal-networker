@@ -4,3 +4,4 @@
 Name=lan0
 
 [Network]
+IPv6AcceptRA=no

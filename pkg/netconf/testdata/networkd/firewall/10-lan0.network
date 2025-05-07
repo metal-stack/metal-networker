@@ -4,6 +4,7 @@
 Name=lan0
 
 [Network]
+IPv6AcceptRA=no
 VXLAN=vni3981
 VXLAN=vni3982
 VXLAN=vni104009
