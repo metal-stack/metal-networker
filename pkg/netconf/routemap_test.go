@@ -59,7 +59,11 @@ var (
 		prefixes:     []importPrefix{inetNet6},
 		destinations: []importPrefix{defaultRoute6},
 	}
-
+	dualstack = network{
+		vrf:          inetVrf,
+		prefixes:     []importPrefix{inetNet1, inetNet6},
+		destinations: []importPrefix{defaultRoute6},
+	}
 	external = network{
 		vrf:          externalVrf,
 		destinations: []importPrefix{externalDestinationNet},
@@ -241,6 +245,40 @@ func Test_importRulesForNetwork(t *testing.T) {
 				inet6.vrf: {
 					private6.vrf: ImportSettings{
 						ImportPrefixes:         leakFrom(inet6.prefixes, private6.vrf),
+						ImportPrefixesNoExport: private6.prefixes,
+					},
+				},
+				external.vrf: {
+					private6.vrf: ImportSettings{
+						ImportPrefixes:         leakFrom(external.prefixes, private6.vrf),
+						ImportPrefixesNoExport: private6.prefixes,
+					},
+				},
+			},
+		},
+		{
+			name:  "firewall with ipv6 private network and dualstack internet network",
+			input: "testdata/firewall_dualstack.yaml",
+			want: map[string]map[string]ImportSettings{
+				private6.vrf: {
+					inet6.vrf: ImportSettings{
+						ImportPrefixes: concatPfxSlices(inet6.destinations, []importPrefix{publicDefaultNetIPv6, publicDefaultNet}, dualstack.prefixes),
+					},
+					external.vrf: ImportSettings{
+						ImportPrefixes: concatPfxSlices(external.destinations, external.prefixes),
+					},
+					shared.vrf: ImportSettings{
+						ImportPrefixes: shared.prefixes,
+					},
+				},
+				shared.vrf: {
+					private6.vrf: ImportSettings{
+						ImportPrefixes: concatPfxSlices(private6.prefixes, leakFrom(shared.prefixes, private6.vrf)),
+					},
+				},
+				inet6.vrf: {
+					private6.vrf: ImportSettings{
+						ImportPrefixes:         leakFrom(dualstack.prefixes, private6.vrf),
 						ImportPrefixesNoExport: private6.prefixes,
 					},
 				},

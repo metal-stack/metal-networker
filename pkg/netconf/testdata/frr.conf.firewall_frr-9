@@ -1,0 +1,208 @@
+# This file was auto generated for machine: 'e0ab02d2-27cd-5a5e-8efc-080ba80cf258' by app version .
+# Do not edit.
+frr version 8.5
+frr defaults datacenter
+hostname firewall
+!
+log syslog debugging
+debug bgp updates
+debug bgp nht
+debug bgp update-groups
+debug bgp zebra
+!
+vrf vrf3981
+ vni 3981
+ exit-vrf
+!
+vrf vrf3982
+ vni 3982
+ exit-vrf
+!
+vrf vrf104009
+ vni 104009
+ exit-vrf
+!
+vrf vrf104010
+ vni 104010
+ exit-vrf
+!
+interface lan0
+ ipv6 nd ra-interval 6
+ no ipv6 nd suppress-ra
+!
+interface lan1
+ ipv6 nd ra-interval 6
+ no ipv6 nd suppress-ra
+!
+router bgp 4200003073
+ bgp router-id 10.1.0.1
+ bgp bestpath as-path multipath-relax
+ neighbor FABRIC peer-group
+ neighbor FABRIC remote-as external
+ neighbor FABRIC timers 2 8
+ neighbor lan0 interface peer-group FABRIC
+ neighbor lan1 interface peer-group FABRIC
+ !
+ address-family ipv4 unicast
+  redistribute connected route-map LOOPBACKS
+  neighbor FABRIC route-map only-self-out out
+ exit-address-family
+ !
+ address-family ipv6 unicast
+  redistribute connected route-map LOOPBACKS
+  neighbor FABRIC route-map only-self-out out
+  neighbor FABRIC activate
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  neighbor FABRIC activate
+  advertise-all-vni
+ exit-address-family
+!
+router bgp 4200003073 vrf vrf3981
+ bgp router-id 10.1.0.1
+ bgp bestpath as-path multipath-relax
+ !
+ address-family ipv4 unicast
+  redistribute connected
+  import vrf vrf104009
+  import vrf vrf104010
+  import vrf vrf3982
+  import vrf route-map vrf3981-import-map
+ exit-address-family
+ !
+ address-family ipv6 unicast
+  redistribute connected
+  import vrf vrf104009
+  import vrf vrf104010
+  import vrf vrf3982
+  import vrf route-map vrf3981-import-map
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  advertise ipv4 unicast
+  advertise ipv6 unicast
+ exit-address-family
+!
+router bgp 4200003073 vrf vrf3982
+ bgp router-id 10.1.0.1
+ bgp bestpath as-path multipath-relax
+ !
+ address-family ipv4 unicast
+  redistribute connected
+  import vrf vrf3981
+  import vrf route-map vrf3982-import-map
+ exit-address-family
+ !
+ address-family ipv6 unicast
+  redistribute connected
+  import vrf vrf3981
+  import vrf route-map vrf3982-import-map
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  advertise ipv4 unicast
+  advertise ipv6 unicast
+ exit-address-family
+!
+router bgp 4200003073 vrf vrf104009
+ bgp router-id 10.1.0.1
+ bgp bestpath as-path multipath-relax
+ !
+ address-family ipv4 unicast
+  redistribute connected
+  import vrf vrf3981
+  import vrf route-map vrf104009-import-map
+ exit-address-family
+ !
+ address-family ipv6 unicast
+  redistribute connected
+  import vrf vrf3981
+  import vrf route-map vrf104009-import-map
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  advertise ipv4 unicast
+  advertise ipv6 unicast
+ exit-address-family
+!
+router bgp 4200003073 vrf vrf104010
+ bgp router-id 10.1.0.1
+ bgp bestpath as-path multipath-relax
+ !
+ address-family ipv4 unicast
+  redistribute connected
+  import vrf vrf3981
+  import vrf route-map vrf104010-import-map
+ exit-address-family
+ !
+ address-family ipv6 unicast
+  redistribute connected
+  import vrf vrf3981
+  import vrf route-map vrf104010-import-map
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  advertise ipv4 unicast
+  advertise ipv6 unicast
+ exit-address-family
+!
+ip prefix-list vrf3981-import-from-vrf104009 permit 0.0.0.0/0
+ip prefix-list vrf3981-import-from-vrf104010 seq 101 permit 100.127.1.0/24 le 32
+ip prefix-list vrf3981-import-from-vrf104009 seq 102 deny 185.1.2.3/32 le 32
+ip prefix-list vrf3981-import-from-vrf104009 seq 103 permit 185.1.2.0/24 le 32
+ip prefix-list vrf3981-import-from-vrf104009 seq 104 permit 185.27.0.0/22 le 32
+ip prefix-list vrf3981-import-from-vrf104010 seq 105 permit 100.127.129.0/24 le 32
+ip prefix-list vrf3981-import-from-vrf3982 seq 106 permit 10.0.18.0/22 le 32
+route-map vrf3981-import-map permit 10
+ match source-vrf vrf3982
+ match ip address prefix-list vrf3981-import-from-vrf3982
+route-map vrf3981-import-map permit 20
+ match source-vrf vrf104010
+ match ip address prefix-list vrf3981-import-from-vrf104010
+route-map vrf3981-import-map permit 30
+ match source-vrf vrf104009
+ match ip address prefix-list vrf3981-import-from-vrf104009
+route-map vrf3981-import-map deny 40
+!
+ip prefix-list vrf3982-import-from-vrf3981 seq 100 permit 10.0.16.0/22 le 32
+ip prefix-list vrf3982-import-from-vrf3981 seq 101 permit 10.0.18.0/22 le 32
+route-map vrf3982-import-map permit 10
+ match source-vrf vrf3981
+ match ip address prefix-list vrf3982-import-from-vrf3981
+route-map vrf3982-import-map deny 20
+!
+ip prefix-list vrf104009-import-from-vrf3981-no-export seq 100 permit 10.0.16.0/22 le 32
+ip prefix-list vrf104009-import-from-vrf3981 seq 101 permit 185.1.2.0/24 le 32
+ip prefix-list vrf104009-import-from-vrf3981 seq 102 permit 185.27.0.0/22 le 32
+route-map vrf104009-import-map permit 10
+ match source-vrf vrf3981
+ match ip address prefix-list vrf104009-import-from-vrf3981-no-export
+ set community additive no-export
+route-map vrf104009-import-map permit 20
+ match source-vrf vrf3981
+ match ip address prefix-list vrf104009-import-from-vrf3981
+route-map vrf104009-import-map deny 30
+!
+ip prefix-list vrf104010-import-from-vrf3981-no-export seq 100 permit 10.0.16.0/22 le 32
+ip prefix-list vrf104010-import-from-vrf3981 seq 101 permit 100.127.129.0/24 le 32
+route-map vrf104010-import-map permit 10
+ match source-vrf vrf3981
+ match ip address prefix-list vrf104010-import-from-vrf3981-no-export
+ set community additive no-export
+route-map vrf104010-import-map permit 20
+ match source-vrf vrf3981
+ match ip address prefix-list vrf104010-import-from-vrf3981
+route-map vrf104010-import-map deny 30
+!
+route-map only-self-out permit 10
+ match as-path SELF
+route-map only-self-out deny 20
+!
+route-map LOOPBACKS permit 10
+ match interface lo
+!
+bgp as-path access-list SELF permit ^$
+!
+line vty
+!

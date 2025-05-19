@@ -38,7 +38,7 @@ func TestIfacesApplier(t *testing.T) {
 			require.NoError(t, err)
 			systemdNetworkPath = tempdir
 			defer func() {
-				os.RemoveAll(systemdNetworkPath)
+				_ = os.RemoveAll(systemdNetworkPath)
 				systemdNetworkPath = old
 			}()
 			kb, err := New(log, tc.input)
@@ -83,7 +83,7 @@ func list(dir string) []string {
 		panic(err)
 	}
 	finfos, err := f.Readdir(-1)
-	f.Close()
+	_ = f.Close()
 	if err != nil {
 		panic(err)
 	}

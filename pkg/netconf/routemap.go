@@ -74,16 +74,18 @@ func importRulesForNetwork(kb config, network *models.V1MachineNetwork) *importR
 
 		// deny public address of default network
 		defaultNet := kb.GetDefaultRouteNetwork()
-		if ip, err := netip.ParseAddr(defaultNet.Ips[0]); err == nil {
-			var bl = 32
-			if ip.Is6() {
-				bl = 128
+		for _, ip := range defaultNet.Ips {
+			if parsed, err := netip.ParseAddr(ip); err == nil {
+				var bl = 32
+				if parsed.Is6() {
+					bl = 128
+				}
+				i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
+					Prefix:    netip.PrefixFrom(parsed, bl),
+					Policy:    Deny,
+					SourceVRF: vrfNameOf(defaultNet),
+				})
 			}
-			i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
-				Prefix:    netip.PrefixFrom(ip, bl),
-				Policy:    Deny,
-				SourceVRF: vrfNameOf(defaultNet),
-			})
 		}
 
 		// permit external routes

@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,6 +15,7 @@ func TestFrrConfigApplier(t *testing.T) {
 	tests := []struct {
 		name             string
 		input            string
+		frrVersion       *semver.Version
 		expectedOutput   string
 		configuratorType BareMetalType
 		tpl              string
@@ -61,11 +63,34 @@ func TestFrrConfigApplier(t *testing.T) {
 			tpl:              TplFirewallFRR,
 		},
 		{
+			name:             "firewall with private primary unshared ipv6 network, private secondary shared ipv4 network, dualstack internet and ipv4 mpls",
+			input:            "testdata/firewall_dualstack.yaml",
+			expectedOutput:   "testdata/frr.conf.firewall_dualstack",
+			configuratorType: Firewall,
+			tpl:              TplFirewallFRR,
+		},
+		{
 			name:             "standard machine",
 			input:            "testdata/machine.yaml",
 			expectedOutput:   "testdata/frr.conf.machine",
 			configuratorType: Machine,
 			tpl:              TplMachineFRR,
+		},
+		{
+			name:             "standard firewall with lower frr version",
+			input:            "testdata/firewall.yaml",
+			frrVersion:       semver.MustParse("9.0.5-0"),
+			expectedOutput:   "testdata/frr.conf.firewall_frr-9",
+			configuratorType: Firewall,
+			tpl:              TplFirewallFRR,
+		},
+		{
+			name:             "standard firewall with higher frr version",
+			input:            "testdata/firewall.yaml",
+			frrVersion:       semver.MustParse("10.1.5"),
+			expectedOutput:   "testdata/frr.conf.firewall_frr-10",
+			configuratorType: Firewall,
+			tpl:              TplFirewallFRR,
 		},
 	}
 	for _, test := range tests {
@@ -74,7 +99,7 @@ func TestFrrConfigApplier(t *testing.T) {
 			log := slog.Default()
 			kb, err := New(log, test.input)
 			require.NoError(t, err)
-			a := NewFrrConfigApplier(test.configuratorType, *kb, "")
+			a := NewFrrConfigApplier(test.configuratorType, *kb, "", test.frrVersion)
 			b := bytes.Buffer{}
 
 			tpl := MustParseTpl(test.tpl)

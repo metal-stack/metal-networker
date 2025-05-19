@@ -64,14 +64,14 @@ networks:
     # network VRF's for return traffic. Applied to the SVI (as /32)
     # For Machine: Used to set the loopback ips.
     ips:
-      - 10.0.16.2
+      - 2002::1
     # [IGNORED in case of private network]
     nat: false
     # [IGNORED in case of private network]
     networkid: bc830818-2df1-4904-8c40-4322296d393d
     # considered as source range for nat and to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
     prefixes:
-      - 10.0.16.0/22
+      - 2002::/64
     private: true
     underlay: false
     networktype: privateprimaryunshared
@@ -102,9 +102,10 @@ networks:
   - asn: 4200003073
     # Considered to establish static route leak to reach out from tenant VRF into the public networks.
     destinationprefixes:
-      - 0.0.0.0/0
+      - ::/0
     # Applied to the SVI (as /32)
     ips:
+      - 2a02:c00:20::1
       - 185.1.2.3
     # In case nat equals true, Source NAT via SVI is added.
     nat: true
@@ -112,7 +113,7 @@ networks:
     # considered to figure out allowed prefixes for route imports from private network into non-private, non-underlay network
     prefixes:
       - 185.1.2.0/24
-      - 185.27.0.0/22
+      - 2a02:c00:20::/45
     private: false
     underlay: false
     networktype: external
@@ -176,39 +177,7 @@ nics:
       - mac: "44:38:39:00:00:04"
         name: null
         neighbors: []
-firewall_rules:
-  egress:
-    - comment: "allow apt update"
-      protocol: tcp
-      ports: [443]
-      to:
-        - "0.0.0.0/0"
-        - "1.2.3.4/32"
-    - comment: "allow apt update v6"
-      protocol: tcp
-      ports: [443]
-      to:
-        - "::/0"
-  ingress:
-    - protocol: TCP
-      ports: [22]
-      from:
-        - "2.3.4.0/24"
-        - "192.168.1.0/16"
-      to:
-        - "100.1.2.3/32"
-        - "100.1.2.4/32"
-      comment: "allow incoming ssh"
-    - protocol: TCP
-      ports: [22]
-      from:
-        - 2001:db8::1/128
-      to:
-        - 2001:db8:0:113::/64
-      comment: "allow incoming ssh ipv6"
-    - protocol: TCP
-      ports: [80,443,8080]
-      from:
-        - "1.2.3.0/24"
-        - "192.168.0.0/16"
-firewallDistance: 2
+
+
+
+

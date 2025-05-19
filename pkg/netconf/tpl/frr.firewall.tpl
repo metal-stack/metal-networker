@@ -54,6 +54,9 @@ router bgp {{ .ASN }}
 {{- range .VRFs }}
 router bgp {{ $ASN }} vrf vrf{{ .ID }}
  bgp router-id {{ $RouterId }}
+{{- if and (.FRRVersion) (gt .FRRVersion.Major 9) }}
+ no bgp enforce-first-as
+{{- end }}
  bgp bestpath as-path multipath-relax
  !
  address-family ipv4 unicast
