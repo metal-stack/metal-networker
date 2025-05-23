@@ -7,7 +7,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/google/go-cmp v0.7.0
 	github.com/metal-stack/metal-go v0.41.0
-	github.com/metal-stack/metal-hammer v0.13.11
+	github.com/metal-stack/metal-hammer v0.13.12-0.20250519092240-c5ba4bd386fd
 	github.com/metal-stack/metal-lib v0.21.0
 	github.com/metal-stack/v v1.0.3
 	github.com/stretchr/testify v1.10.0

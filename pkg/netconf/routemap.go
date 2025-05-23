@@ -284,7 +284,7 @@ func byName(prefixLists []IPPrefixList) map[string]IPPrefixList {
 	return byName
 }
 
-func (i *importRule) routeMaps() []RouteMap {
+func (i *importRule) routeMaps(asn int64, distance uint8) []RouteMap {
 	var result []RouteMap
 
 	order := RouteMapOrderSeed
@@ -301,7 +301,14 @@ func (i *importRule) routeMaps() []RouteMap {
 
 		matchVrf := fmt.Sprintf("match source-vrf %s", prefixList.SourceVRF)
 		matchPfxList := fmt.Sprintf("match %s address prefix-list %s", prefixList.AddressFamily, n)
-		entries := []string{matchVrf, matchPfxList}
+		// Using the distance we extend the path of a firewall by adding asn to its as-path prepend
+		numAsns := int(2 + distance)
+		asnList := make([]string, numAsns)
+		for i := 0; i < numAsns; i++ {
+			asnList[i] = fmt.Sprintf("%d", asn)
+		}
+		asPathPrepend := fmt.Sprintf("set as-path prepend %s", strings.Join(asnList, " "))
+		entries := []string{matchVrf, matchPfxList, asPathPrepend}
 		if strings.HasSuffix(n, IPPrefixListNoExportSuffix) {
 			entries = append(entries, "set community additive no-export")
 		}

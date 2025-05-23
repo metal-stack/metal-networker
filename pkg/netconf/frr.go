@@ -154,7 +154,7 @@ func assembleVRFs(kb config, frrVersion *semver.Version) []VRF {
 			VNI:            int(*network.Vrf),
 			ImportVRFNames: i.ImportVRFs,
 			IPPrefixLists:  i.prefixLists(),
-			RouteMaps:      i.routeMaps(),
+			RouteMaps:      i.routeMaps(*network.Asn, kb.FirewallDistance),
 			FRRVersion:     frr,
 		}
 		result = append(result, vrf)
