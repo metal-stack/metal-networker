@@ -25,5 +25,5 @@ validate () {
         metal-networker-validate:${tag} /validate_os.sh
 }
 
-validate "ubuntu" "24.04" "frr-10.2" "noble"
-validate "debian" "12" "frr-10.2" "bookworm"
+validate "ubuntu" "24.04" "frr-10.4" "noble"
+validate "debian" "12" "frr-10.4" "bookworm"
