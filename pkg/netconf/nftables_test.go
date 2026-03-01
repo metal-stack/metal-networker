@@ -70,7 +70,6 @@ func TestCompileNftRules(t *testing.T) {
 	log := slog.Default()
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.input, func(t *testing.T) {
 			expected, err := os.ReadFile(tt.expected)
 			require.NoError(t, err)

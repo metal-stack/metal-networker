@@ -94,7 +94,6 @@ func TestFrrConfigApplier(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			log := slog.Default()
 			kb, err := New(log, test.input)
