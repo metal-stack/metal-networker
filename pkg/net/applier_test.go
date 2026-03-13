@@ -23,7 +23,6 @@ func TestNetworkApplier_Compare(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			n := &networkApplier{}
 			if got := n.Compare(tt.source, tt.target); got != tt.want {

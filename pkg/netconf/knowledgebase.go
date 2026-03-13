@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"slices"
 
 	"github.com/metal-stack/metal-hammer/pkg/api"
 
@@ -118,12 +119,7 @@ func (c config) containsAnyPublicNetwork() bool {
 	if len(c.GetNetworks(mn.External)) > 0 {
 		return true
 	}
-	for _, n := range c.Networks {
-		if isDMZNetwork(n) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(c.Networks, isDMZNetwork)
 }
 
 func (c config) containsSinglePrivatePrimary() bool {
