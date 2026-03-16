@@ -1,5 +1,7 @@
 # metal-networker
 
+*DEPRECATION NOTICE* this repo is no longer maintained and was replaced by [os-installer](https://github.com/metal-stack/os-installer).
+
 Configures networking related resources such as interfaces, frr and nftables.
 
 ## Preconditions
