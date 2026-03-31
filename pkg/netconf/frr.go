@@ -13,8 +13,6 @@ import (
 )
 
 const (
-	// FRRVersion holds a string that is used in the frr.conf to define the FRR version.
-	FRRVersion = "8.5"
 	// TplFirewallFRR defines the name of the template to render FRR configuration to a 'firewall'.
 	TplFirewallFRR = "frr.firewall.tpl"
 	// TplMachineFRR defines the name of the template to render FRR configuration to a 'machine'.
@@ -36,7 +34,7 @@ type (
 	CommonFRRData struct {
 		ASN        int64
 		Comment    string
-		FRRVersion string
+		FRRVersion *FRR
 		Hostname   string
 		RouterID   string
 	}
@@ -64,26 +62,36 @@ type (
 
 // NewFrrConfigApplier constructs a new Applier of the given type of Bare Metal.
 func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string, frrVersion *semver.Version) net.Applier {
-	var data any
+	var (
+		data any
+		frr  *FRR
+	)
+
+	if frrVersion != nil {
+		frr = &FRR{
+			Major: frrVersion.Major(),
+			Minor: frrVersion.Minor(),
+		}
+	}
 
 	switch kind {
 	case Firewall:
 		net := c.getUnderlayNetwork()
 		data = FirewallFRRData{
 			CommonFRRData: CommonFRRData{
-				FRRVersion: FRRVersion,
+				FRRVersion: frr,
 				Hostname:   c.Hostname,
 				Comment:    versionHeader(c.MachineUUID),
 				ASN:        *net.Asn,
 				RouterID:   routerID(net),
 			},
-			VRFs: assembleVRFs(c, frrVersion),
+			VRFs: assembleVRFs(c, frr),
 		}
 	case Machine:
 		net := c.getPrivatePrimaryNetwork()
 		data = MachineFRRData{
 			CommonFRRData: CommonFRRData{
-				FRRVersion: FRRVersion,
+				FRRVersion: frr,
 				Hostname:   c.Hostname,
 				Comment:    versionHeader(c.MachineUUID),
 				ASN:        *net.Asn,
@@ -128,17 +136,10 @@ func (v frrValidator) Validate() error {
 	return exec.NewVerboseCmd("bash", "-c", vtysh, v.path).Run()
 }
 
-func assembleVRFs(kb config, frrVersion *semver.Version) []VRF {
+func assembleVRFs(kb config, frr *FRR) []VRF {
 	var (
 		result []VRF
-		frr    *FRR
 	)
-	if frrVersion != nil {
-		frr = &FRR{
-			Major: frrVersion.Major(),
-			Minor: frrVersion.Minor(),
-		}
-	}
 
 	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
 	for _, network := range networks {
